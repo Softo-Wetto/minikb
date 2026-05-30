@@ -6,12 +6,31 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "pb:setup": "node scripts/setup-pocketbase.mjs",
+    "pb:import": "node scripts/import-supabase-csv.mjs",
+    "pb:check": "node scripts/check-pocketbase-queries.mjs"
   },
   "dependencies": {
+    "@tiptap/extension-color": "^3.22.1",
+    "@tiptap/extension-highlight": "^3.22.1",
+    "@tiptap/extension-image": "^3.22.1",
+    "@tiptap/extension-link": "^3.22.1",
+    "@tiptap/extension-subscript": "^3.22.1",
+    "@tiptap/extension-superscript": "^3.22.1",
+    "@tiptap/extension-text-align": "^3.22.1",
+    "@tiptap/extension-text-style": "^3.22.1",
+    "@tiptap/extension-underline": "^3.22.1",
+    "@tiptap/pm": "^3.22.1",
+    "@tiptap/react": "^3.22.1",
+    "@tiptap/starter-kit": "^3.22.1",
+    "clsx": "^2.1.1",
+    "lucide-react": "^1.7.0",
     "next": "16.2.1",
     "react": "19.2.4",
-    "react-dom": "19.2.4"
+    "react-dom": "19.2.4",
+    "react-markdown": "^10.1.0",
+    "remark-gfm": "^4.0.1"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",

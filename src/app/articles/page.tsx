@@ -1,0 +1,159 @@
+import Link from "next/link";
+import { FilePlus2, Filter, Search } from "lucide-react";
+import KbCategoryList from "@/components/kb-category-list";
+import ArticleTable from "@/components/article-table";
+import {
+  equalsFilter,
+  getRecords,
+  searchFilter,
+} from "@/lib/pocketbase/server";
+import { requireUser } from "@/lib/auth";
+import type { Article, RawPocketBaseRecord } from "@/types/database";
+
+type CategoryRow = RawPocketBaseRecord & {
+  category: string | null;
+};
+
+type SearchParams = Promise<{
+  q?: string;
+  category?: string;
+  visibility?: string;
+  companyId?: string;
+}>;
+
+export default async function ArticlesPage({
+  searchParams,
+}: {
+  searchParams: SearchParams;
+}) {
+  await requireUser();
+
+  const { q = "", category = "", visibility = "", companyId = "" } = await searchParams;
+  const filters: string[] = [];
+
+  if (q.trim()) {
+    filters.push(`(${searchFilter(["title", "summary", "content"], q.trim())})`);
+  }
+
+  if (category.trim()) filters.push(equalsFilter("category", category));
+  if (companyId.trim()) filters.push(equalsFilter("company_id", companyId));
+  if (visibility === "internal") filters.push("is_internal = true");
+  if (visibility === "public") filters.push("is_internal = false");
+
+  let articles: Article[] = [];
+  let error: Error | null = null;
+
+  try {
+    const response = await getRecords<Article>("articles", {
+      fields: "id,title,category,summary,created_at,updated_at,is_pinned,is_internal",
+      sort: "-updated_at",
+      filter: filters.join(" && "),
+    });
+    articles = response.items;
+  } catch (caught) {
+    error = caught as Error;
+  }
+
+  let categoryRows: CategoryRow[] = [];
+
+  try {
+    const response = await getRecords<CategoryRow>("articles", {
+      fields: "id,category",
+      sort: "category",
+    });
+    categoryRows = response.items;
+  } catch {
+    categoryRows = [];
+  }
+
+  const categories = Array.from(
+    new Set(categoryRows.map((row) => row.category).filter(Boolean))
+  ) as string[];
+
+  return (
+    <div className="space-y-4">
+      <section className="rounded border border-slate-800 bg-slate-950/80">
+        <div className="flex flex-col justify-between gap-4 border-b border-slate-800 px-5 py-5 lg:flex-row lg:items-end">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-wide text-orange-300">
+              Knowledge Base
+            </p>
+            <h1 className="mt-2 text-3xl font-semibold tracking-tight text-white">
+              Articles
+            </h1>
+            <p className="mt-2 text-sm text-slate-400">
+              Search procedures, notes, runbooks, and internal documentation.
+            </p>
+          </div>
+
+          <Link
+            href="/articles/new"
+            className="inline-flex h-9 items-center gap-2 rounded bg-orange-500 px-3 text-sm font-semibold text-white transition hover:bg-orange-400"
+          >
+            <FilePlus2 className="h-4 w-4" />
+            New Article
+          </Link>
+        </div>
+
+        <div className="border-b border-slate-800 p-4">
+          <form className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_220px_180px_130px]">
+            {companyId && <input type="hidden" name="companyId" value={companyId} />}
+
+            <label className="relative">
+              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" />
+              <input
+                type="text"
+                name="q"
+                defaultValue={q}
+                placeholder="Search articles..."
+                className="h-10 w-full rounded border border-slate-800 bg-slate-900/70 pl-9 pr-3 text-sm text-white outline-none transition placeholder:text-slate-500 focus:border-orange-500/70"
+              />
+            </label>
+
+            <select
+              name="category"
+              defaultValue={category}
+              className="h-10 rounded border border-slate-800 bg-slate-900/70 px-3 text-sm text-white outline-none transition focus:border-orange-500/70"
+            >
+              <option value="">All Categories</option>
+              {categories.map((item) => (
+                <option key={item} value={item}>
+                  {item}
+                </option>
+              ))}
+            </select>
+
+            <select
+              name="visibility"
+              defaultValue={visibility}
+              className="h-10 rounded border border-slate-800 bg-slate-900/70 px-3 text-sm text-white outline-none transition focus:border-orange-500/70"
+            >
+              <option value="">All Visibility</option>
+              <option value="internal">Internal</option>
+              <option value="public">Public</option>
+            </select>
+
+            <button
+              type="submit"
+              className="inline-flex h-10 items-center justify-center gap-2 rounded border border-slate-700 bg-slate-900 px-3 text-sm font-medium text-slate-100 transition hover:border-orange-500/60 hover:text-white"
+            >
+              <Filter className="h-4 w-4" />
+              Filter
+            </button>
+          </form>
+        </div>
+
+        {error && (
+          <div className="border-b border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-200">
+            {error.message}
+          </div>
+        )}
+
+        <div className="grid gap-4 p-4 xl:grid-cols-[360px_minmax(0,1fr)]">
+          <KbCategoryList articles={articles} />
+          <ArticleTable articles={articles} />
+        </div>
+      </section>
+    </div>
+  );
+}

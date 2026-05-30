@@ -1,36 +1,145 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# MiniKB
 
-## Getting Started
+MiniKB is a Next.js knowledge base frontend wired to the self-hosted PocketBase
+instance documented for the Docs app:
 
-First, run the development server:
-
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+```env
+NEXT_PUBLIC_POCKETBASE_URL=https://minikb.duckdns.org
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+The PocketBase admin UI is available at:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```text
+https://minikb.duckdns.org/_/
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Development
 
-## Learn More
+```bash
+npm install
+npm run dev
+```
 
-To learn more about Next.js, take a look at the following resources:
+Open `http://localhost:3000`.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Logs And Debugging
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+For frontend/server-render logs, run the app in a visible VS Code terminal:
 
-## Deploy on Vercel
+```powershell
+npm run dev
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+If port `3000` is already occupied by a hidden dev server:
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```powershell
+Get-NetTCPConnection -LocalPort 3000 -State Listen | Select-Object OwningProcess
+Stop-Process -Id <PID>
+npm run dev
+```
+
+For browser-side create/update failures, open DevTools -> Network, click the
+failed `/api/collections/.../records` request, and check the response body.
+
+For PocketBase server logs on the VPS:
+
+```bash
+sudo journalctl -u pb-docs -f
+sudo journalctl -u caddy -f
+```
+
+PocketBase also exposes request/application logs in the admin UI:
+
+```text
+https://minikb.duckdns.org/_/
+```
+
+## Expected PocketBase Collections
+
+You can create/update the MiniKB collections from this repo with:
+
+```powershell
+$env:POCKETBASE_URL="https://minikb.duckdns.org"
+$env:POCKETBASE_SUPERUSER_EMAIL="you@example.com"
+$env:POCKETBASE_SUPERUSER_PASSWORD="your-pocketbase-password"
+npm run pb:setup
+```
+
+The script creates/updates `users`, `companies`, `articles`, `assets`, and
+`attachments` using PocketBase's Collections API.
+
+CSV imports update existing users without changing their password. To reset
+imported user passwords intentionally, set:
+
+```powershell
+$env:MINIKB_IMPORTED_USER_PASSWORD="new-password"
+$env:MINIKB_RESET_IMPORTED_USER_PASSWORDS="true"
+npm run pb:import
+```
+
+Use PocketBase's built-in `users` auth collection and add these fields:
+
+| Field | Type | Notes |
+| --- | --- | --- |
+| `full_name` | Text | Optional display name |
+| `role` | Select | `admin`, `editor`, `viewer`; default `viewer` |
+| `legacy_id` | Text | Original Supabase UUID for imports |
+
+Create these base collections:
+
+### `articles`
+
+| Field | Type |
+| --- | --- |
+| `title` | Text |
+| `legacy_id` | Text |
+| `slug` | Text |
+| `summary` | Text |
+| `content` | Editor/Text |
+| `company_id` | Relation to `companies`, optional |
+| `category` | Text |
+| `tags` | JSON |
+| `is_pinned` | Bool |
+| `is_internal` | Bool |
+| `created_by` | Relation to `users`, optional |
+
+### `companies`
+
+| Field | Type |
+| --- | --- |
+| `name` | Text |
+| `legacy_id` | Text |
+| `slug` | Text |
+| `description` | Text |
+| `website` | Url/Text |
+| `created_by` | Relation to `users`, optional |
+
+### `assets`
+
+| Field | Type |
+| --- | --- |
+| `company_id` | Relation to `companies`, optional |
+| `legacy_id` | Text |
+| `name` | Text |
+| `asset_type` | Select/Text |
+| `description` | Text |
+| `metadata` | JSON |
+| `created_by` | Relation to `users`, optional |
+
+### `attachments`
+
+| Field | Type |
+| --- | --- |
+| `article_id` | Relation to `articles` |
+| `legacy_id` | Text |
+| `asset_id` | Relation to `assets`, optional |
+| `file` | File |
+| `file_name` | Text |
+| `file_path` | Text |
+| `file_size` | Number |
+| `mime_type` | Text |
+| `uploaded_by` | Relation to `users`, optional |
+
+PocketBase supplies `created` and `updated` automatically. The frontend maps
+those to the old `created_at`/`updated_at` names internally.
+

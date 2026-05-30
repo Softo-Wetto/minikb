@@ -1,0 +1,358 @@
+@import "tailwindcss";
+
+:root {
+  --background: #020617;
+  --foreground: #ffffff;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: Inter, Arial, Helvetica, sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+input,
+textarea,
+select,
+button {
+  font: inherit;
+}
+
+::selection {
+  background: rgba(240, 75, 35, 0.35);
+  color: #fff;
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes pop-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes slide-down {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in {
+  animation: fade-in 180ms ease-out both;
+}
+
+.animate-pop-in {
+  animation: pop-in 140ms ease-out both;
+}
+
+.animate-slide-down {
+  animation: slide-down 140ms ease-out both;
+}
+
+.prose {
+  color: #e4e4e7;
+}
+
+.prose h1,
+.prose h2,
+.prose h3,
+.prose h4,
+.prose strong {
+  color: #fff;
+}
+
+.prose code {
+  color: #f4f4f5;
+  background: #18181b;
+  padding: 0.15rem 0.35rem;
+  border-radius: 0.25rem;
+}
+
+.prose pre {
+  background: #09090b;
+  border: 1px solid #27272a;
+  color: #f4f4f5;
+}
+
+.tiptap {
+  min-height: 520px;
+  color: #ffffff;
+  line-height: 1.7;
+}
+
+.tiptap p {
+  margin: 0 0 1rem 0;
+}
+
+.tiptap h1 {
+  font-size: 2.25rem;
+  line-height: 1.15;
+  font-weight: 700;
+  margin: 1.25rem 0 0.75rem;
+}
+
+.tiptap h2 {
+  font-size: 1.75rem;
+  line-height: 1.2;
+  font-weight: 700;
+  margin: 1.2rem 0 0.7rem;
+}
+
+.tiptap h3 {
+  font-size: 1.35rem;
+  line-height: 1.25;
+  font-weight: 700;
+  margin: 1rem 0 0.6rem;
+}
+
+.tiptap h4 {
+  font-size: 1.1rem;
+  line-height: 1.3;
+  font-weight: 700;
+  margin: 0.9rem 0 0.55rem;
+}
+
+.tiptap ul,
+.tiptap ol {
+  padding-left: 1.5rem;
+  margin: 0 0 1rem;
+}
+
+.tiptap li {
+  margin: 0.2rem 0;
+}
+
+.tiptap blockquote {
+  border-left: 3px solid #f04b23;
+  margin: 1rem 0;
+  padding-left: 1rem;
+  color: #d4d4d8;
+}
+
+.tiptap code {
+  background: #18181b;
+  color: #f4f4f5;
+  padding: 0.15rem 0.35rem;
+  border-radius: 0.25rem;
+}
+
+.tiptap pre {
+  background: #09090b;
+  color: #f4f4f5;
+  border: 1px solid #27272a;
+  border-radius: 0.5rem;
+  padding: 1rem;
+  overflow-x: auto;
+  margin: 1rem 0;
+}
+
+.tiptap a {
+  color: #60a5fa;
+  text-decoration: underline;
+}
+
+.tiptap img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 0.5rem;
+  margin: 1rem 0;
+}
+
+.tiptap.ProseMirror {
+  outline: none;
+}
+
+.article-content {
+  color: #e2e8f0;
+  line-height: 1.75;
+  font-size: 1.06rem;
+}
+
+.article-content p {
+  margin: 0 0 1rem 0;
+}
+
+.article-content h1 {
+  font-size: 2.25rem;
+  line-height: 1.1;
+  font-weight: 700;
+  color: #ffffff;
+  margin: 1.5rem 0 0.9rem;
+}
+
+.article-content h2 {
+  font-size: 1.65rem;
+  line-height: 1.15;
+  font-weight: 700;
+  color: #ffffff;
+  margin: 1.35rem 0 0.85rem;
+}
+
+.article-content h3 {
+  font-size: 1.3rem;
+  line-height: 1.2;
+  font-weight: 700;
+  color: #ffffff;
+  margin: 1.2rem 0 0.75rem;
+}
+
+.article-content h4 {
+  font-size: 1.2rem;
+  line-height: 1.25;
+  font-weight: 700;
+  color: #ffffff;
+  margin: 1rem 0 0.65rem;
+}
+
+.article-content ul {
+  list-style: disc;
+  padding-left: 1.75rem;
+  margin: 0 0 1rem 0;
+}
+
+.article-content ol {
+  list-style: decimal;
+  padding-left: 1.75rem;
+  margin: 0 0 1rem 0;
+}
+
+.article-content li {
+  margin: 0.3rem 0;
+}
+
+.article-content blockquote {
+  border-left: 3px solid #f97316;
+  padding-left: 1rem;
+  margin: 1rem 0;
+  color: #d4d4d8;
+}
+
+.article-content code {
+  background: #18181b;
+  color: #f4f4f5;
+  padding: 0.15rem 0.35rem;
+  border-radius: 0.25rem;
+}
+
+.article-content pre {
+  background: #0f172a;
+  color: #f4f4f5;
+  border: 1px solid #1e293b;
+  border-radius: 0.5rem;
+  padding: 1rem;
+  overflow-x: auto;
+  margin: 1rem 0;
+}
+
+.article-content a {
+  color: #fdba74;
+  text-decoration: underline;
+}
+
+.article-content img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 0.5rem;
+  margin: 1rem 0;
+}
+
+.article-content hr {
+  border: 0;
+  border-top: 1px solid #3f3f46;
+  margin: 1.5rem 0;
+}
+
+.article-content mark {
+  background: #854d0e;
+  color: #fff7ed;
+  padding: 0.1rem 0.25rem;
+  border-radius: 0.2rem;
+}
+
+@media print {
+  body {
+    background: #ffffff;
+    color: #111827;
+  }
+
+  header,
+  aside,
+  .print-hidden {
+    display: none !important;
+  }
+
+  main,
+  article {
+    width: 100% !important;
+    max-width: none !important;
+  }
+
+  .article-content,
+  .article-content h1,
+  .article-content h2,
+  .article-content h3,
+  .article-content h4 {
+    color: #111827 !important;
+  }
+}
+
+.article-content sub,
+.article-content sup {
+  font-size: 0.75em;
+}
+
+.tiptap ul {
+  list-style: disc;
+  padding-left: 1.75rem;
+  margin: 0 0 1rem 0;
+}
+
+.tiptap ol {
+  list-style: decimal;
+  padding-left: 1.75rem;
+  margin: 0 0 1rem 0;
+}
+
+.tiptap li {
+  margin: 0.3rem 0;
+}
+
+.tiptap hr {
+  border: 0;
+  border-top: 1px solid #3f3f46;
+  margin: 1.5rem 0;
+}
+
+.tiptap mark {
+  background: #854d0e;
+  color: #fff7ed;
+  padding: 0.1rem 0.25rem;
+  border-radius: 0.2rem;
+}
