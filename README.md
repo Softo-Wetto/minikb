@@ -4,13 +4,13 @@ MiniKB is a Next.js knowledge base frontend wired to the self-hosted PocketBase
 instance documented for the Docs app:
 
 ```env
-NEXT_PUBLIC_POCKETBASE_URL=https://minikb.duckdns.org
+NEXT_PUBLIC_POCKETBASE_URL=https://api-docs.softowetto.com
 ```
 
 The PocketBase admin UI is available at:
 
 ```text
-https://minikb.duckdns.org/_/
+https://api-docs.softowetto.com/_/
 ```
 
 ## Development
@@ -51,7 +51,7 @@ sudo journalctl -u caddy -f
 PocketBase also exposes request/application logs in the admin UI:
 
 ```text
-https://minikb.duckdns.org/_/
+https://api-docs.softowetto.com/_/
 ```
 
 ## Expected PocketBase Collections
@@ -59,9 +59,9 @@ https://minikb.duckdns.org/_/
 You can create/update the MiniKB collections from this repo with:
 
 ```powershell
-$env:POCKETBASE_URL="https://minikb.duckdns.org"
-$env:POCKETBASE_SUPERUSER_EMAIL="you@example.com"
-$env:POCKETBASE_SUPERUSER_PASSWORD="your-pocketbase-password"
+POCKETBASE_URL="https://api-docs.softowetto.com"
+POCKETBASE_SUPERUSER_EMAIL="you@example.com"
+POCKETBASE_SUPERUSER_PASSWORD="your-pocketbase-password"
 npm run pb:setup
 ```
 

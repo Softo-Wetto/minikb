@@ -33,7 +33,7 @@ loadEnvFile(".env.local");
 const baseUrl = (
   process.env.POCKETBASE_URL ||
   process.env.NEXT_PUBLIC_POCKETBASE_URL ||
-  "https://minikb.duckdns.org"
+  "https://api-docs.softowetto.com"
 ).replace(/\/$/, "");
 
 const superuserEmail = process.env.POCKETBASE_SUPERUSER_EMAIL;

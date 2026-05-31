@@ -33,7 +33,7 @@ loadEnvFile(".env.local");
 const baseUrl = (
   process.env.POCKETBASE_URL ||
   process.env.NEXT_PUBLIC_POCKETBASE_URL ||
-  "https://minikb.duckdns.org"
+  "https://api-docs.softowetto.com"
 ).replace(/\/$/, "");
 
 const email =
@@ -45,10 +45,9 @@ const password =
   process.env.MINIKB_IMPORTED_USER_PASSWORD ||
   process.env.POCKETBASE_SUPERUSER_PASSWORD;
 
-async function printResponse(label, response) {
+async function readResponse(label, response) {
   const text = await response.text();
-  console.log(`\n${label}: ${response.status}`);
-  console.log(text);
+  console.log(`${label}: ${response.status}`);
   return text ? JSON.parse(text) : null;
 }
 
@@ -74,7 +73,7 @@ if (!authResponse.ok) {
   authResponse = await authenticate("/api/admins/auth-with-password");
 }
 
-const auth = await printResponse("auth", authResponse);
+const auth = await readResponse("auth", authResponse);
 if (!authResponse.ok) process.exit(1);
 
 const headers = { Authorization: `Bearer ${auth.token}` };
@@ -82,31 +81,49 @@ const headers = { Authorization: `Bearer ${auth.token}` };
 const collectionResponse = await fetch(`${baseUrl}/api/collections/articles`, {
   headers,
 });
-await printResponse("articles collection", collectionResponse);
+const collection = await readResponse("articles collection", collectionResponse);
+if (collectionResponse.ok) {
+  console.log(`articles fields=${collection.fields?.length ?? 0}`);
+}
 
 const articleListNoSort = await fetch(
   `${baseUrl}/api/collections/articles/records?page=1&perPage=20`,
   { headers }
 );
-await printResponse("articles list no sort", articleListNoSort);
+const articleListNoSortBody = await readResponse("articles list no sort", articleListNoSort);
+if (articleListNoSort.ok) {
+  console.log(`articles no sort total=${articleListNoSortBody.totalItems ?? 0}`);
+}
 
 const articleListCreatedSort = await fetch(
   `${baseUrl}/api/collections/articles/records?page=1&perPage=20&sort=-created_at`,
   { headers }
 );
-await printResponse("articles list sort created", articleListCreatedSort);
+const articleListCreatedSortBody = await readResponse(
+  "articles list sort created",
+  articleListCreatedSort
+);
+if (articleListCreatedSort.ok) {
+  console.log(`articles created sort total=${articleListCreatedSortBody.totalItems ?? 0}`);
+}
 
 const articleList = await fetch(
   `${baseUrl}/api/collections/articles/records?page=1&perPage=20&sort=-updated_at`,
   { headers }
 );
-const articleListBody = await printResponse("articles list", articleList);
+const articleListBody = await readResponse("articles list", articleList);
+if (articleList.ok) {
+  console.log(`articles total=${articleListBody.totalItems ?? 0}`);
+}
 
 const fieldsList = await fetch(
   `${baseUrl}/api/collections/articles/records?page=1&perPage=20&sort=-updated_at&fields=id,title,category,summary,created_at,updated_at,is_pinned,is_internal`,
   { headers }
 );
-await printResponse("articles list with fields", fieldsList);
+const fieldsListBody = await readResponse("articles list with fields", fieldsList);
+if (fieldsList.ok) {
+  console.log(`articles fields query total=${fieldsListBody.totalItems ?? 0}`);
+}
 
 const first = articleListBody?.items?.[0];
 if (first) {
@@ -117,14 +134,20 @@ if (first) {
     `${baseUrl}/api/collections/articles/records?page=1&perPage=5&fields=id,title&filter=${relatedFilter}`,
     { headers }
   );
-  await printResponse("related articles", related);
+  const relatedBody = await readResponse("related articles", related);
+  if (related.ok) {
+    console.log(`related total=${relatedBody.totalItems ?? 0}`);
+  }
 
   const attachmentFilter = encodeURIComponent(`article_id = "${first.id}"`);
   const attachments = await fetch(
     `${baseUrl}/api/collections/attachments/records?page=1&perPage=20&sort=-created_at&filter=${attachmentFilter}`,
     { headers }
   );
-  await printResponse("attachments article_id equals", attachments);
+  const attachmentsBody = await readResponse("attachments article_id equals", attachments);
+  if (attachments.ok) {
+    console.log(`attachments total=${attachmentsBody.totalItems ?? 0}`);
+  }
 
   const attachmentBackRelationFilter = encodeURIComponent(
     `article_id.id = "${first.id}"`
@@ -133,5 +156,11 @@ if (first) {
     `${baseUrl}/api/collections/attachments/records?page=1&perPage=20&sort=-created_at&filter=${attachmentBackRelationFilter}`,
     { headers }
   );
-  await printResponse("attachments article_id.id equals", attachmentsBackRelation);
+  const attachmentsBackRelationBody = await readResponse(
+    "attachments article_id.id equals",
+    attachmentsBackRelation
+  );
+  if (attachmentsBackRelation.ok) {
+    console.log(`attachments relation total=${attachmentsBackRelationBody.totalItems ?? 0}`);
+  }
 }

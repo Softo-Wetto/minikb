@@ -35,7 +35,7 @@ loadEnvFile(".env.local");
 const pocketBaseUrl =
   process.env.POCKETBASE_URL ||
   process.env.NEXT_PUBLIC_POCKETBASE_URL ||
-  "https://minikb.duckdns.org";
+  "https://api-docs.softowetto.com";
 
 const superuserEmail = process.env.POCKETBASE_SUPERUSER_EMAIL;
 const superuserPassword = process.env.POCKETBASE_SUPERUSER_PASSWORD;
