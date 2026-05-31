@@ -6,6 +6,12 @@ import { getCurrentProfile } from "@/lib/auth";
 export const metadata: Metadata = {
   title: "MiniKB",
   description: "A lightweight internal knowledge base",
+  icons: {
+    icon: [
+      { url: "/icon.svg", type: "image/svg+xml" },
+      { url: "/favicon.ico", sizes: "any" },
+    ],
+  },
 };
 
 export default async function RootLayout({
