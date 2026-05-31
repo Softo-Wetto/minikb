@@ -356,3 +356,28 @@ button {
   padding: 0.1rem 0.25rem;
   border-radius: 0.2rem;
 }
+@keyframes minikb-logo-scan {
+  0%,
+  46% {
+    transform: translateY(-130%);
+  }
+  100% {
+    transform: translateY(130%);
+  }
+}
+
+.minikb-logo-scan {
+  background: linear-gradient(
+    180deg,
+    transparent,
+    rgba(125, 211, 252, 0.22),
+    transparent
+  );
+  animation: minikb-logo-scan 3.8s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .minikb-logo-scan {
+    animation: none;
+  }
+}

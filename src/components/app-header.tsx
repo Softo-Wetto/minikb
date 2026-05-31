@@ -14,6 +14,7 @@ import {
   UserCircle2,
 } from "lucide-react";
 import { getClientRecords, signOut } from "@/lib/pocketbase/client";
+import MiniKbLogo from "@/components/minikb-logo";
 import type { RawPocketBaseRecord } from "@/types/database";
 
 type Profile = {
@@ -168,12 +169,7 @@ export default function AppHeader({ profile }: { profile: Profile | null }) {
       <div className="flex h-14 items-center justify-between gap-3 px-4">
         <div className="flex min-w-0 items-center gap-3">
           <Link href="/" className="flex items-center gap-2">
-            <span className="flex h-8 w-8 items-center justify-center rounded bg-orange-500 text-xs font-black text-white shadow-sm shadow-orange-950/30">
-              KB
-            </span>
-            <span className="hidden text-sm font-semibold tracking-wide text-white sm:block">
-              MiniKB
-            </span>
+            <MiniKbLogo />
           </Link>
 
           <div className="hidden h-5 w-px bg-slate-800 md:block" />
