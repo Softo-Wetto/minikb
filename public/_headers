@@ -1,2 +1,15 @@
+/*
+  Cache-Control: private,no-store,no-cache,must-revalidate,max-age=0,s-maxage=0
+  CDN-Cache-Control: no-store
+  Cloudflare-CDN-Cache-Control: no-store
+  Pragma: no-cache
+  Expires: 0
+
 /_next/static/*
   Cache-Control: public,max-age=31536000,immutable
+
+/icon.svg
+  Cache-Control: public,max-age=86400
+
+/favicon.ico
+  Cache-Control: public,max-age=86400
