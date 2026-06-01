@@ -39,7 +39,11 @@ export function normalizeUser(record: RawPocketBaseRecord): UserProfile {
   return {
     ...normalized,
     email: stringValue(normalized.email),
-    full_name: stringValue(normalized.full_name) ?? stringValue(normalized.name),
+    username: stringValue(normalized.username),
+    full_name:
+      stringValue(normalized.full_name) ??
+      stringValue(normalized.name) ??
+      stringValue(normalized.username),
     role: roleValue(normalized.role),
   };
 }

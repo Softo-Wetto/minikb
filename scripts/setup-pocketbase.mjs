@@ -241,6 +241,7 @@ async function main() {
     deleteRule: '@request.auth.role = "admin"',
     fields: [
       text("legacy_id"),
+      text("username"),
       text("full_name"),
       select("role", ["admin", "editor", "viewer"], { required: true }),
       date("created_at"),

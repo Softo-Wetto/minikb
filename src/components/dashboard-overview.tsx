@@ -134,8 +134,9 @@ export default function DashboardOverview({
 
   return (
     <div className="space-y-4">
-      <section className="overflow-hidden rounded border border-slate-800 bg-slate-950/80">
-        <div className="flex flex-col justify-between gap-4 border-b border-slate-800 bg-slate-900/45 px-5 py-5 md:flex-row md:items-end">
+      <section className="surface-panel overflow-hidden rounded-2xl">
+        <div className="relative flex flex-col justify-between gap-4 border-b border-slate-800 bg-slate-900/45 px-5 py-5 md:flex-row md:items-end">
+          <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-orange-300/0 via-orange-300/45 to-sky-300/0" />
           <div>
             <p className="text-xs font-semibold uppercase tracking-wide text-orange-300">
               MiniKB Dashboard
@@ -173,7 +174,7 @@ export default function DashboardOverview({
               <Link
                 key={item.label}
                 href={item.href}
-                className="group bg-slate-950/95 p-5 transition hover:bg-slate-900/75"
+                className="group bg-slate-950/80 p-5 transition hover:bg-slate-900/75"
               >
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-slate-400">{item.label}</span>
@@ -224,7 +225,7 @@ export default function DashboardOverview({
       </section>
 
       <div className="grid gap-4 2xl:grid-cols-[minmax(0,1.45fr)_minmax(360px,0.9fr)]">
-        <section className="rounded border border-slate-800 bg-slate-950/80">
+        <section className="surface-card rounded-2xl">
           <div className="flex items-center justify-between border-b border-slate-800 px-4 py-3">
             <div>
               <h2 className="text-sm font-semibold text-white">Recently Updated Articles</h2>
@@ -265,7 +266,7 @@ export default function DashboardOverview({
         </section>
 
         <div className="space-y-4">
-          <section className="rounded border border-slate-800 bg-slate-950/80">
+          <section className="surface-card rounded-2xl">
             <div className="flex items-center justify-between border-b border-slate-800 px-4 py-3">
               <div>
                 <h2 className="text-sm font-semibold text-white">Knowledge Signals</h2>
@@ -283,7 +284,7 @@ export default function DashboardOverview({
             </div>
           </section>
 
-          <section className="rounded border border-slate-800 bg-slate-950/80">
+          <section className="surface-card rounded-2xl">
             <div className="flex items-center justify-between border-b border-slate-800 px-4 py-3">
               <div>
                 <h2 className="text-sm font-semibold text-white">Asset Types</h2>
@@ -360,7 +361,7 @@ export default function DashboardOverview({
       </div>
 
       <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(340px,0.8fr)]">
-        <section className="rounded border border-slate-800 bg-slate-950/80">
+        <section className="surface-card rounded-2xl">
           <div className="flex items-center justify-between border-b border-slate-800 px-4 py-3">
             <div>
               <h2 className="text-sm font-semibold text-white">Recently Updated Assets</h2>
@@ -396,7 +397,7 @@ export default function DashboardOverview({
           </div>
         </section>
 
-        <section className="rounded border border-slate-800 bg-slate-950/80">
+        <section className="surface-card rounded-2xl">
           <div className="flex items-center justify-between border-b border-slate-800 px-4 py-3">
             <div>
               <h2 className="text-sm font-semibold text-white">Pinned</h2>
@@ -449,7 +450,7 @@ function HealthCard({
   tone: "good" | "warn";
 }) {
   return (
-    <div className="rounded border border-slate-800 bg-slate-950/80 p-4">
+    <div className="surface-card interactive-surface rounded-2xl p-4">
       <div className="flex items-center justify-between gap-3">
         <p className="text-sm text-slate-400">{label}</p>
         <Icon className={tone === "good" ? "h-4 w-4 text-emerald-300" : "h-4 w-4 text-orange-300"} />
@@ -495,7 +496,7 @@ function AttentionList({
   }>;
 }) {
   return (
-    <section className="rounded border border-slate-800 bg-slate-950/80">
+    <section className="surface-card rounded-2xl">
       <div className="flex items-center justify-between border-b border-slate-800 px-4 py-3">
         <div>
           <h2 className="text-sm font-semibold text-white">{title}</h2>

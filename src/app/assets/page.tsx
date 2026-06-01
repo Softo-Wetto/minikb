@@ -68,8 +68,9 @@ export default async function AssetsPage({
 
   return (
     <div className="space-y-4">
-      <section className="rounded border border-slate-800 bg-slate-950/80">
-        <div className="flex flex-col justify-between gap-4 border-b border-slate-800 px-5 py-5 sm:flex-row sm:items-end">
+      <section className="surface-panel overflow-hidden rounded-2xl">
+        <div className="relative flex flex-col justify-between gap-4 border-b border-slate-800 bg-slate-900/35 px-5 py-5 sm:flex-row sm:items-end">
+          <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-orange-300/0 via-orange-300/40 to-sky-300/0" />
           <div>
             <p className="text-xs font-semibold uppercase tracking-wide text-orange-300">
               Inventory
@@ -84,7 +85,7 @@ export default async function AssetsPage({
 
           <Link
             href="/assets/new"
-            className="inline-flex h-9 items-center gap-2 rounded bg-orange-500 px-3 text-sm font-semibold text-white transition hover:bg-orange-400"
+            className="inline-flex h-10 items-center gap-2 rounded-2xl bg-gradient-to-r from-orange-500 to-amber-500 px-3 text-sm font-semibold text-white shadow-lg shadow-orange-950/25 transition hover:from-orange-400 hover:to-amber-400"
           >
             <Plus className="h-4 w-4" />
             New Asset
@@ -92,7 +93,7 @@ export default async function AssetsPage({
         </div>
 
         <form className="grid gap-3 border-b border-slate-800 p-4 lg:grid-cols-[minmax(0,1fr)_220px_260px_auto]">
-          <label className="flex h-10 items-center gap-2 rounded border border-slate-800 bg-slate-900/70 px-3 text-white focus-within:border-orange-500/70">
+          <label className="flex h-10 items-center gap-2 rounded-xl border border-slate-800 bg-slate-900/70 px-3 text-white focus-within:border-orange-500/70">
             <Search className="h-4 w-4 text-slate-500" />
             <input
               name="q"
@@ -105,7 +106,7 @@ export default async function AssetsPage({
           <select
             name="type"
             defaultValue={type}
-            className="h-10 rounded border border-slate-800 bg-slate-900/70 px-3 text-sm text-white outline-none transition focus:border-orange-500/70"
+            className="h-10 rounded-xl border border-slate-800 bg-slate-900/70 px-3 text-sm text-white outline-none transition focus:border-orange-500/70"
           >
             <option value="">All Types</option>
             {types.map((assetType) => (
@@ -118,7 +119,7 @@ export default async function AssetsPage({
           <select
             name="companyId"
             defaultValue={companyId}
-            className="h-10 rounded border border-slate-800 bg-slate-900/70 px-3 text-sm text-white outline-none transition focus:border-orange-500/70"
+            className="h-10 rounded-xl border border-slate-800 bg-slate-900/70 px-3 text-sm text-white outline-none transition focus:border-orange-500/70"
           >
             <option value="">All Companies</option>
             {companies.map((company) => (
@@ -130,7 +131,7 @@ export default async function AssetsPage({
 
           <button
             type="submit"
-            className="rounded border border-slate-700 px-4 text-sm font-semibold text-slate-200 transition hover:border-orange-500/60 hover:text-orange-200"
+            className="rounded-xl border border-slate-700 px-4 text-sm font-semibold text-slate-200 transition hover:border-orange-500/60 hover:text-orange-200"
           >
             Filter
           </button>
@@ -152,11 +153,11 @@ export default async function AssetsPage({
               <Link
                 key={asset.id}
                 href={`/assets/${asset.id}`}
-                className="group rounded border border-slate-800 bg-slate-900/35 p-4 transition hover:-translate-y-0.5 hover:border-orange-500/40 hover:bg-slate-900/70"
+                className="interactive-surface group rounded-2xl border border-slate-800 bg-slate-900/35 p-4 transition hover:border-orange-500/40 hover:bg-slate-900/70"
               >
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex min-w-0 items-center gap-3">
-                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded bg-orange-500/10 text-orange-300 ring-1 ring-orange-500/20">
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-orange-500/10 text-orange-300 ring-1 ring-orange-500/20">
                       <Server className="h-5 w-5" />
                     </div>
                     <div className="min-w-0">

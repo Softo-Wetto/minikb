@@ -13,6 +13,7 @@ import {
 } from "@/lib/pocketbase/shared";
 import type { PocketBaseAuth } from "@/lib/pocketbase/types";
 import type { RawPocketBaseRecord } from "@/lib/pocketbase/types";
+import type { UserProfile } from "@/lib/pocketbase/types";
 
 async function pbRequest<T>(
   path: string,
@@ -74,6 +75,55 @@ export function signOut() {
 
 export function getCurrentAuth() {
   return getBrowserAuth();
+}
+
+export async function updateCurrentUser(data: {
+  username?: string | null;
+  full_name?: string | null;
+  email?: string | null;
+}) {
+  const auth = getBrowserAuth();
+  if (!auth) throw new Error("Not logged in");
+
+  const record = await pbRequest<RawPocketBaseRecord>(
+    `/api/collections/users/records/${auth.user.id}`,
+    {
+      method: "PATCH",
+      token: auth.token,
+      body: JSON.stringify(data),
+    }
+  );
+
+  const nextAuth: PocketBaseAuth = {
+    token: auth.token,
+    user: normalizeUser(record),
+  };
+
+  saveBrowserAuth(nextAuth);
+  return nextAuth.user;
+}
+
+export async function changeCurrentUserPassword({
+  oldPassword,
+  password,
+  passwordConfirm,
+}: {
+  oldPassword: string;
+  password: string;
+  passwordConfirm: string;
+}) {
+  const auth = getBrowserAuth();
+  if (!auth) throw new Error("Not logged in");
+
+  await pbRequest<UserProfile>(`/api/collections/users/records/${auth.user.id}`, {
+    method: "PATCH",
+    token: auth.token,
+    body: JSON.stringify({
+      oldPassword,
+      password,
+      passwordConfirm,
+    }),
+  });
 }
 
 export async function createRecord<T extends RawPocketBaseRecord>(

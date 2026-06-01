@@ -104,11 +104,12 @@ export default async function CompanyPage({
         )}
       </div>
 
-      <section className="overflow-hidden rounded border border-slate-800 bg-slate-950/80">
-        <div className="border-b border-slate-800 bg-slate-950 px-5 py-6">
+      <section className="surface-panel overflow-hidden rounded-2xl">
+        <div className="relative border-b border-slate-800 bg-slate-950/75 px-5 py-6">
+          <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-sky-300/0 via-sky-300/45 to-orange-300/0" />
           <div className="flex flex-col justify-between gap-5 lg:flex-row lg:items-start">
             <div className="flex min-w-0 items-start gap-4">
-              <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded bg-orange-500 text-lg font-black text-white shadow-sm shadow-orange-950/30">
+              <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-sky-400 to-orange-500 text-lg font-black text-white shadow-lg shadow-sky-950/30">
                 {company.name.slice(0, 1).toUpperCase()}
               </div>
               <div className="min-w-0">
@@ -135,15 +136,15 @@ export default async function CompanyPage({
             </div>
 
             <div className="grid grid-cols-3 gap-2 sm:min-w-[360px]">
-              <div className="rounded border border-slate-800 bg-slate-900/45 p-3">
+              <div className="rounded-2xl border border-slate-800 bg-slate-900/45 p-3">
                 <p className="text-xs text-slate-500">Articles</p>
                 <p className="mt-1 text-2xl font-semibold text-white">{articles.length}</p>
               </div>
-              <div className="rounded border border-slate-800 bg-slate-900/45 p-3">
+              <div className="rounded-2xl border border-slate-800 bg-slate-900/45 p-3">
                 <p className="text-xs text-slate-500">Assets</p>
                 <p className="mt-1 text-2xl font-semibold text-white">{assets.length}</p>
               </div>
-              <div className="rounded border border-slate-800 bg-slate-900/45 p-3">
+              <div className="rounded-2xl border border-slate-800 bg-slate-900/45 p-3">
                 <p className="text-xs text-slate-500">Updated</p>
                 <p className="mt-2 text-sm font-semibold text-white">
                   {formatDate(company.updated_at || company.created_at)}
@@ -162,7 +163,7 @@ export default async function CompanyPage({
         <div className="grid gap-4 p-4 2xl:grid-cols-[minmax(0,1fr)_420px]">
           <div
             id="articles"
-            className="scroll-mt-20 rounded border border-slate-800 bg-slate-900/35"
+            className="surface-card scroll-mt-20 rounded-2xl"
           >
             <div className="flex items-center justify-between gap-3 border-b border-slate-800 px-4 py-3">
               <div className="flex items-center gap-2">
@@ -208,7 +209,7 @@ export default async function CompanyPage({
 
           <div
             id="assets"
-            className="scroll-mt-20 rounded border border-slate-800 bg-slate-900/35"
+            className="surface-card scroll-mt-20 rounded-2xl"
           >
             <div className="flex items-center justify-between gap-3 border-b border-slate-800 px-4 py-3">
               <div className="flex items-center gap-2">
@@ -258,7 +259,7 @@ export default async function CompanyPage({
         </div>
 
         <div className="border-t border-slate-800 p-4">
-          <div className="rounded border border-slate-800 bg-slate-900/30 p-4">
+          <div className="surface-card rounded-2xl p-4">
             <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
               Client Shortcuts
             </p>

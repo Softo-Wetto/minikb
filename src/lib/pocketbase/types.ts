@@ -36,6 +36,7 @@ export type RawPocketBaseRecord = Record<string, unknown> & {
 
 export type UserProfile = PocketBaseRecord & {
   email: string | null;
+  username: string | null;
   full_name: string | null;
   role: AppRole;
 };

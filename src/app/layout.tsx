@@ -24,7 +24,7 @@ export default async function RootLayout({
   return (
     <html lang="en" data-scroll-behavior="smooth">
       <body className="bg-slate-950 text-white">
-        <div className="min-h-screen bg-[radial-gradient(circle_at_top_left,rgba(249,115,22,0.10),transparent_34rem),linear-gradient(180deg,#020617,#020617)] text-white">
+        <div className="min-h-screen bg-[radial-gradient(ellipse_at_top_left,rgba(249,115,22,0.13),transparent_34rem),radial-gradient(ellipse_at_top_right,rgba(14,165,233,0.10),transparent_32rem),linear-gradient(180deg,#020617,#020617_58%,#030712)] text-white">
           <AppShell profile={profile}>{children}</AppShell>
         </div>
       </body>

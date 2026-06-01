@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo } from "react";
 import { EditorContent, useEditor } from "@tiptap/react";
+import { mergeAttributes, Node } from "@tiptap/core";
 import StarterKit from "@tiptap/starter-kit";
 import Link from "@tiptap/extension-link";
 import Image from "@tiptap/extension-image";
@@ -12,13 +13,18 @@ import Subscript from "@tiptap/extension-subscript";
 import Superscript from "@tiptap/extension-superscript";
 import { TextStyle } from "@tiptap/extension-text-style";
 import Color from "@tiptap/extension-color";
+import { Table, TableCell, TableHeader, TableRow } from "@tiptap/extension-table";
+import TaskList from "@tiptap/extension-task-list";
+import TaskItem from "@tiptap/extension-task-item";
 import {
+  AlertTriangle,
   Bold,
   Italic,
   Underline as UnderlineIcon,
   Strikethrough,
   List,
   ListOrdered,
+  ListChecks,
   Quote,
   Code,
   Heading1,
@@ -33,12 +39,52 @@ import {
   Redo2,
   Minus,
   Highlighter,
+  Info,
+  Table as TableIcon,
+  Rows3,
+  Columns3,
+  Trash2,
 } from "lucide-react";
 
 type Props = {
   value: string;
   onChange: (html: string) => void;
 };
+
+const Callout = Node.create({
+  name: "callout",
+  group: "block",
+  content: "block+",
+  defining: true,
+
+  addAttributes() {
+    return {
+      type: {
+        default: "info",
+        parseHTML: (element) => element.getAttribute("data-callout-type") || "info",
+        renderHTML: (attributes) => ({
+          "data-callout-type": attributes.type,
+        }),
+      },
+    };
+  },
+
+  parseHTML() {
+    return [{ tag: 'div[data-type="callout"]' }];
+  },
+
+  renderHTML({ HTMLAttributes }) {
+    const type = HTMLAttributes["data-callout-type"] || HTMLAttributes.type || "info";
+    return [
+      "div",
+      mergeAttributes(HTMLAttributes, {
+        "data-type": "callout",
+        class: `kb-callout kb-callout-${type}`,
+      }),
+      0,
+    ];
+  },
+});
 
 function ToolbarButton({
   onClick,
@@ -79,6 +125,17 @@ export default function RichTextEditor({ value, onChange }: Props) {
         underline: false,
       }),
       Underline,
+      TaskList,
+      TaskItem.configure({
+        nested: true,
+      }),
+      Table.configure({
+        resizable: true,
+      }),
+      TableRow,
+      TableHeader,
+      TableCell,
+      Callout,
       Highlight,
       Subscript,
       Superscript,
@@ -157,6 +214,28 @@ export default function RichTextEditor({ value, onChange }: Props) {
     const color = window.prompt("Enter text color (example: #ff6600 or red)", "#ffffff");
     if (!color) return;
     safeEditor.chain().focus().setColor(color).run();
+  }
+
+  function insertCallout(type: "info" | "warning") {
+    const label = type === "warning" ? "Important note" : "Note";
+    safeEditor
+      .chain()
+      .focus()
+      .insertContent({
+        type: "callout",
+        attrs: { type },
+        content: [
+          {
+            type: "paragraph",
+            content: [{ type: "text", text: label }],
+          },
+        ],
+      })
+      .run();
+  }
+
+  function insertTable() {
+    safeEditor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run();
   }
 
   return (
@@ -324,11 +403,35 @@ export default function RichTextEditor({ value, onChange }: Props) {
         </ToolbarButton>
 
         <ToolbarButton
+          title="Task List"
+          active={safeEditor.isActive("taskList")}
+          onClick={() => safeEditor.chain().focus().toggleTaskList().run()}
+        >
+          <ListChecks className="h-4 w-4" />
+        </ToolbarButton>
+
+        <ToolbarButton
           title="Blockquote"
           active={safeEditor.isActive("blockquote")}
           onClick={() => safeEditor.chain().focus().toggleBlockquote().run()}
         >
           <Quote className="h-4 w-4" />
+        </ToolbarButton>
+
+        <ToolbarButton
+          title="Info Callout"
+          active={safeEditor.isActive("callout", { type: "info" })}
+          onClick={() => insertCallout("info")}
+        >
+          <Info className="h-4 w-4" />
+        </ToolbarButton>
+
+        <ToolbarButton
+          title="Warning Callout"
+          active={safeEditor.isActive("callout", { type: "warning" })}
+          onClick={() => insertCallout("warning")}
+        >
+          <AlertTriangle className="h-4 w-4" />
         </ToolbarButton>
 
         <ToolbarButton
@@ -375,6 +478,34 @@ export default function RichTextEditor({ value, onChange }: Props) {
           onClick={addImage}
         >
           <ImageIcon className="h-4 w-4" />
+        </ToolbarButton>
+
+        <ToolbarButton
+          title="Insert Table"
+          onClick={insertTable}
+        >
+          <TableIcon className="h-4 w-4" />
+        </ToolbarButton>
+
+        <ToolbarButton
+          title="Add Row"
+          onClick={() => safeEditor.chain().focus().addRowAfter().run()}
+        >
+          <Rows3 className="h-4 w-4" />
+        </ToolbarButton>
+
+        <ToolbarButton
+          title="Add Column"
+          onClick={() => safeEditor.chain().focus().addColumnAfter().run()}
+        >
+          <Columns3 className="h-4 w-4" />
+        </ToolbarButton>
+
+        <ToolbarButton
+          title="Delete Table"
+          onClick={() => safeEditor.chain().focus().deleteTable().run()}
+        >
+          <Trash2 className="h-4 w-4" />
         </ToolbarButton>
       </div>
 

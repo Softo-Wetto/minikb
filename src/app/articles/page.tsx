@@ -72,11 +72,12 @@ export default async function ArticlesPage({
 
   return (
     <div className="space-y-4">
-      <section className="rounded border border-slate-800 bg-slate-950/80">
-        <div className="flex flex-col justify-between gap-4 border-b border-slate-800 px-5 py-5 lg:flex-row lg:items-end">
+      <section className="surface-panel overflow-hidden rounded-2xl">
+        <div className="relative flex flex-col justify-between gap-4 border-b border-slate-800 bg-slate-900/35 px-5 py-5 lg:flex-row lg:items-end">
+          <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-orange-300/0 via-orange-300/40 to-sky-300/0" />
           <div>
             <p className="text-xs font-semibold uppercase tracking-wide text-orange-300">
-              Knowledge Base
+              {companyId ? "Client Knowledge Base" : "Central Knowledge Base"}
             </p>
             <h1 className="mt-2 text-3xl font-semibold tracking-tight text-white">
               Articles
@@ -88,7 +89,7 @@ export default async function ArticlesPage({
 
           <Link
             href="/articles/new"
-            className="inline-flex h-9 items-center gap-2 rounded bg-orange-500 px-3 text-sm font-semibold text-white transition hover:bg-orange-400"
+              className="inline-flex h-10 items-center gap-2 rounded-2xl bg-gradient-to-r from-orange-500 to-amber-500 px-3 text-sm font-semibold text-white shadow-lg shadow-orange-950/25 transition hover:from-orange-400 hover:to-amber-400"
           >
             <FilePlus2 className="h-4 w-4" />
             New Article
@@ -106,14 +107,14 @@ export default async function ArticlesPage({
                 name="q"
                 defaultValue={q}
                 placeholder="Search articles..."
-                className="h-10 w-full rounded border border-slate-800 bg-slate-900/70 pl-9 pr-3 text-sm text-white outline-none transition placeholder:text-slate-500 focus:border-orange-500/70"
+                className="h-10 w-full rounded-xl border border-slate-800 bg-slate-900/70 pl-9 pr-3 text-sm text-white outline-none transition placeholder:text-slate-500 focus:border-orange-500/70"
               />
             </label>
 
             <select
               name="category"
               defaultValue={category}
-              className="h-10 rounded border border-slate-800 bg-slate-900/70 px-3 text-sm text-white outline-none transition focus:border-orange-500/70"
+              className="h-10 rounded-xl border border-slate-800 bg-slate-900/70 px-3 text-sm text-white outline-none transition focus:border-orange-500/70"
             >
               <option value="">All Categories</option>
               {categories.map((item) => (
@@ -126,7 +127,7 @@ export default async function ArticlesPage({
             <select
               name="visibility"
               defaultValue={visibility}
-              className="h-10 rounded border border-slate-800 bg-slate-900/70 px-3 text-sm text-white outline-none transition focus:border-orange-500/70"
+              className="h-10 rounded-xl border border-slate-800 bg-slate-900/70 px-3 text-sm text-white outline-none transition focus:border-orange-500/70"
             >
               <option value="">All Visibility</option>
               <option value="internal">Internal</option>
@@ -135,7 +136,7 @@ export default async function ArticlesPage({
 
             <button
               type="submit"
-              className="inline-flex h-10 items-center justify-center gap-2 rounded border border-slate-700 bg-slate-900 px-3 text-sm font-medium text-slate-100 transition hover:border-orange-500/60 hover:text-white"
+              className="inline-flex h-10 items-center justify-center gap-2 rounded-xl border border-slate-700 bg-slate-900 px-3 text-sm font-medium text-slate-100 transition hover:border-orange-500/60 hover:text-white"
             >
               <Filter className="h-4 w-4" />
               Filter
