@@ -13,6 +13,7 @@ import {
   Tags,
 } from "lucide-react";
 import RichTextEditor from "@/components/rich-text-editor";
+import { useUnsavedChangesGuard } from "@/hooks/use-unsaved-changes-guard";
 import { updateRecord } from "@/lib/pocketbase/client";
 import { formatDateTime } from "@/lib/utils";
 
@@ -55,6 +56,41 @@ export default function EditArticleForm({
   const [previewing, setPreviewing] = useState(false);
   const [copied, setCopied] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [allowNavigation, setAllowNavigation] = useState(false);
+
+  const originalTags = useMemo(() => (article.tags || []).join(", "), [article.tags]);
+
+  const isDirty = useMemo(() => {
+    return (
+      title !== (article.title || "") ||
+      summary !== (article.summary || "") ||
+      content !== (article.content || "<p></p>") ||
+      category !== (article.category || "General") ||
+      tags !== originalTags ||
+      companyId !== (article.company_id || "") ||
+      isPinned !== !!article.is_pinned ||
+      isInternal !== (article.is_internal ?? true)
+    );
+  }, [
+    article.category,
+    article.company_id,
+    article.content,
+    article.is_internal,
+    article.is_pinned,
+    article.summary,
+    article.title,
+    category,
+    companyId,
+    content,
+    isInternal,
+    isPinned,
+    originalTags,
+    summary,
+    tags,
+    title,
+  ]);
+
+  useUnsavedChangesGuard(isDirty && !allowNavigation);
 
   const stats = useMemo(() => {
     const plain = content.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
@@ -88,6 +124,7 @@ export default function EditArticleForm({
         is_internal: isInternal,
         updated_at: new Date().toISOString(),
       });
+      setAllowNavigation(true);
       window.location.href = `/articles/${article.id}`;
     } catch (error) {
       alert(error instanceof Error ? error.message : "Unable to update article.");

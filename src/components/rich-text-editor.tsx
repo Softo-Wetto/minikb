@@ -19,6 +19,7 @@ import TaskItem from "@tiptap/extension-task-item";
 import {
   AlertTriangle,
   Bold,
+  CircleSlash,
   Italic,
   Underline as UnderlineIcon,
   Strikethrough,
@@ -50,6 +51,27 @@ type Props = {
   value: string;
   onChange: (html: string) => void;
 };
+
+const TEXT_COLORS = [
+  { label: "White", value: "#ffffff" },
+  { label: "Slate", value: "#cbd5e1" },
+  { label: "Orange", value: "#fb923c" },
+  { label: "Amber", value: "#facc15" },
+  { label: "Green", value: "#4ade80" },
+  { label: "Blue", value: "#60a5fa" },
+  { label: "Purple", value: "#c084fc" },
+  { label: "Pink", value: "#f472b6" },
+  { label: "Red", value: "#f87171" },
+];
+
+const HIGHLIGHT_COLORS = [
+  { label: "Yellow", value: "#fde68a" },
+  { label: "Orange", value: "#fed7aa" },
+  { label: "Green", value: "#bbf7d0" },
+  { label: "Blue", value: "#bfdbfe" },
+  { label: "Purple", value: "#ddd6fe" },
+  { label: "Pink", value: "#fbcfe8" },
+];
 
 const Callout = Node.create({
   name: "callout",
@@ -136,7 +158,9 @@ export default function RichTextEditor({ value, onChange }: Props) {
       TableHeader,
       TableCell,
       Callout,
-      Highlight,
+      Highlight.configure({
+        multicolor: true,
+      }),
       Subscript,
       Superscript,
       TextStyle,
@@ -208,12 +232,6 @@ export default function RichTextEditor({ value, onChange }: Props) {
     const url = window.prompt("Enter image URL");
     if (!url) return;
     safeEditor.chain().focus().setImage({ src: url }).run();
-  }
-
-  function setTextColor() {
-    const color = window.prompt("Enter text color (example: #ff6600 or red)", "#ffffff");
-    if (!color) return;
-    safeEditor.chain().focus().setColor(color).run();
   }
 
   function insertCallout(type: "info" | "warning") {
@@ -316,12 +334,54 @@ export default function RichTextEditor({ value, onChange }: Props) {
         </ToolbarButton>
 
         <ToolbarButton
-          title="Highlight"
+          title="Clear text color"
+          onClick={() => safeEditor.chain().focus().unsetColor().run()}
+        >
+          <CircleSlash className="h-4 w-4" />
+        </ToolbarButton>
+
+        <div className="flex h-10 items-center gap-1 border-r border-zinc-700 bg-zinc-900 px-2">
+          <span className="mr-1 text-xs font-semibold text-zinc-400">A</span>
+          {TEXT_COLORS.map((color) => (
+            <button
+              key={color.value}
+              type="button"
+              title={`${color.label} text`}
+              onClick={() => safeEditor.chain().focus().setColor(color.value).run()}
+              className={`h-5 w-5 rounded-full border transition hover:scale-110 ${
+                safeEditor.isActive("textStyle", { color: color.value })
+                  ? "border-white ring-2 ring-orange-400"
+                  : "border-zinc-600"
+              }`}
+              style={{ backgroundColor: color.value }}
+            />
+          ))}
+        </div>
+
+        <ToolbarButton
+          title="Clear highlight"
           active={safeEditor.isActive("highlight")}
-          onClick={() => safeEditor.chain().focus().toggleHighlight().run()}
+          onClick={() => safeEditor.chain().focus().unsetHighlight().run()}
         >
           <Highlighter className="h-4 w-4" />
         </ToolbarButton>
+
+        <div className="flex h-10 items-center gap-1 border-r border-zinc-700 bg-zinc-900 px-2">
+          {HIGHLIGHT_COLORS.map((color) => (
+            <button
+              key={color.value}
+              type="button"
+              title={`${color.label} highlight`}
+              onClick={() => safeEditor.chain().focus().setHighlight({ color: color.value }).run()}
+              className={`h-5 w-5 rounded border transition hover:scale-110 ${
+                safeEditor.isActive("highlight", { color: color.value })
+                  ? "border-white ring-2 ring-orange-400"
+                  : "border-zinc-600"
+              }`}
+              style={{ backgroundColor: color.value }}
+            />
+          ))}
+        </div>
 
         <ToolbarButton
           title="Superscript"
@@ -337,13 +397,6 @@ export default function RichTextEditor({ value, onChange }: Props) {
           onClick={() => safeEditor.chain().focus().toggleSubscript().run()}
         >
           x_
-        </ToolbarButton>
-
-        <ToolbarButton
-          title="Text Color"
-          onClick={setTextColor}
-        >
-          A
         </ToolbarButton>
 
         <ToolbarButton

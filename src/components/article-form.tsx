@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import RichTextEditor from "@/components/rich-text-editor";
+import { useUnsavedChangesGuard } from "@/hooks/use-unsaved-changes-guard";
 import { updateRecord } from "@/lib/pocketbase/client";
 
 type Article = {
@@ -28,6 +29,38 @@ export default function EditArticleForm({
   const [isPinned, setIsPinned] = useState(!!article.is_pinned);
   const [isInternal, setIsInternal] = useState(article.is_internal ?? true);
   const [saving, setSaving] = useState(false);
+  const [allowNavigation, setAllowNavigation] = useState(false);
+
+  const originalTags = useMemo(() => (article.tags || []).join(", "), [article.tags]);
+
+  const isDirty = useMemo(() => {
+    return (
+      title !== (article.title || "") ||
+      summary !== (article.summary || "") ||
+      content !== (article.content || "<p></p>") ||
+      category !== (article.category || "General") ||
+      tags !== originalTags ||
+      isPinned !== !!article.is_pinned ||
+      isInternal !== (article.is_internal ?? true)
+    );
+  }, [
+    article.category,
+    article.content,
+    article.is_internal,
+    article.is_pinned,
+    article.summary,
+    article.title,
+    category,
+    content,
+    isInternal,
+    isPinned,
+    originalTags,
+    summary,
+    tags,
+    title,
+  ]);
+
+  useUnsavedChangesGuard(isDirty && !allowNavigation);
 
   const lastAutosaved = useMemo(() => {
     return new Date().toLocaleString("en-AU", {
@@ -57,6 +90,7 @@ export default function EditArticleForm({
         is_internal: isInternal,
         updated_at: new Date().toISOString(),
       });
+      setAllowNavigation(true);
       window.location.href = `/articles/${article.id}`;
     } catch (error) {
       alert(error instanceof Error ? error.message : "Unable to update article.");

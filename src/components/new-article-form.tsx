@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import RichTextEditor from "@/components/rich-text-editor";
+import { useUnsavedChangesGuard } from "@/hooks/use-unsaved-changes-guard";
 import { createRecord, getCurrentAuth } from "@/lib/pocketbase/client";
 import type { Article } from "@/types/database";
 
@@ -20,15 +21,32 @@ export default function NewArticleForm({
   folders: string[];
   initialCompanyId?: string;
 }) {
+  const initialCategory = folders[0] || "General";
   const [title, setTitle] = useState("");
   const [summary, setSummary] = useState("");
   const [content, setContent] = useState("<p></p>");
-  const [category, setCategory] = useState(folders[0] || "General");
+  const [category, setCategory] = useState(initialCategory);
   const [tags, setTags] = useState("");
   const [companyId, setCompanyId] = useState(initialCompanyId);
   const [isPinned, setIsPinned] = useState(false);
   const [isInternal, setIsInternal] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [allowNavigation, setAllowNavigation] = useState(false);
+
+  const isDirty = useMemo(() => {
+    return (
+      title.trim().length > 0 ||
+      summary.trim().length > 0 ||
+      content !== "<p></p>" ||
+      category !== initialCategory ||
+      tags.trim().length > 0 ||
+      companyId !== initialCompanyId ||
+      isPinned ||
+      !isInternal
+    );
+  }, [category, companyId, content, initialCategory, initialCompanyId, isInternal, isPinned, summary, tags, title]);
+
+  useUnsavedChangesGuard(isDirty && !allowNavigation);
 
   const lastAutosaved = useMemo(() => {
     return new Date().toLocaleString("en-AU", {
@@ -81,6 +99,7 @@ export default function NewArticleForm({
 
     try {
       const data = await createRecord<Pick<Article, "id">>("articles", payload);
+      setAllowNavigation(true);
       window.location.href = `/articles/${data.id}`;
     } catch (error) {
       alert(error instanceof Error ? error.message : "Unable to create article.");
