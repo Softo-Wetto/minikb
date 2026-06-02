@@ -1,6 +1,7 @@
 export type {
   AppRole,
   Article,
+  ArticleFolder,
   Asset,
   AssetType,
   Attachment,

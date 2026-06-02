@@ -155,6 +155,14 @@ export async function updateRecord<T extends RawPocketBaseRecord>(
   return normalizeRecord(record);
 }
 
+export async function deleteRecord(collection: string, id: string) {
+  const auth = getBrowserAuth();
+  await pbRequest<void>(`/api/collections/${collection}/records/${id}`, {
+    method: "DELETE",
+    token: auth?.token,
+  });
+}
+
 export async function createAttachment({
   articleId,
   assetId,

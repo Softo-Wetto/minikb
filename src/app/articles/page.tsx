@@ -1,18 +1,15 @@
 import Link from "next/link";
-import { FilePlus2, Filter, Search } from "lucide-react";
+import { FilePlus2, Filter, FolderCog, Search } from "lucide-react";
 import KbCategoryList from "@/components/kb-category-list";
 import ArticleTable from "@/components/article-table";
+import { getArticleFolderOptions } from "@/lib/article-folders";
 import {
   equalsFilter,
   getRecords,
   searchFilter,
 } from "@/lib/pocketbase/server";
 import { requireUser } from "@/lib/auth";
-import type { Article, RawPocketBaseRecord } from "@/types/database";
-
-type CategoryRow = RawPocketBaseRecord & {
-  category: string | null;
-};
+import type { Article } from "@/types/database";
 
 type SearchParams = Promise<{
   q?: string;
@@ -57,21 +54,8 @@ export default async function ArticlesPage({
     error = caught as Error;
   }
 
-  let categoryRows: CategoryRow[] = [];
-
-  try {
-    const response = await getRecords<CategoryRow>("articles", {
-      fields: "id,category",
-      sort: "category",
-    });
-    categoryRows = response.items;
-  } catch {
-    categoryRows = [];
-  }
-
-  const categories = Array.from(
-    new Set(categoryRows.map((row) => row.category).filter(Boolean))
-  ) as string[];
+  const folders = await getArticleFolderOptions();
+  const categories = folders.map((folder) => folder.name);
 
   return (
     <div className="space-y-4">
@@ -90,13 +74,23 @@ export default async function ArticlesPage({
             </p>
           </div>
 
-          <Link
-            href="/articles/new"
+          <div className="flex flex-wrap gap-2">
+            <Link
+              href="/articles/folders"
+              className="inline-flex h-10 items-center gap-2 rounded-2xl border border-slate-700 bg-slate-900 px-3 text-sm font-semibold text-slate-100 transition hover:border-orange-500/50 hover:text-orange-200"
+            >
+              <FolderCog className="h-4 w-4" />
+              Manage Folders
+            </Link>
+
+            <Link
+              href="/articles/new"
               className="inline-flex h-10 items-center gap-2 rounded-2xl bg-gradient-to-r from-orange-500 to-amber-500 px-3 text-sm font-semibold text-white shadow-lg shadow-orange-950/25 transition hover:from-orange-400 hover:to-amber-400"
-          >
-            <FilePlus2 className="h-4 w-4" />
-            New Article
-          </Link>
+            >
+              <FilePlus2 className="h-4 w-4" />
+              New Article
+            </Link>
+          </div>
         </div>
 
         <div className="border-b border-slate-800 p-4">
@@ -164,7 +158,7 @@ export default async function ArticlesPage({
         )}
 
         <div className="grid gap-4 p-4 xl:grid-cols-[360px_minmax(0,1fr)]">
-          <KbCategoryList articles={articles} />
+          <KbCategoryList articles={articles} folderOrder={categories} />
           <ArticleTable articles={articles} />
         </div>
       </section>

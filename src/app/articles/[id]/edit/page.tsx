@@ -1,11 +1,8 @@
 import EditArticleForm from "@/components/edit-article-form";
 import { getRecord, getRecords } from "@/lib/pocketbase/server";
 import { requireEditor } from "@/lib/auth";
-import type { Article, Company, RawPocketBaseRecord } from "@/types/database";
-
-type CategoryRow = RawPocketBaseRecord & {
-  category: string | null;
-};
+import { getArticleFolderOptions } from "@/lib/article-folders";
+import type { Article, Company } from "@/types/database";
 
 export default async function EditArticlePage({
   params,
@@ -17,7 +14,6 @@ export default async function EditArticlePage({
   const { id } = await params;
   let article: Article | null = null;
   let companies: Pick<Company, "id" | "name">[] = [];
-  let categoryRows: CategoryRow[] = [];
 
   try {
     article = await getRecord<Article>("articles", id);
@@ -38,16 +34,6 @@ export default async function EditArticlePage({
     companies = [];
   }
 
-  try {
-    const response = await getRecords<CategoryRow>("articles", {
-      fields: "id,category",
-      sort: "category",
-    });
-    categoryRows = response.items;
-  } catch {
-    categoryRows = [];
-  }
-
   if (!article) {
     return (
       <div className="rounded border border-zinc-800 bg-zinc-950 p-6 text-zinc-300">
@@ -56,9 +42,7 @@ export default async function EditArticlePage({
     );
   }
 
-  const folders = Array.from(
-    new Set(categoryRows.map((row) => row.category).filter(Boolean))
-  ) as string[];
+  const folders = (await getArticleFolderOptions()).map((folder) => folder.name);
 
   return (
     <EditArticleForm

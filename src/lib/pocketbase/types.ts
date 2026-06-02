@@ -63,6 +63,12 @@ export type Article = PocketBaseRecord & {
   created_by: string | null;
 };
 
+export type ArticleFolder = PocketBaseRecord & {
+  name: string;
+  sort_order: number | null;
+  created_by?: string | null;
+};
+
 export type Asset = PocketBaseRecord & {
   company_id: string | null;
   name: string;

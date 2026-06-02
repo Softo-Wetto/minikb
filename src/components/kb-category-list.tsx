@@ -11,9 +11,16 @@ type Article = {
   summary?: string | null;
 };
 
-export default function KbCategoryList({ articles }: { articles: Article[] }) {
+export default function KbCategoryList({
+  articles,
+  folderOrder = [],
+}: {
+  articles: Article[];
+  folderOrder?: string[];
+}) {
   const grouped = useMemo(() => {
     const map = new Map<string, { name: string; count: number; articles: Article[] }>();
+    const order = new Map(folderOrder.map((name, index) => [name, index]));
 
     for (const article of articles) {
       const name = article.category?.trim() || "General";
@@ -23,8 +30,13 @@ export default function KbCategoryList({ articles }: { articles: Article[] }) {
       group.articles.push(article);
     }
 
-    return Array.from(map.values()).sort((a, b) => a.name.localeCompare(b.name));
-  }, [articles]);
+    return Array.from(map.values()).sort((a, b) => {
+      const aOrder = order.get(a.name) ?? Number.MAX_SAFE_INTEGER;
+      const bOrder = order.get(b.name) ?? Number.MAX_SAFE_INTEGER;
+      if (aOrder !== bOrder) return aOrder - bOrder;
+      return a.name.localeCompare(b.name);
+    });
+  }, [articles, folderOrder]);
 
   const [open, setOpen] = useState<Record<string, boolean>>(
     grouped[0] ? { [grouped[0].name]: true } : {}

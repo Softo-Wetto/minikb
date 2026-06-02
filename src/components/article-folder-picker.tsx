@@ -24,11 +24,7 @@ export default function ArticleFolderPicker({ value, folders, onChange }: Props)
           .map((folder) => normalizeFolder(folder || ""))
           .filter(Boolean),
       ),
-    ).sort((a, b) => {
-      if (a === "General") return -1;
-      if (b === "General") return 1;
-      return a.localeCompare(b);
-    });
+    );
   }, [folders, localFolders, value]);
 
   const selectedFolder = normalizeFolder(value) || "General";

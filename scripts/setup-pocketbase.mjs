@@ -292,6 +292,20 @@ async function main() {
     ],
   });
 
+  await upsertCollection(token, {
+    name: "article_folders",
+    type: "base",
+    ...editableRules(),
+    indexes: ["CREATE UNIQUE INDEX idx_article_folders_name ON article_folders (name)"],
+    fields: [
+      text("name", { required: true }),
+      number("sort_order"),
+      relation("created_by", users.id),
+      date("created_at"),
+      date("updated_at"),
+    ],
+  });
+
   const assets = await upsertCollection(token, {
     name: "assets",
     type: "base",
