@@ -285,6 +285,7 @@ async function main() {
       json("tags"),
       bool("is_pinned"),
       bool("is_internal"),
+      bool("is_draft"),
       relation("created_by", users.id),
       date("created_at"),
       date("updated_at"),

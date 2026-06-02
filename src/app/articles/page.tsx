@@ -18,6 +18,7 @@ type SearchParams = Promise<{
   q?: string;
   category?: string;
   visibility?: string;
+  status?: string;
   companyId?: string;
 }>;
 
@@ -28,7 +29,7 @@ export default async function ArticlesPage({
 }) {
   await requireUser();
 
-  const { q = "", category = "", visibility = "", companyId = "" } = await searchParams;
+  const { q = "", category = "", visibility = "", status = "", companyId = "" } = await searchParams;
   const filters: string[] = [];
 
   if (q.trim()) {
@@ -39,13 +40,15 @@ export default async function ArticlesPage({
   if (companyId.trim()) filters.push(equalsFilter("company_id", companyId));
   if (visibility === "internal") filters.push("is_internal = true");
   if (visibility === "public") filters.push("is_internal = false");
+  if (status === "draft") filters.push("is_draft = true");
+  if (status === "published") filters.push("is_draft = false");
 
   let articles: Article[] = [];
   let error: Error | null = null;
 
   try {
     const response = await getRecords<Article>("articles", {
-      fields: "id,title,category,summary,created_at,updated_at,is_pinned,is_internal",
+      fields: "id,title,category,summary,created_at,updated_at,is_pinned,is_internal,is_draft",
       sort: "-updated_at",
       filter: filters.join(" && "),
     });
@@ -97,7 +100,7 @@ export default async function ArticlesPage({
         </div>
 
         <div className="border-b border-slate-800 p-4">
-          <form className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_220px_180px_130px]">
+          <form className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_220px_180px_170px_130px]">
             {companyId && <input type="hidden" name="companyId" value={companyId} />}
 
             <label className="relative">
@@ -132,6 +135,16 @@ export default async function ArticlesPage({
               <option value="">All Visibility</option>
               <option value="internal">Internal</option>
               <option value="public">Public</option>
+            </select>
+
+            <select
+              name="status"
+              defaultValue={status}
+              className="h-10 rounded-xl border border-slate-800 bg-slate-900/70 px-3 text-sm text-white outline-none transition focus:border-orange-500/70"
+            >
+              <option value="">All Status</option>
+              <option value="published">Published</option>
+              <option value="draft">Draft</option>
             </select>
 
             <button

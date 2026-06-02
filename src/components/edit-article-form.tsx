@@ -12,6 +12,7 @@ import {
   Save,
   Tags,
 } from "lucide-react";
+import ArticleFolderPicker from "@/components/article-folder-picker";
 import RichTextEditor from "@/components/rich-text-editor";
 import { useUnsavedChangesGuard } from "@/hooks/use-unsaved-changes-guard";
 import { updateRecord } from "@/lib/pocketbase/client";
@@ -27,6 +28,7 @@ type Article = {
   tags: string[] | null;
   is_pinned: boolean | null;
   is_internal: boolean | null;
+  is_draft?: boolean | null;
   created_at?: string | null;
   updated_at?: string | null;
 };
@@ -53,10 +55,10 @@ export default function EditArticleForm({
   const [companyId, setCompanyId] = useState(article.company_id || "");
   const [isPinned, setIsPinned] = useState(!!article.is_pinned);
   const [isInternal, setIsInternal] = useState(article.is_internal ?? true);
+  const [isDraft, setIsDraft] = useState(!!article.is_draft);
   const [previewing, setPreviewing] = useState(false);
   const [copied, setCopied] = useState(false);
-  const [saving, setSaving] = useState(false);
-  const [allowNavigation, setAllowNavigation] = useState(false);
+  const [savingMode, setSavingMode] = useState<"publish" | "draft" | null>(null);
 
   const originalTags = useMemo(() => (article.tags || []).join(", "), [article.tags]);
 
@@ -69,13 +71,15 @@ export default function EditArticleForm({
       tags !== originalTags ||
       companyId !== (article.company_id || "") ||
       isPinned !== !!article.is_pinned ||
-      isInternal !== (article.is_internal ?? true)
+      isInternal !== (article.is_internal ?? true) ||
+      isDraft !== !!article.is_draft
     );
   }, [
     article.category,
     article.company_id,
     article.content,
     article.is_internal,
+    article.is_draft,
     article.is_pinned,
     article.summary,
     article.title,
@@ -83,6 +87,7 @@ export default function EditArticleForm({
     companyId,
     content,
     isInternal,
+    isDraft,
     isPinned,
     originalTags,
     summary,
@@ -90,7 +95,7 @@ export default function EditArticleForm({
     title,
   ]);
 
-  useUnsavedChangesGuard(isDirty && !allowNavigation);
+  const allowNextNavigation = useUnsavedChangesGuard(isDirty);
 
   const stats = useMemo(() => {
     const plain = content.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
@@ -105,9 +110,9 @@ export default function EditArticleForm({
     return Array.from(new Set(["General", ...folders, category].filter(Boolean)));
   }, [category, folders]);
 
-  async function handleSubmit(e: React.FormEvent) {
+  async function saveArticle(e: React.FormEvent | React.MouseEvent, draft: boolean) {
     e.preventDefault();
-    setSaving(true);
+    setSavingMode(draft ? "draft" : "publish");
 
     try {
       await updateRecord("articles", article.id, {
@@ -122,13 +127,15 @@ export default function EditArticleForm({
           .filter(Boolean),
         is_pinned: isPinned,
         is_internal: isInternal,
+        is_draft: draft,
         updated_at: new Date().toISOString(),
       });
-      setAllowNavigation(true);
+      setIsDraft(draft);
+      allowNextNavigation();
       window.location.href = `/articles/${article.id}`;
     } catch (error) {
       alert(error instanceof Error ? error.message : "Unable to update article.");
-      setSaving(false);
+      setSavingMode(null);
     }
   }
 
@@ -140,7 +147,7 @@ export default function EditArticleForm({
 
   return (
     <form
-      onSubmit={handleSubmit}
+      onSubmit={(event) => saveArticle(event, false)}
       className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_360px]"
     >
       <section className="min-w-0 overflow-hidden rounded border border-slate-800 bg-slate-950/85">
@@ -222,16 +229,26 @@ export default function EditArticleForm({
             <div className="mt-4 space-y-3">
               <button
                 type="submit"
-                disabled={saving}
+                disabled={!!savingMode}
                 className="inline-flex w-full items-center justify-center gap-2 rounded bg-orange-500 px-4 py-3 text-sm font-semibold text-white transition hover:bg-orange-400 disabled:opacity-50"
               >
                 <Save className="h-4 w-4" />
-                {saving ? "Publishing..." : "Publish Changes"}
+                {savingMode === "publish" ? "Publishing..." : "Publish Changes"}
+              </button>
+
+              <button
+                type="button"
+                disabled={!!savingMode}
+                onClick={(event) => saveArticle(event, true)}
+                className="inline-flex w-full items-center justify-center gap-2 rounded border border-slate-700 bg-slate-900 px-4 py-3 text-sm font-semibold text-slate-100 transition hover:border-orange-500/60 hover:text-orange-200 disabled:opacity-50"
+              >
+                <FileText className="h-4 w-4" />
+                {savingMode === "draft" ? "Saving draft..." : "Save Draft"}
               </button>
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-2 p-4">
+          <div className="grid grid-cols-3 gap-2 p-4">
             <div className="rounded border border-slate-800 bg-slate-900/40 p-3">
               <p className="text-xs text-slate-500">Words</p>
               <p className="mt-1 text-xl font-semibold text-white">{stats.words}</p>
@@ -239,6 +256,12 @@ export default function EditArticleForm({
             <div className="rounded border border-slate-800 bg-slate-900/40 p-3">
               <p className="text-xs text-slate-500">Read Time</p>
               <p className="mt-1 text-xl font-semibold text-white">{stats.readTime}</p>
+            </div>
+            <div className="rounded border border-slate-800 bg-slate-900/40 p-3">
+              <p className="text-xs text-slate-500">Status</p>
+              <p className="mt-1 text-xl font-semibold text-white">
+                {isDraft ? "Draft" : "Live"}
+              </p>
             </div>
           </div>
         </section>
@@ -268,22 +291,11 @@ export default function EditArticleForm({
               </select>
             </div>
 
-            <div>
-              <label className="mb-2 block text-sm font-medium text-white">
-                Folder
-              </label>
-              <input
-                list="article-folders"
-                value={category}
-                onChange={(e) => setCategory(e.target.value)}
-                className="w-full rounded border border-slate-800 bg-slate-900/70 px-3 py-2 text-sm text-white outline-none transition focus:border-orange-500/70"
-              />
-              <datalist id="article-folders">
-                {uniqueFolders.map((folder) => (
-                  <option key={folder} value={folder} />
-                ))}
-              </datalist>
-            </div>
+            <ArticleFolderPicker
+              value={category}
+              folders={uniqueFolders}
+              onChange={setCategory}
+            />
 
             <div>
               <label className="mb-2 flex items-center gap-2 text-sm font-medium text-white">

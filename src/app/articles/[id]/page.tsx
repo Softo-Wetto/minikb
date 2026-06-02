@@ -122,6 +122,16 @@ export default async function ArticlePage({
               <span className="rounded bg-slate-900 px-2 py-1">
                 {article.category || "General"}
               </span>
+              {article.is_draft ? (
+                <span className="inline-flex items-center gap-1 rounded border border-sky-500/30 bg-sky-500/10 px-2 py-1 text-sky-200">
+                  <FileText className="h-3 w-3" />
+                  Draft
+                </span>
+              ) : (
+                <span className="rounded border border-emerald-500/30 bg-emerald-500/10 px-2 py-1 text-emerald-200">
+                  Live
+                </span>
+              )}
               {article.is_internal && (
                 <span className="inline-flex items-center gap-1 rounded border border-slate-700 bg-slate-900 px-2 py-1 text-slate-300">
                   <LockKeyhole className="h-3 w-3" />
@@ -184,6 +194,12 @@ export default async function ArticlePage({
                 <span className="text-slate-500">Visibility</span>
                 <span className="text-right text-slate-200">
                   {article.is_internal ? "Internal" : "Public"}
+                </span>
+              </div>
+              <div className="flex justify-between gap-4">
+                <span className="text-slate-500">Status</span>
+                <span className="text-right text-slate-200">
+                  {article.is_draft ? "Draft" : "Published"}
                 </span>
               </div>
             </div>

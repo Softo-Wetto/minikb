@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import ArticleFolderPicker from "@/components/article-folder-picker";
 import RichTextEditor from "@/components/rich-text-editor";
 import { useUnsavedChangesGuard } from "@/hooks/use-unsaved-changes-guard";
 import { updateRecord } from "@/lib/pocketbase/client";
@@ -14,6 +15,7 @@ type Article = {
   tags: string[] | null;
   is_pinned: boolean | null;
   is_internal: boolean | null;
+  is_draft?: boolean | null;
 };
 
 export default function EditArticleForm({
@@ -28,8 +30,8 @@ export default function EditArticleForm({
   const [tags, setTags] = useState((article.tags || []).join(", "));
   const [isPinned, setIsPinned] = useState(!!article.is_pinned);
   const [isInternal, setIsInternal] = useState(article.is_internal ?? true);
-  const [saving, setSaving] = useState(false);
-  const [allowNavigation, setAllowNavigation] = useState(false);
+  const [isDraft, setIsDraft] = useState(!!article.is_draft);
+  const [savingMode, setSavingMode] = useState<"publish" | "draft" | null>(null);
 
   const originalTags = useMemo(() => (article.tags || []).join(", "), [article.tags]);
 
@@ -41,18 +43,21 @@ export default function EditArticleForm({
       category !== (article.category || "General") ||
       tags !== originalTags ||
       isPinned !== !!article.is_pinned ||
-      isInternal !== (article.is_internal ?? true)
+      isInternal !== (article.is_internal ?? true) ||
+      isDraft !== !!article.is_draft
     );
   }, [
     article.category,
     article.content,
     article.is_internal,
+    article.is_draft,
     article.is_pinned,
     article.summary,
     article.title,
     category,
     content,
     isInternal,
+    isDraft,
     isPinned,
     originalTags,
     summary,
@@ -60,7 +65,7 @@ export default function EditArticleForm({
     title,
   ]);
 
-  useUnsavedChangesGuard(isDirty && !allowNavigation);
+  const allowNextNavigation = useUnsavedChangesGuard(isDirty);
 
   const lastAutosaved = useMemo(() => {
     return new Date().toLocaleString("en-AU", {
@@ -72,9 +77,13 @@ export default function EditArticleForm({
     });
   }, []);
 
-  async function handleSubmit(e: React.FormEvent) {
+  const folderOptions = useMemo(() => {
+    return Array.from(new Set(["General", article.category || "General"].filter(Boolean)));
+  }, [article.category]);
+
+  async function saveArticle(e: React.FormEvent | React.MouseEvent, draft: boolean) {
     e.preventDefault();
-    setSaving(true);
+    setSavingMode(draft ? "draft" : "publish");
 
     try {
       await updateRecord("articles", article.id, {
@@ -88,18 +97,20 @@ export default function EditArticleForm({
           .filter(Boolean),
         is_pinned: isPinned,
         is_internal: isInternal,
+        is_draft: draft,
         updated_at: new Date().toISOString(),
       });
-      setAllowNavigation(true);
+      setIsDraft(draft);
+      allowNextNavigation();
       window.location.href = `/articles/${article.id}`;
     } catch (error) {
       alert(error instanceof Error ? error.message : "Unable to update article.");
-      setSaving(false);
+      setSavingMode(null);
     }
   }
 
   return (
-    <form onSubmit={handleSubmit} className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_340px]">
+    <form onSubmit={(event) => saveArticle(event, false)} className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_340px]">
       <section className="min-w-0 rounded border border-zinc-800 bg-black">
         <div className="border-b border-zinc-800 px-4 py-3">
           <label className="mb-2 block text-sm font-medium text-white">
@@ -139,10 +150,19 @@ export default function EditArticleForm({
           <div className="mt-4 space-y-3">
             <button
               type="submit"
-              disabled={saving}
+              disabled={!!savingMode}
               className="w-full rounded bg-[#f04b23] px-4 py-3 text-sm font-semibold text-white hover:brightness-110 disabled:opacity-50"
             >
-              {saving ? "Publishing..." : "Publish"}
+              {savingMode === "publish" ? "Publishing..." : "Publish"}
+            </button>
+
+            <button
+              type="button"
+              disabled={!!savingMode}
+              onClick={(event) => saveArticle(event, true)}
+              className="w-full rounded border border-slate-700 bg-slate-900 px-4 py-3 text-sm font-semibold text-slate-100 transition hover:border-orange-500/60 hover:text-orange-200 disabled:opacity-50"
+            >
+              {savingMode === "draft" ? "Saving draft..." : "Save Draft"}
             </button>
 
             <a
@@ -158,25 +178,11 @@ export default function EditArticleForm({
           <h2 className="mb-4 text-2xl font-semibold text-white">Meta</h2>
 
           <div className="space-y-4">
-            <div>
-              <label className="mb-2 block text-sm font-medium text-white">
-                Folder
-              </label>
-              <select
-                value={category}
-                onChange={(e) => setCategory(e.target.value)}
-                className="w-full rounded border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm text-white outline-none"
-              >
-                <option value="General">No folder</option>
-                <option value="Microsoft 365">Microsoft 365</option>
-                <option value="Windows">Windows</option>
-                <option value="Zoho">Zoho</option>
-                <option value="CRM">CRM</option>
-                <option value="Veeam">Veeam</option>
-                <option value="Networking">Networking</option>
-                <option value="Hosting">Hosting</option>
-              </select>
-            </div>
+            <ArticleFolderPicker
+              value={category}
+              folders={folderOptions}
+              onChange={setCategory}
+            />
 
             <div>
               <label className="mb-2 block text-sm font-medium text-white">
@@ -207,6 +213,10 @@ export default function EditArticleForm({
               />
               Internal only
             </label>
+
+            <div className="rounded border border-slate-800 bg-slate-900/50 px-3 py-2 text-sm text-slate-300">
+              Status: <span className="font-semibold text-white">{isDraft ? "Draft" : "Live"}</span>
+            </div>
           </div>
         </div>
       </aside>

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowRight, LockKeyhole, Pin } from "lucide-react";
+import { ArrowRight, FileText, LockKeyhole, Pin } from "lucide-react";
 
 type Article = {
   id: string;
@@ -10,6 +10,7 @@ type Article = {
   updated_at: string | null;
   is_pinned?: boolean | null;
   is_internal?: boolean | null;
+  is_draft?: boolean | null;
 };
 
 function formatDate(value?: string | null) {
@@ -80,6 +81,16 @@ export default function ArticleTable({ articles }: { articles: Article[] }) {
                 </td>
                 <td className="px-4 py-3">
                   <div className="flex flex-wrap gap-1.5">
+                    {article.is_draft ? (
+                      <span className="inline-flex items-center gap-1 rounded border border-sky-500/30 bg-sky-500/10 px-2 py-0.5 text-xs text-sky-200">
+                        <FileText className="h-3 w-3" />
+                        Draft
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1 rounded border border-emerald-500/30 bg-emerald-500/10 px-2 py-0.5 text-xs text-emerald-200">
+                        Live
+                      </span>
+                    )}
                     {article.is_internal && (
                       <span className="inline-flex items-center gap-1 rounded border border-slate-700 bg-slate-900 px-2 py-0.5 text-xs text-slate-300">
                         <LockKeyhole className="h-3 w-3" />

@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
+import ArticleFolderPicker from "@/components/article-folder-picker";
 import RichTextEditor from "@/components/rich-text-editor";
 import { useUnsavedChangesGuard } from "@/hooks/use-unsaved-changes-guard";
 import { createRecord, getCurrentAuth } from "@/lib/pocketbase/client";
@@ -21,7 +22,7 @@ export default function NewArticleForm({
   folders: string[];
   initialCompanyId?: string;
 }) {
-  const initialCategory = folders[0] || "General";
+  const initialCategory = "General";
   const [title, setTitle] = useState("");
   const [summary, setSummary] = useState("");
   const [content, setContent] = useState("<p></p>");
@@ -30,8 +31,7 @@ export default function NewArticleForm({
   const [companyId, setCompanyId] = useState(initialCompanyId);
   const [isPinned, setIsPinned] = useState(false);
   const [isInternal, setIsInternal] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [allowNavigation, setAllowNavigation] = useState(false);
+  const [savingMode, setSavingMode] = useState<"publish" | "draft" | null>(null);
 
   const isDirty = useMemo(() => {
     return (
@@ -46,7 +46,7 @@ export default function NewArticleForm({
     );
   }, [category, companyId, content, initialCategory, initialCompanyId, isInternal, isPinned, summary, tags, title]);
 
-  useUnsavedChangesGuard(isDirty && !allowNavigation);
+  const allowNextNavigation = useUnsavedChangesGuard(isDirty);
 
   const lastAutosaved = useMemo(() => {
     return new Date().toLocaleString("en-AU", {
@@ -67,9 +67,9 @@ export default function NewArticleForm({
       .replace(/-+/g, "-");
   }
 
-  async function handleSubmit(e: React.FormEvent) {
+  async function saveArticle(e: React.FormEvent | React.MouseEvent, draft: boolean) {
     e.preventDefault();
-    setSaving(true);
+    setSavingMode(draft ? "draft" : "publish");
 
     const auth = getCurrentAuth();
 
@@ -85,6 +85,7 @@ export default function NewArticleForm({
         .filter(Boolean),
       is_pinned: isPinned,
       is_internal: isInternal,
+      is_draft: draft,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
     };
@@ -99,16 +100,16 @@ export default function NewArticleForm({
 
     try {
       const data = await createRecord<Pick<Article, "id">>("articles", payload);
-      setAllowNavigation(true);
+      allowNextNavigation();
       window.location.href = `/articles/${data.id}`;
     } catch (error) {
       alert(error instanceof Error ? error.message : "Unable to create article.");
-      setSaving(false);
+      setSavingMode(null);
     }
   }
 
   return (
-    <form onSubmit={handleSubmit} className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_340px]">
+    <form onSubmit={(event) => saveArticle(event, false)} className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_340px]">
       <section className="min-w-0 rounded border border-zinc-800 bg-black">
         <div className="border-b border-zinc-800 px-4 py-3">
           <label className="mb-2 block text-sm font-medium text-white">
@@ -148,10 +149,19 @@ export default function NewArticleForm({
           <div className="mt-4 space-y-3">
             <button
               type="submit"
-              disabled={saving}
+              disabled={!!savingMode}
               className="w-full rounded bg-[#f04b23] px-4 py-3 text-sm font-semibold text-white hover:brightness-110 disabled:opacity-50"
             >
-              {saving ? "Publishing..." : "Publish"}
+              {savingMode === "publish" ? "Publishing..." : "Publish"}
+            </button>
+
+            <button
+              type="button"
+              disabled={!!savingMode}
+              onClick={(event) => saveArticle(event, true)}
+              className="w-full rounded border border-slate-700 bg-slate-900 px-4 py-3 text-sm font-semibold text-slate-100 transition hover:border-orange-500/60 hover:text-orange-200 disabled:opacity-50"
+            >
+              {savingMode === "draft" ? "Saving draft..." : "Save Draft"}
             </button>
 
             <Link
@@ -167,29 +177,11 @@ export default function NewArticleForm({
           <h2 className="mb-4 text-2xl font-semibold text-white">Meta</h2>
 
           <div className="space-y-4">
-            <div>
-              <label className="mb-2 block text-sm font-medium text-white">
-                Folder
-              </label>
-              <select
-                value={category}
-                onChange={(e) => setCategory(e.target.value)}
-                className="w-full rounded border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm text-white outline-none"
-              >
-                {folders.length === 0 ? (
-                  <option value="General">No folder</option>
-                ) : (
-                  <>
-                    <option value="General">No folder</option>
-                    {folders.map((folder) => (
-                      <option key={folder} value={folder}>
-                        {folder}
-                      </option>
-                    ))}
-                  </>
-                )}
-              </select>
-            </div>
+            <ArticleFolderPicker
+              value={category}
+              folders={folders}
+              onChange={setCategory}
+            />
 
             <div>
               <label className="mb-2 block text-sm font-medium text-white">
@@ -238,6 +230,7 @@ export default function NewArticleForm({
               />
               Internal only
             </label>
+
           </div>
         </div>
       </aside>

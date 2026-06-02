@@ -308,6 +308,7 @@ async function main() {
       tags: parseJson(article.tags, []),
       is_pinned: parseBoolean(article.is_pinned),
       is_internal: parseBoolean(article.is_internal),
+      is_draft: false,
       created_by: userIds.get(article.created_by) || null,
       created_at: dateValue(article.created_at),
       updated_at: dateValue(article.updated_at),

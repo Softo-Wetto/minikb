@@ -59,6 +59,7 @@ export type Article = PocketBaseRecord & {
   tags: string[];
   is_pinned: boolean;
   is_internal: boolean;
+  is_draft?: boolean | null;
   created_by: string | null;
 };
 

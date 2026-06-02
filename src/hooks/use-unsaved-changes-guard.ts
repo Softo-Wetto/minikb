@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useCallback, useEffect, useRef } from "react";
 
 const DEFAULT_MESSAGE = "Are you sure you want to leave without saving changes?";
 
@@ -8,10 +8,24 @@ export function useUnsavedChangesGuard(
   isDirty: boolean,
   message = DEFAULT_MESSAGE,
 ) {
+  const bypassNextNavigationRef = useRef(false);
+
+  const allowNextNavigation = useCallback(() => {
+    bypassNextNavigationRef.current = true;
+  }, []);
+
+  useEffect(() => {
+    if (!isDirty) {
+      bypassNextNavigationRef.current = false;
+    }
+  }, [isDirty]);
+
   useEffect(() => {
     if (!isDirty) return;
 
     const handleBeforeUnload = (event: BeforeUnloadEvent) => {
+      if (bypassNextNavigationRef.current) return;
+
       event.preventDefault();
       event.returnValue = message;
       return message;
@@ -25,6 +39,8 @@ export function useUnsavedChangesGuard(
     if (!isDirty) return;
 
     const handleDocumentClick = (event: MouseEvent) => {
+      if (bypassNextNavigationRef.current) return;
+
       if (event.defaultPrevented || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) {
         return;
       }
@@ -59,6 +75,7 @@ export function useUnsavedChangesGuard(
     window.history.pushState({ ...window.history.state, __minikbUnsavedGuard: true }, "", currentUrl);
 
     const handlePopState = () => {
+      if (bypassNextNavigationRef.current) return;
       if (window.confirm(message)) return;
 
       window.history.pushState(
@@ -71,4 +88,6 @@ export function useUnsavedChangesGuard(
     window.addEventListener("popstate", handlePopState);
     return () => window.removeEventListener("popstate", handlePopState);
   }, [isDirty, message]);
+
+  return allowNextNavigation;
 }
