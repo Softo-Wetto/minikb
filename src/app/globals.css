@@ -376,6 +376,7 @@ button {
   top: -0.75rem;
   z-index: 5;
   display: flex;
+  align-items: center;
   gap: 0.25rem;
   padding: 0.25rem;
   border: 1px solid rgba(51, 65, 85, 0.9);
@@ -388,11 +389,14 @@ button {
 .kb-editor-image-toolbar button {
   display: inline-flex;
   height: 1.8rem;
-  width: 1.8rem;
+  min-width: 1.8rem;
   align-items: center;
   justify-content: center;
   border-radius: 0.5rem;
+  padding: 0 0.35rem;
   color: #cbd5e1;
+  font-size: 0.72rem;
+  font-weight: 700;
   transition:
     background-color 140ms ease,
     color 140ms ease;
@@ -404,18 +408,50 @@ button {
   color: #fed7aa;
 }
 
+.kb-editor-image-slider {
+  display: inline-flex;
+  height: 1.8rem;
+  align-items: center;
+  gap: 0.35rem;
+  border-left: 1px solid rgba(51, 65, 85, 0.8);
+  border-right: 1px solid rgba(51, 65, 85, 0.8);
+  padding: 0 0.45rem;
+  color: #cbd5e1;
+  font-size: 0.68rem;
+  font-weight: 700;
+}
+
+.kb-editor-image-slider input {
+  width: 6.5rem;
+  accent-color: #fb923c;
+}
+
 .kb-editor-image-resize {
   position: absolute;
-  right: -0.55rem;
-  bottom: -0.55rem;
+  right: -0.8rem;
+  bottom: -0.8rem;
   z-index: 6;
-  height: 1.15rem;
-  width: 1.15rem;
+  height: 1.6rem;
+  width: 1.6rem;
   cursor: nwse-resize;
   border: 2px solid #020617;
-  border-radius: 999px;
-  background: #fb923c;
-  box-shadow: 0 0 0 1px rgba(251, 146, 60, 0.45);
+  border-radius: 0.55rem;
+  background:
+    linear-gradient(135deg, transparent 0 40%, rgba(2, 6, 23, 0.5) 41% 45%, transparent 46% 100%),
+    #fb923c;
+  box-shadow:
+    0 0 0 1px rgba(251, 146, 60, 0.45),
+    0 10px 22px rgba(0, 0, 0, 0.3);
+  touch-action: none;
+}
+
+.kb-editor-image-resize::after {
+  content: "";
+  position: absolute;
+  inset: 0.3rem;
+  border-right: 2px solid rgba(2, 6, 23, 0.72);
+  border-bottom: 2px solid rgba(2, 6, 23, 0.72);
+  border-radius: 0.2rem;
 }
 
 .kb-image-resizing {

@@ -42,6 +42,7 @@ import {
   AlignRight,
   Captions,
   Maximize2,
+  RotateCcw,
   Link as LinkIcon,
   Image as ImageIcon,
   Undo2,
@@ -107,6 +108,8 @@ function ResizableImageView({
   };
   const align = normalizeImageAlign(attrs.align);
   const width = attrs.width || null;
+  const numericWidth = width?.match(/^(\d+(?:\.\d+)?)%$/)?.[1] || null;
+  const sliderValue = numericWidth ? Number(numericWidth) : width === "100%" ? 100 : 50;
 
   function selectNode() {
     const pos = typeof getPos === "function" ? getPos() : null;
@@ -115,7 +118,7 @@ function ResizableImageView({
     }
   }
 
-  function startResize(event: React.MouseEvent<HTMLButtonElement>) {
+  function startResize(event: React.PointerEvent<HTMLDivElement>) {
     event.preventDefault();
     event.stopPropagation();
     selectNode();
@@ -128,24 +131,25 @@ function ResizableImageView({
     const editorWidth = wrapper.closest(".tiptap")?.getBoundingClientRect().width || startWidth;
 
     setResizing(true);
+    event.currentTarget.setPointerCapture(event.pointerId);
 
-    const handleMouseMove = (moveEvent: MouseEvent) => {
+    const handlePointerMove = (moveEvent: PointerEvent) => {
       moveEvent.preventDefault();
       const delta = moveEvent.clientX - startX;
       const nextWidth = Math.max(160, Math.min(editorWidth, startWidth + delta));
       updateAttributes({ width: `${Math.round(nextWidth)}px` });
     };
 
-    const handleMouseUp = () => {
+    const handlePointerUp = () => {
       setResizing(false);
       document.body.classList.remove("kb-image-resizing");
-      window.removeEventListener("mousemove", handleMouseMove);
-      window.removeEventListener("mouseup", handleMouseUp);
+      window.removeEventListener("pointermove", handlePointerMove);
+      window.removeEventListener("pointerup", handlePointerUp);
     };
 
     document.body.classList.add("kb-image-resizing");
-    window.addEventListener("mousemove", handleMouseMove);
-    window.addEventListener("mouseup", handleMouseUp);
+    window.addEventListener("pointermove", handlePointerMove);
+    window.addEventListener("pointerup", handlePointerUp);
   }
 
   return (
@@ -172,7 +176,7 @@ function ResizableImageView({
 
       {(selected || resizing) && (
         <>
-          <div className="kb-editor-image-toolbar">
+          <div className="kb-editor-image-toolbar" data-image-control>
             <button
               type="button"
               title="Align left"
@@ -199,11 +203,37 @@ function ResizableImageView({
             </button>
             <button
               type="button"
+              title="Natural size"
+              onClick={() => updateAttributes({ width: null })}
+            >
+              <RotateCcw className="h-3.5 w-3.5" />
+            </button>
+            <button
+              type="button"
               title="Full width"
               onClick={() => updateAttributes({ width: "100%" })}
             >
               <Maximize2 className="h-3.5 w-3.5" />
             </button>
+            <button type="button" title="Small image" onClick={() => updateAttributes({ width: "35%" })}>
+              S
+            </button>
+            <button type="button" title="Medium image" onClick={() => updateAttributes({ width: "60%" })}>
+              M
+            </button>
+            <button type="button" title="Large image" onClick={() => updateAttributes({ width: "80%" })}>
+              L
+            </button>
+            <label className="kb-editor-image-slider" title="Image width">
+              <span>{Math.round(sliderValue)}%</span>
+              <input
+                type="range"
+                min="20"
+                max="100"
+                value={sliderValue}
+                onChange={(event) => updateAttributes({ width: `${event.target.value}%` })}
+              />
+            </label>
             <button
               type="button"
               title="Alt text"
@@ -222,11 +252,11 @@ function ResizableImageView({
               <Trash2 className="h-3.5 w-3.5" />
             </button>
           </div>
-          <button
-            type="button"
+          <div
+            data-image-control
             title="Resize image"
             className="kb-editor-image-resize"
-            onMouseDown={startResize}
+            onPointerDown={startResize}
           />
         </>
       )}
@@ -281,7 +311,12 @@ const ResizableImage = Image.extend({
   },
 
   addNodeView() {
-    return ReactNodeViewRenderer(ResizableImageView);
+    return ReactNodeViewRenderer(ResizableImageView, {
+      stopEvent: ({ event }) => {
+        const target = event.target as HTMLElement | null;
+        return !!target?.closest("[data-image-control]");
+      },
+    });
   },
 });
 
