@@ -1,7 +1,13 @@
 "use client";
 
-import { useEffect, useMemo } from "react";
-import { EditorContent, useEditor } from "@tiptap/react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import {
+  EditorContent,
+  NodeViewWrapper,
+  ReactNodeViewRenderer,
+  useEditor,
+  type NodeViewProps,
+} from "@tiptap/react";
 import { mergeAttributes, Node } from "@tiptap/core";
 import StarterKit from "@tiptap/starter-kit";
 import Link from "@tiptap/extension-link";
@@ -34,6 +40,8 @@ import {
   AlignLeft,
   AlignCenter,
   AlignRight,
+  Captions,
+  Maximize2,
   Link as LinkIcon,
   Image as ImageIcon,
   Undo2,
@@ -72,6 +80,198 @@ const HIGHLIGHT_COLORS = [
   { label: "Purple", value: "#ddd6fe" },
   { label: "Pink", value: "#fbcfe8" },
 ];
+
+type ImageAlign = "left" | "center" | "right";
+
+function normalizeImageAlign(value: unknown): ImageAlign {
+  return value === "left" || value === "right" || value === "center"
+    ? value
+    : "center";
+}
+
+function ResizableImageView({
+  editor,
+  getPos,
+  node,
+  selected,
+  updateAttributes,
+}: NodeViewProps) {
+  const wrapperRef = useRef<HTMLDivElement | null>(null);
+  const [resizing, setResizing] = useState(false);
+  const attrs = node.attrs as {
+    src: string;
+    alt?: string | null;
+    title?: string | null;
+    width?: string | null;
+    align?: ImageAlign | null;
+  };
+  const align = normalizeImageAlign(attrs.align);
+  const width = attrs.width || "100%";
+
+  function selectNode() {
+    const pos = typeof getPos === "function" ? getPos() : null;
+    if (typeof pos === "number") {
+      editor.commands.setNodeSelection(pos);
+    }
+  }
+
+  function startResize(event: React.PointerEvent<HTMLButtonElement>) {
+    event.preventDefault();
+    event.stopPropagation();
+    selectNode();
+
+    const wrapper = wrapperRef.current;
+    if (!wrapper) return;
+
+    const startX = event.clientX;
+    const startWidth = wrapper.getBoundingClientRect().width;
+    const editorWidth = wrapper.closest(".tiptap")?.getBoundingClientRect().width || startWidth;
+
+    setResizing(true);
+    event.currentTarget.setPointerCapture(event.pointerId);
+
+    const handlePointerMove = (moveEvent: PointerEvent) => {
+      const delta = moveEvent.clientX - startX;
+      const nextWidth = Math.max(160, Math.min(editorWidth, startWidth + delta));
+      updateAttributes({ width: `${Math.round(nextWidth)}px` });
+    };
+
+    const handlePointerUp = () => {
+      setResizing(false);
+      window.removeEventListener("pointermove", handlePointerMove);
+      window.removeEventListener("pointerup", handlePointerUp);
+    };
+
+    window.addEventListener("pointermove", handlePointerMove);
+    window.addEventListener("pointerup", handlePointerUp);
+  }
+
+  return (
+    <NodeViewWrapper
+      as="figure"
+      data-resizable-image
+      data-align={align}
+      className={`kb-editor-image ${selected || resizing ? "is-selected" : ""}`}
+      style={{ width }}
+      contentEditable={false}
+      draggable="true"
+      onClick={(event: React.MouseEvent<HTMLElement>) => {
+        event.stopPropagation();
+        selectNode();
+      }}
+    >
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src={attrs.src}
+        alt={attrs.alt || ""}
+        title={attrs.title || ""}
+        draggable="false"
+      />
+
+      {(selected || resizing) && (
+        <>
+          <div className="kb-editor-image-toolbar">
+            <button
+              type="button"
+              title="Align left"
+              className={align === "left" ? "is-active" : ""}
+              onClick={() => updateAttributes({ align: "left" })}
+            >
+              <AlignLeft className="h-3.5 w-3.5" />
+            </button>
+            <button
+              type="button"
+              title="Align center"
+              className={align === "center" ? "is-active" : ""}
+              onClick={() => updateAttributes({ align: "center" })}
+            >
+              <AlignCenter className="h-3.5 w-3.5" />
+            </button>
+            <button
+              type="button"
+              title="Align right"
+              className={align === "right" ? "is-active" : ""}
+              onClick={() => updateAttributes({ align: "right" })}
+            >
+              <AlignRight className="h-3.5 w-3.5" />
+            </button>
+            <button
+              type="button"
+              title="Full width"
+              onClick={() => updateAttributes({ width: "100%" })}
+            >
+              <Maximize2 className="h-3.5 w-3.5" />
+            </button>
+            <button
+              type="button"
+              title="Alt text"
+              onClick={() => {
+                const alt = window.prompt("Image alt text", attrs.alt || "");
+                if (alt !== null) updateAttributes({ alt });
+              }}
+            >
+              <Captions className="h-3.5 w-3.5" />
+            </button>
+            <button
+              type="button"
+              title="Delete image"
+              onClick={() => editor.chain().focus().deleteSelection().run()}
+            >
+              <Trash2 className="h-3.5 w-3.5" />
+            </button>
+          </div>
+          <button
+            type="button"
+            title="Resize image"
+            className="kb-editor-image-resize"
+            onPointerDown={startResize}
+          />
+        </>
+      )}
+    </NodeViewWrapper>
+  );
+}
+
+const ResizableImage = Image.extend({
+  addAttributes() {
+    return {
+      ...this.parent?.(),
+      width: {
+        default: "100%",
+        parseHTML: (element) => element.getAttribute("width") || element.style.width || "100%",
+        renderHTML: (attributes) => ({
+          width: attributes.width,
+          style: `width: ${attributes.width || "100%"};`,
+        }),
+      },
+      align: {
+        default: "center",
+        parseHTML: (element) => element.getAttribute("data-align") || "center",
+        renderHTML: (attributes) => ({
+          "data-align": normalizeImageAlign(attributes.align),
+        }),
+      },
+    };
+  },
+
+  renderHTML({ HTMLAttributes }) {
+    const align = normalizeImageAlign(HTMLAttributes["data-align"] || HTMLAttributes.align);
+    const width = HTMLAttributes.width || HTMLAttributes.style?.match(/width:\s*([^;]+)/)?.[1] || "100%";
+
+    return [
+      "img",
+      mergeAttributes(HTMLAttributes, {
+        "data-align": align,
+        width,
+        style: `width: ${width}; max-width: 100%; height: auto;`,
+      }),
+    ];
+  },
+
+  addNodeView() {
+    return ReactNodeViewRenderer(ResizableImageView);
+  },
+});
 
 const Callout = Node.create({
   name: "callout",
@@ -170,7 +370,7 @@ export default function RichTextEditor({ value, onChange }: Props) {
         autolink: true,
         defaultProtocol: "https",
       }),
-      Image.configure({
+      ResizableImage.configure({
         allowBase64: true,
       }),
       TextAlign.configure({
@@ -181,6 +381,37 @@ export default function RichTextEditor({ value, onChange }: Props) {
     editorProps: {
       attributes: {
         class: "tiptap min-h-[520px] w-full outline-none px-4 py-4 text-white",
+      },
+      handlePaste(view, event) {
+        const files = Array.from(event.clipboardData?.files || []).filter((file) =>
+          file.type.startsWith("image/")
+        );
+
+        if (files.length === 0) return false;
+
+        event.preventDefault();
+
+        for (const file of files) {
+          const reader = new FileReader();
+          reader.onload = () => {
+            if (typeof reader.result !== "string") return;
+
+            const imageNode = view.state.schema.nodes.image.create({
+              src: reader.result,
+              alt: file.name,
+              title: file.name,
+              width: "100%",
+              align: "center",
+            });
+
+            view.dispatch(
+              view.state.tr.replaceSelectionWith(imageNode).scrollIntoView()
+            );
+          };
+          reader.readAsDataURL(file);
+        }
+
+        return true;
       },
     },
     onUpdate: ({ editor }) => {
@@ -231,7 +462,18 @@ export default function RichTextEditor({ value, onChange }: Props) {
   function addImage() {
     const url = window.prompt("Enter image URL");
     if (!url) return;
-    safeEditor.chain().focus().setImage({ src: url }).run();
+    safeEditor
+      .chain()
+      .focus()
+      .insertContent({
+        type: "image",
+        attrs: {
+          src: url,
+          width: "100%",
+          align: "center",
+        },
+      })
+      .run();
   }
 
   function insertCallout(type: "info" | "warning") {
