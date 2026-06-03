@@ -106,7 +106,7 @@ function ResizableImageView({
     align?: ImageAlign | null;
   };
   const align = normalizeImageAlign(attrs.align);
-  const width = attrs.width || "100%";
+  const width = attrs.width || null;
 
   function selectNode() {
     const pos = typeof getPos === "function" ? getPos() : null;
@@ -115,7 +115,7 @@ function ResizableImageView({
     }
   }
 
-  function startResize(event: React.PointerEvent<HTMLButtonElement>) {
+  function startResize(event: React.MouseEvent<HTMLButtonElement>) {
     event.preventDefault();
     event.stopPropagation();
     selectNode();
@@ -128,22 +128,24 @@ function ResizableImageView({
     const editorWidth = wrapper.closest(".tiptap")?.getBoundingClientRect().width || startWidth;
 
     setResizing(true);
-    event.currentTarget.setPointerCapture(event.pointerId);
 
-    const handlePointerMove = (moveEvent: PointerEvent) => {
+    const handleMouseMove = (moveEvent: MouseEvent) => {
+      moveEvent.preventDefault();
       const delta = moveEvent.clientX - startX;
       const nextWidth = Math.max(160, Math.min(editorWidth, startWidth + delta));
       updateAttributes({ width: `${Math.round(nextWidth)}px` });
     };
 
-    const handlePointerUp = () => {
+    const handleMouseUp = () => {
       setResizing(false);
-      window.removeEventListener("pointermove", handlePointerMove);
-      window.removeEventListener("pointerup", handlePointerUp);
+      document.body.classList.remove("kb-image-resizing");
+      window.removeEventListener("mousemove", handleMouseMove);
+      window.removeEventListener("mouseup", handleMouseUp);
     };
 
-    window.addEventListener("pointermove", handlePointerMove);
-    window.addEventListener("pointerup", handlePointerUp);
+    document.body.classList.add("kb-image-resizing");
+    window.addEventListener("mousemove", handleMouseMove);
+    window.addEventListener("mouseup", handleMouseUp);
   }
 
   return (
@@ -151,10 +153,10 @@ function ResizableImageView({
       as="figure"
       data-resizable-image
       data-align={align}
+      data-sized={width ? "true" : "false"}
       className={`kb-editor-image ${selected || resizing ? "is-selected" : ""}`}
-      style={{ width }}
+      style={width ? { width } : undefined}
       contentEditable={false}
-      draggable="true"
       onClick={(event: React.MouseEvent<HTMLElement>) => {
         event.stopPropagation();
         selectNode();
@@ -224,7 +226,7 @@ function ResizableImageView({
             type="button"
             title="Resize image"
             className="kb-editor-image-resize"
-            onPointerDown={startResize}
+            onMouseDown={startResize}
           />
         </>
       )}
@@ -237,12 +239,15 @@ const ResizableImage = Image.extend({
     return {
       ...this.parent?.(),
       width: {
-        default: "100%",
-        parseHTML: (element) => element.getAttribute("width") || element.style.width || "100%",
-        renderHTML: (attributes) => ({
-          width: attributes.width,
-          style: `width: ${attributes.width || "100%"};`,
-        }),
+        default: null,
+        parseHTML: (element) => element.getAttribute("width") || element.style.width || null,
+        renderHTML: (attributes) => {
+          if (!attributes.width) return {};
+          return {
+            width: attributes.width,
+            style: `width: ${attributes.width};`,
+          };
+        },
       },
       align: {
         default: "center",
@@ -256,14 +261,21 @@ const ResizableImage = Image.extend({
 
   renderHTML({ HTMLAttributes }) {
     const align = normalizeImageAlign(HTMLAttributes["data-align"] || HTMLAttributes.align);
-    const width = HTMLAttributes.width || HTMLAttributes.style?.match(/width:\s*([^;]+)/)?.[1] || "100%";
+    const width = HTMLAttributes.width || HTMLAttributes.style?.match(/width:\s*([^;]+)/)?.[1] || null;
+    const sizeAttributes = width
+      ? {
+          width,
+          style: `width: ${width}; max-width: 100%; height: auto;`,
+        }
+      : {
+          style: "max-width: 100%; height: auto;",
+        };
 
     return [
       "img",
       mergeAttributes(HTMLAttributes, {
         "data-align": align,
-        width,
-        style: `width: ${width}; max-width: 100%; height: auto;`,
+        ...sizeAttributes,
       }),
     ];
   },
@@ -400,7 +412,6 @@ export default function RichTextEditor({ value, onChange }: Props) {
               src: reader.result,
               alt: file.name,
               title: file.name,
-              width: "100%",
               align: "center",
             });
 
@@ -469,7 +480,6 @@ export default function RichTextEditor({ value, onChange }: Props) {
         type: "image",
         attrs: {
           src: url,
-          width: "100%",
           align: "center",
         },
       })

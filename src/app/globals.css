@@ -327,10 +327,14 @@ button {
 }
 
 .kb-editor-image {
-  display: block;
+  display: table;
   max-width: 100%;
   margin: 1rem auto;
   position: relative;
+}
+
+.kb-editor-image[data-sized="true"] {
+  display: block;
 }
 
 .kb-editor-image[data-align="left"] {
@@ -350,11 +354,14 @@ button {
 
 .kb-editor-image img {
   display: block;
-  width: 100%;
   max-width: 100%;
   height: auto;
   border-radius: 0.75rem;
   margin: 0;
+}
+
+.kb-editor-image[data-sized="true"] img {
+  width: 100%;
 }
 
 .kb-editor-image.is-selected img {
@@ -409,6 +416,11 @@ button {
   border-radius: 999px;
   background: #fb923c;
   box-shadow: 0 0 0 1px rgba(251, 146, 60, 0.45);
+}
+
+.kb-image-resizing {
+  cursor: nwse-resize !important;
+  user-select: none;
 }
 
 .tiptap.ProseMirror {
