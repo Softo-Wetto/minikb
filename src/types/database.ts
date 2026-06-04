@@ -1,5 +1,7 @@
 export type {
   AppRole,
+  ActivityLog,
+  AppSetting,
   Article,
   ArticleFolder,
   Asset,

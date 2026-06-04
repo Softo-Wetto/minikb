@@ -306,6 +306,45 @@ async function main() {
     ],
   });
 
+  const appSettings = await upsertCollection(token, {
+    name: "app_settings",
+    type: "base",
+    listRule: '@request.auth.role = "admin"',
+    viewRule: '@request.auth.role = "admin"',
+    createRule: '@request.auth.role = "admin"',
+    updateRule: '@request.auth.role = "admin"',
+    deleteRule: '@request.auth.role = "admin"',
+    indexes: ["CREATE UNIQUE INDEX idx_app_settings_key ON app_settings (key)"],
+    fields: [
+      text("key", { required: true }),
+      json("value"),
+      text("description"),
+      relation("updated_by", users.id),
+      date("created_at"),
+      date("updated_at"),
+    ],
+  });
+
+  await upsertCollection(token, {
+    name: "activity_logs",
+    type: "base",
+    listRule: '@request.auth.role = "admin"',
+    viewRule: '@request.auth.role = "admin"',
+    createRule: '@request.auth.role = "admin" || @request.auth.role = "editor"',
+    updateRule: '@request.auth.role = "admin"',
+    deleteRule: '@request.auth.role = "admin"',
+    fields: [
+      text("action", { required: true }),
+      text("target_collection"),
+      text("record_id"),
+      text("record_label"),
+      text("detail"),
+      relation("actor", users.id),
+      relation("setting_id", appSettings.id),
+      date("created_at"),
+    ],
+  });
+
   const assets = await upsertCollection(token, {
     name: "assets",
     type: "base",

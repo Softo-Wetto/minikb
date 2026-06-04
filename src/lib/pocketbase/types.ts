@@ -69,6 +69,23 @@ export type ArticleFolder = PocketBaseRecord & {
   created_by?: string | null;
 };
 
+export type AppSetting = PocketBaseRecord & {
+  key: string;
+  value?: Json;
+  description?: string | null;
+  updated_by?: string | null;
+};
+
+export type ActivityLog = PocketBaseRecord & {
+  action: string;
+  target_collection?: string | null;
+  record_id?: string | null;
+  record_label?: string | null;
+  detail?: string | null;
+  actor?: string | null;
+  setting_id?: string | null;
+};
+
 export type Asset = PocketBaseRecord & {
   company_id: string | null;
   name: string;

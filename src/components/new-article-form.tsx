@@ -6,7 +6,7 @@ import ArticleFolderPicker from "@/components/article-folder-picker";
 import RichTextEditor from "@/components/rich-text-editor";
 import { useUnsavedChangesGuard } from "@/hooks/use-unsaved-changes-guard";
 import { createRecord, getCurrentAuth } from "@/lib/pocketbase/client";
-import type { Article } from "@/types/database";
+import type { Article, RawPocketBaseRecord } from "@/types/database";
 
 type Company = {
   id: string;
@@ -17,12 +17,19 @@ export default function NewArticleForm({
   companies,
   folders,
   initialCompanyId = "",
+  initialCategory = "General",
+  initialInternal = true,
+  primaryDraft = false,
+  allowPublicArticles = true,
 }: {
   companies: Company[];
   folders: string[];
   initialCompanyId?: string;
+  initialCategory?: string;
+  initialInternal?: boolean;
+  primaryDraft?: boolean;
+  allowPublicArticles?: boolean;
 }) {
-  const initialCategory = "General";
   const [title, setTitle] = useState("");
   const [summary, setSummary] = useState("");
   const [content, setContent] = useState("<p></p>");
@@ -30,7 +37,8 @@ export default function NewArticleForm({
   const [tags, setTags] = useState("");
   const [companyId, setCompanyId] = useState(initialCompanyId);
   const [isPinned, setIsPinned] = useState(false);
-  const [isInternal, setIsInternal] = useState(true);
+  const defaultInternal = allowPublicArticles ? initialInternal : true;
+  const [isInternal, setIsInternal] = useState(defaultInternal);
   const [savingMode, setSavingMode] = useState<"publish" | "draft" | null>(null);
 
   const isDirty = useMemo(() => {
@@ -42,9 +50,9 @@ export default function NewArticleForm({
       tags.trim().length > 0 ||
       companyId !== initialCompanyId ||
       isPinned ||
-      !isInternal
+      isInternal !== defaultInternal
     );
-  }, [category, companyId, content, initialCategory, initialCompanyId, isInternal, isPinned, summary, tags, title]);
+  }, [category, companyId, content, defaultInternal, initialCategory, initialCompanyId, isInternal, isPinned, summary, tags, title]);
 
   const allowNextNavigation = useUnsavedChangesGuard(isDirty);
 
@@ -84,7 +92,7 @@ export default function NewArticleForm({
         .map((t) => t.trim())
         .filter(Boolean),
       is_pinned: isPinned,
-      is_internal: isInternal,
+      is_internal: allowPublicArticles ? isInternal : true,
       is_draft: draft,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
@@ -99,7 +107,7 @@ export default function NewArticleForm({
     }
 
     try {
-      const data = await createRecord<Pick<Article, "id">>("articles", payload);
+      const data = await createRecord<RawPocketBaseRecord & Pick<Article, "id">>("articles", payload);
       allowNextNavigation();
       window.location.href = `/articles/${data.id}`;
     } catch (error) {
@@ -109,7 +117,7 @@ export default function NewArticleForm({
   }
 
   return (
-    <form onSubmit={(event) => saveArticle(event, false)} className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_340px]">
+    <form onSubmit={(event) => saveArticle(event, primaryDraft)} className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_340px]">
       <section className="min-w-0 rounded border border-zinc-800 bg-black">
         <div className="border-b border-zinc-800 px-4 py-3">
           <label className="mb-2 block text-sm font-medium text-white">
@@ -152,16 +160,28 @@ export default function NewArticleForm({
               disabled={!!savingMode}
               className="w-full rounded bg-[#f04b23] px-4 py-3 text-sm font-semibold text-white hover:brightness-110 disabled:opacity-50"
             >
-              {savingMode === "publish" ? "Publishing..." : "Publish"}
+              {primaryDraft
+                ? savingMode === "draft"
+                  ? "Saving draft..."
+                  : "Save Draft"
+                : savingMode === "publish"
+                  ? "Publishing..."
+                  : "Publish"}
             </button>
 
             <button
               type="button"
               disabled={!!savingMode}
-              onClick={(event) => saveArticle(event, true)}
+              onClick={(event) => saveArticle(event, !primaryDraft)}
               className="w-full rounded border border-slate-700 bg-slate-900 px-4 py-3 text-sm font-semibold text-slate-100 transition hover:border-orange-500/60 hover:text-orange-200 disabled:opacity-50"
             >
-              {savingMode === "draft" ? "Saving draft..." : "Save Draft"}
+              {primaryDraft
+                ? savingMode === "publish"
+                  ? "Publishing..."
+                  : "Publish Now"
+                : savingMode === "draft"
+                  ? "Saving draft..."
+                  : "Save Draft"}
             </button>
 
             <Link
@@ -226,9 +246,10 @@ export default function NewArticleForm({
               <input
                 type="checkbox"
                 checked={isInternal}
+                disabled={!allowPublicArticles}
                 onChange={(e) => setIsInternal(e.target.checked)}
               />
-              Internal only
+              {allowPublicArticles ? "Internal only" : "Internal only enforced"}
             </label>
 
           </div>
