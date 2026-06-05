@@ -17,6 +17,8 @@ type SearchParams = Promise<{
   visibility?: string;
   status?: string;
   companyId?: string;
+  sort?: string;
+  dir?: string;
 }>;
 
 export default async function ArticlesPage({
@@ -26,7 +28,15 @@ export default async function ArticlesPage({
 }) {
   await requireUser();
 
-  const { q = "", category = "", visibility = "", status = "", companyId = "" } = await searchParams;
+  const {
+    q = "",
+    category = "",
+    visibility = "",
+    status = "",
+    companyId = "",
+    sort = "updated",
+    dir = "desc",
+  } = await searchParams;
   const filters: string[] = [];
 
   if (q.trim()) {
@@ -40,13 +50,22 @@ export default async function ArticlesPage({
   if (status === "draft") filters.push("is_draft = true");
   if (status === "published") filters.push("is_draft = false");
 
+  const sortMap: Record<string, string> = {
+    name: "title",
+    category: "category",
+    updated: "updated_at",
+    status: "is_draft",
+  };
+  const sortField = sortMap[sort] ?? "updated_at";
+  const sortDirection = dir === "asc" ? "" : "-";
+
   let articles: Article[] = [];
   let error: Error | null = null;
 
   try {
     const response = await getRecords<Article>("articles", {
       fields: "id,title,category,summary,created_at,updated_at,is_pinned,is_internal,is_draft",
-      sort: "-updated_at",
+      sort: `${sortDirection}${sortField}`,
       filter: filters.join(" && "),
     });
     articles = response.items;
@@ -96,6 +115,8 @@ export default async function ArticlesPage({
         <div className="border-b border-slate-800 p-4">
           <form className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_220px_180px_170px_130px]">
             {companyId && <input type="hidden" name="companyId" value={companyId} />}
+            <input type="hidden" name="sort" value={sort} />
+            <input type="hidden" name="dir" value={dir} />
 
             <label className="relative">
               <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" />
@@ -159,7 +180,11 @@ export default async function ArticlesPage({
 
         <div className="grid gap-4 p-4 xl:grid-cols-[360px_minmax(0,1fr)]">
           <KbCategoryList articles={articles} folderOrder={categories} />
-          <ArticleTable articles={articles} />
+          <ArticleTable
+            articles={articles}
+            categories={categories}
+            filters={{ q, category, visibility, status, companyId, sort, dir }}
+          />
         </div>
       </section>
     </div>
