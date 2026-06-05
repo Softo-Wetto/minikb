@@ -12,6 +12,7 @@ import { mergeAttributes, Node } from "@tiptap/core";
 import StarterKit from "@tiptap/starter-kit";
 import Link from "@tiptap/extension-link";
 import Image from "@tiptap/extension-image";
+import { BulletList, OrderedList } from "@tiptap/extension-list";
 import TextAlign from "@tiptap/extension-text-align";
 import Underline from "@tiptap/extension-underline";
 import Highlight from "@tiptap/extension-highlight";
@@ -34,9 +35,6 @@ import {
   ListChecks,
   Quote,
   Code,
-  Heading1,
-  Heading2,
-  Heading3,
   AlignLeft,
   AlignCenter,
   AlignRight,
@@ -54,6 +52,8 @@ import {
   Rows3,
   Columns3,
   Trash2,
+  ChevronDown,
+  Type,
 } from "lucide-react";
 
 type Props = {
@@ -81,6 +81,25 @@ const HIGHLIGHT_COLORS = [
   { label: "Purple", value: "#ddd6fe" },
   { label: "Pink", value: "#fbcfe8" },
 ];
+
+const ORDERED_LIST_STYLES = [
+  { label: "1, 2, 3", value: "decimal" },
+  { label: "A, B, C", value: "upper-alpha" },
+  { label: "a, b, c", value: "lower-alpha" },
+  { label: "I, II, III", value: "upper-roman" },
+  { label: "i, ii, iii", value: "lower-roman" },
+];
+
+const BULLET_LIST_STYLES = [
+  { label: "Disc", value: "disc" },
+  { label: "Circle", value: "circle" },
+  { label: "Square", value: "square" },
+];
+
+type ColorOption = {
+  label: string;
+  value: string;
+};
 
 type ImageAlign = "left" | "center" | "right";
 
@@ -320,6 +339,44 @@ const ResizableImage = Image.extend({
   },
 });
 
+const StyledOrderedList = OrderedList.extend({
+  addAttributes() {
+    return {
+      ...this.parent?.(),
+      listStyle: {
+        default: "decimal",
+        parseHTML: (element) =>
+          element.getAttribute("data-list-style") ||
+          element.style.listStyleType ||
+          "decimal",
+        renderHTML: (attributes) => ({
+          "data-list-style": attributes.listStyle || "decimal",
+          style: `list-style-type: ${attributes.listStyle || "decimal"};`,
+        }),
+      },
+    };
+  },
+});
+
+const StyledBulletList = BulletList.extend({
+  addAttributes() {
+    return {
+      ...this.parent?.(),
+      listStyle: {
+        default: "disc",
+        parseHTML: (element) =>
+          element.getAttribute("data-list-style") ||
+          element.style.listStyleType ||
+          "disc",
+        renderHTML: (attributes) => ({
+          "data-list-style": attributes.listStyle || "disc",
+          style: `list-style-type: ${attributes.listStyle || "disc"};`,
+        }),
+      },
+    };
+  },
+});
+
 const Callout = Node.create({
   name: "callout",
   group: "block",
@@ -383,6 +440,7 @@ function ToolbarButton({
 }
 
 export default function RichTextEditor({ value, onChange }: Props) {
+  const imageInputRef = useRef<HTMLInputElement | null>(null);
   const editor = useEditor({
     immediatelyRender: false,
     extensions: [
@@ -392,7 +450,11 @@ export default function RichTextEditor({ value, onChange }: Props) {
         },
         link: false,
         underline: false,
+        bulletList: false,
+        orderedList: false,
       }),
+      StyledBulletList,
+      StyledOrderedList,
       Underline,
       TaskList,
       TaskItem.configure({
@@ -448,6 +510,7 @@ export default function RichTextEditor({ value, onChange }: Props) {
               alt: file.name,
               title: file.name,
               align: "center",
+              width: "60%",
             });
 
             view.dispatch(
@@ -521,6 +584,52 @@ export default function RichTextEditor({ value, onChange }: Props) {
       .run();
   }
 
+  function addImageFile(file: File) {
+    if (!file.type.startsWith("image/")) return;
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      if (typeof reader.result !== "string") return;
+      safeEditor
+        .chain()
+        .focus()
+        .insertContent({
+          type: "image",
+          attrs: {
+            src: reader.result,
+            alt: file.name,
+            title: file.name,
+            align: "center",
+            width: "60%",
+          },
+        })
+        .run();
+    };
+    reader.readAsDataURL(file);
+  }
+
+  function setHeadingLevel(level: 1 | 2 | 3 | 4) {
+    if (safeEditor.isActive("heading", { level })) {
+      safeEditor.chain().focus().setParagraph().run();
+      return;
+    }
+    safeEditor.chain().focus().setHeading({ level }).run();
+  }
+
+  function setOrderedListStyle(style: string) {
+    if (!safeEditor.isActive("orderedList")) {
+      safeEditor.chain().focus().toggleOrderedList().run();
+    }
+    safeEditor.chain().focus().updateAttributes("orderedList", { listStyle: style }).run();
+  }
+
+  function setBulletListStyle(style: string) {
+    if (!safeEditor.isActive("bulletList")) {
+      safeEditor.chain().focus().toggleBulletList().run();
+    }
+    safeEditor.chain().focus().updateAttributes("bulletList", { listStyle: style }).run();
+  }
+
   function insertCallout(type: "info" | "warning") {
     const label = type === "warning" ? "Important note" : "Note";
     safeEditor
@@ -543,8 +652,23 @@ export default function RichTextEditor({ value, onChange }: Props) {
     safeEditor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run();
   }
 
+  const currentOrderedStyle = safeEditor.getAttributes("orderedList").listStyle || "decimal";
+  const currentBulletStyle = safeEditor.getAttributes("bulletList").listStyle || "disc";
+  const hasTextColor = Boolean(safeEditor.getAttributes("textStyle").color);
+
   return (
     <div className="overflow-hidden rounded border border-zinc-800 bg-black">
+      <input
+        ref={imageInputRef}
+        type="file"
+        accept="image/*"
+        className="hidden"
+        onChange={(event) => {
+          const file = event.target.files?.[0];
+          if (file) addImageFile(file);
+          event.currentTarget.value = "";
+        }}
+      />
       <div className="flex flex-wrap items-center border-b border-zinc-800 bg-zinc-950">
         <ToolbarButton
           title="Undo"
@@ -569,22 +693,22 @@ export default function RichTextEditor({ value, onChange }: Props) {
               if (selected === "Paragraph") {
                 safeEditor.chain().focus().setParagraph().run();
               } else if (selected === "Header Large") {
-                safeEditor.chain().focus().setHeading({ level: 1 }).run();
+                setHeadingLevel(1);
               } else if (selected === "Header Medium") {
-                safeEditor.chain().focus().setHeading({ level: 2 }).run();
+                setHeadingLevel(2);
               } else if (selected === "Header Small") {
-                safeEditor.chain().focus().setHeading({ level: 3 }).run();
+                setHeadingLevel(3);
               } else if (selected === "Header Tiny") {
-                safeEditor.chain().focus().setHeading({ level: 4 }).run();
+                setHeadingLevel(4);
               }
             }}
             className="rounded border border-zinc-700 bg-zinc-900 px-2 py-1 text-sm text-white outline-none"
           >
+            <option>Paragraph</option>
             <option>Header Large</option>
             <option>Header Medium</option>
             <option>Header Small</option>
             <option>Header Tiny</option>
-            <option>Paragraph</option>
           </select>
         </div>
 
@@ -620,55 +744,24 @@ export default function RichTextEditor({ value, onChange }: Props) {
           <Strikethrough className="h-4 w-4" />
         </ToolbarButton>
 
-        <ToolbarButton
-          title="Clear text color"
-          onClick={() => safeEditor.chain().focus().unsetColor().run()}
-        >
-          <CircleSlash className="h-4 w-4" />
-        </ToolbarButton>
+        <ColorDropdown
+          active={hasTextColor}
+          colors={TEXT_COLORS}
+          icon={<Type className="h-4 w-4" />}
+          label="Text color"
+          onClear={() => safeEditor.chain().focus().unsetColor().run()}
+          onSelect={(color) => safeEditor.chain().focus().setColor(color).run()}
+        />
 
-        <div className="flex h-10 items-center gap-1 border-r border-zinc-700 bg-zinc-900 px-2">
-          <span className="mr-1 text-xs font-semibold text-zinc-400">A</span>
-          {TEXT_COLORS.map((color) => (
-            <button
-              key={color.value}
-              type="button"
-              title={`${color.label} text`}
-              onClick={() => safeEditor.chain().focus().setColor(color.value).run()}
-              className={`h-5 w-5 rounded-full border transition hover:scale-110 ${
-                safeEditor.isActive("textStyle", { color: color.value })
-                  ? "border-white ring-2 ring-orange-400"
-                  : "border-zinc-600"
-              }`}
-              style={{ backgroundColor: color.value }}
-            />
-          ))}
-        </div>
-
-        <ToolbarButton
-          title="Clear highlight"
+        <ColorDropdown
           active={safeEditor.isActive("highlight")}
-          onClick={() => safeEditor.chain().focus().unsetHighlight().run()}
-        >
-          <Highlighter className="h-4 w-4" />
-        </ToolbarButton>
-
-        <div className="flex h-10 items-center gap-1 border-r border-zinc-700 bg-zinc-900 px-2">
-          {HIGHLIGHT_COLORS.map((color) => (
-            <button
-              key={color.value}
-              type="button"
-              title={`${color.label} highlight`}
-              onClick={() => safeEditor.chain().focus().setHighlight({ color: color.value }).run()}
-              className={`h-5 w-5 rounded border transition hover:scale-110 ${
-                safeEditor.isActive("highlight", { color: color.value })
-                  ? "border-white ring-2 ring-orange-400"
-                  : "border-zinc-600"
-              }`}
-              style={{ backgroundColor: color.value }}
-            />
-          ))}
-        </div>
+          colors={HIGHLIGHT_COLORS}
+          icon={<Highlighter className="h-4 w-4" />}
+          label="Highlight"
+          onClear={() => safeEditor.chain().focus().unsetHighlight().run()}
+          onSelect={(color) => safeEditor.chain().focus().setHighlight({ color }).run()}
+          swatchShape="rounded"
+        />
 
         <ToolbarButton
           title="Superscript"
@@ -705,25 +798,25 @@ export default function RichTextEditor({ value, onChange }: Props) {
         <ToolbarButton
           title="Heading 1"
           active={safeEditor.isActive("heading", { level: 1 })}
-          onClick={() => safeEditor.chain().focus().setHeading({ level: 1 }).run()}
+          onClick={() => setHeadingLevel(1)}
         >
-          <Heading1 className="h-4 w-4" />
+          H1
         </ToolbarButton>
 
         <ToolbarButton
           title="Heading 2"
           active={safeEditor.isActive("heading", { level: 2 })}
-          onClick={() => safeEditor.chain().focus().setHeading({ level: 2 }).run()}
+          onClick={() => setHeadingLevel(2)}
         >
-          <Heading2 className="h-4 w-4" />
+          H2
         </ToolbarButton>
 
         <ToolbarButton
           title="Heading 3"
           active={safeEditor.isActive("heading", { level: 3 })}
-          onClick={() => safeEditor.chain().focus().setHeading({ level: 3 }).run()}
+          onClick={() => setHeadingLevel(3)}
         >
-          <Heading3 className="h-4 w-4" />
+          H3
         </ToolbarButton>
 
         <ToolbarButton
@@ -734,6 +827,21 @@ export default function RichTextEditor({ value, onChange }: Props) {
           <List className="h-4 w-4" />
         </ToolbarButton>
 
+        <div className="border-r border-zinc-700 bg-zinc-900 px-2 py-2">
+          <select
+            value={currentBulletStyle}
+            onChange={(event) => setBulletListStyle(event.target.value)}
+            className="max-w-24 rounded border border-zinc-700 bg-zinc-900 px-2 py-1 text-xs text-white outline-none"
+            title="Bullet style"
+          >
+            {BULLET_LIST_STYLES.map((style) => (
+              <option key={style.value} value={style.value}>
+                {style.label}
+              </option>
+            ))}
+          </select>
+        </div>
+
         <ToolbarButton
           title="Ordered List"
           active={safeEditor.isActive("orderedList")}
@@ -741,6 +849,21 @@ export default function RichTextEditor({ value, onChange }: Props) {
         >
           <ListOrdered className="h-4 w-4" />
         </ToolbarButton>
+
+        <div className="border-r border-zinc-700 bg-zinc-900 px-2 py-2">
+          <select
+            value={currentOrderedStyle}
+            onChange={(event) => setOrderedListStyle(event.target.value)}
+            className="max-w-28 rounded border border-zinc-700 bg-zinc-900 px-2 py-1 text-xs text-white outline-none"
+            title="Numbered list style"
+          >
+            {ORDERED_LIST_STYLES.map((style) => (
+              <option key={style.value} value={style.value}>
+                {style.label}
+              </option>
+            ))}
+          </select>
+        </div>
 
         <ToolbarButton
           title="Task List"
@@ -814,10 +937,17 @@ export default function RichTextEditor({ value, onChange }: Props) {
         </ToolbarButton>
 
         <ToolbarButton
-          title="Image"
-          onClick={addImage}
+          title="Upload image from computer"
+          onClick={() => imageInputRef.current?.click()}
         >
           <ImageIcon className="h-4 w-4" />
+        </ToolbarButton>
+
+        <ToolbarButton
+          title="Insert image from URL"
+          onClick={addImage}
+        >
+          URL
         </ToolbarButton>
 
         <ToolbarButton
@@ -853,5 +983,66 @@ export default function RichTextEditor({ value, onChange }: Props) {
         <EditorContent editor={safeEditor} />
       </div>
     </div>
+  );
+}
+
+function ColorDropdown({
+  active,
+  colors,
+  icon,
+  label,
+  onClear,
+  onSelect,
+  swatchShape = "rounded-full",
+}: {
+  active?: boolean;
+  colors: ColorOption[];
+  icon: React.ReactNode;
+  label: string;
+  onClear: () => void;
+  onSelect: (value: string) => void;
+  swatchShape?: string;
+}) {
+  return (
+    <details className="group relative border-r border-zinc-700">
+      <summary
+        title={label}
+        className={`flex h-10 cursor-pointer list-none items-center gap-2 px-3 text-sm transition marker:hidden [&::-webkit-details-marker]:hidden ${
+          active
+            ? "bg-zinc-700 text-white"
+            : "bg-zinc-900 text-zinc-300 hover:bg-zinc-800 hover:text-white"
+        }`}
+      >
+        {icon}
+        <ChevronDown className="h-3.5 w-3.5 text-zinc-500 transition group-open:rotate-180" />
+      </summary>
+      <div className="absolute left-0 top-11 z-30 min-w-48 rounded-xl border border-zinc-700 bg-zinc-950 p-2 shadow-2xl shadow-black/40">
+        <button
+          type="button"
+          onClick={onClear}
+          className="mb-2 flex w-full items-center gap-2 rounded-lg px-2 py-2 text-left text-xs font-semibold text-zinc-300 transition hover:bg-zinc-800 hover:text-white"
+        >
+          <CircleSlash className="h-3.5 w-3.5" />
+          Clear {label.toLowerCase()}
+        </button>
+        <div className="grid grid-cols-3 gap-1.5">
+          {colors.map((color) => (
+            <button
+              key={color.value}
+              type="button"
+              title={color.label}
+              onClick={() => onSelect(color.value)}
+              className="flex items-center gap-2 rounded-lg border border-zinc-800 p-2 text-xs text-zinc-300 transition hover:border-orange-300/60 hover:bg-zinc-900"
+            >
+              <span
+                className={`h-5 w-5 border border-zinc-600 ${swatchShape}`}
+                style={{ backgroundColor: color.value }}
+              />
+              <span className="sr-only">{color.label}</span>
+            </button>
+          ))}
+        </div>
+      </div>
+    </details>
   );
 }
