@@ -669,7 +669,7 @@ export default function RichTextEditor({ value, onChange }: Props) {
           event.currentTarget.value = "";
         }}
       />
-      <div className="flex flex-wrap items-center border-b border-zinc-800 bg-zinc-950">
+      <div className="sticky top-16 z-30 flex flex-wrap items-center border-b border-zinc-800 bg-zinc-950 shadow-lg shadow-black/30">
         <ToolbarButton
           title="Undo"
           onClick={() => safeEditor.chain().focus().undo().run()}
