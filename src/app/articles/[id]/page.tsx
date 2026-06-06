@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import AttachmentUpload from "@/components/attachment-upload";
 import ArticleUtilities from "@/components/article-utilities";
+import DeleteArticleButton from "@/components/delete-article-button";
 import {
   equalsFilter,
   getRecord,
@@ -106,13 +107,20 @@ export default async function ArticlePage({
           Articles
         </Link>
 
-        <Link
-          href={`/articles/${article.id}/edit`}
-          className="inline-flex h-9 items-center gap-2 rounded bg-orange-500 px-3 text-sm font-semibold text-white transition hover:bg-orange-400"
-        >
-          <Pencil className="h-4 w-4" />
-          Edit
-        </Link>
+        <div className="flex flex-wrap gap-2">
+          <DeleteArticleButton
+            articleId={article.id}
+            articleTitle={article.title}
+            companyId={article.company_id}
+          />
+          <Link
+            href={`/articles/${article.id}/edit`}
+            className="inline-flex h-9 items-center gap-2 rounded bg-orange-500 px-3 text-sm font-semibold text-white transition hover:bg-orange-400"
+          >
+            <Pencil className="h-4 w-4" />
+            Edit
+          </Link>
+        </div>
       </div>
 
       <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_360px]">
@@ -175,6 +183,19 @@ export default async function ArticlePage({
 
         <aside className="space-y-4">
           <ArticleUtilities articleId={article.id} title={article.title} />
+
+          <section className="rounded border border-red-500/20 bg-red-500/5 p-4">
+            <h2 className="text-sm font-semibold text-red-100">Danger Zone</h2>
+            <p className="mt-2 text-sm leading-6 text-red-200/75">
+              Permanently delete this KB article and its attached files.
+            </p>
+            <DeleteArticleButton
+              articleId={article.id}
+              articleTitle={article.title}
+              companyId={article.company_id}
+              className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded border border-red-500/35 bg-red-500/10 px-3 py-2.5 text-sm font-semibold text-red-200 transition hover:border-red-400 hover:bg-red-500/15 disabled:opacity-50"
+            />
+          </section>
 
           <section className="rounded border border-slate-800 bg-slate-950/80">
             <div className="flex items-center gap-2 border-b border-slate-800 px-4 py-3">

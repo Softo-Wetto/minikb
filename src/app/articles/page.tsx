@@ -9,7 +9,7 @@ import {
   searchFilter,
 } from "@/lib/pocketbase/server";
 import { requireUser } from "@/lib/auth";
-import type { Article } from "@/types/database";
+import type { Article, Company } from "@/types/database";
 
 type SearchParams = Promise<{
   q?: string;
@@ -60,17 +60,32 @@ export default async function ArticlesPage({
   const sortDirection = dir === "asc" ? "" : "-";
 
   let articles: Article[] = [];
+  let companyRows: Pick<Company, "id" | "name">[] = [];
   let error: Error | null = null;
 
   try {
     const response = await getRecords<Article>("articles", {
-      fields: "id,title,category,summary,created_at,updated_at,is_pinned,is_internal,is_draft",
+      fields: "id,title,category,summary,company_id,created_at,updated_at,is_pinned,is_internal,is_draft",
       sort: `${sortDirection}${sortField}`,
       filter: filters.join(" && "),
     });
     articles = response.items;
   } catch (caught) {
     error = caught as Error;
+  }
+
+  try {
+    const response = await getRecords<Company>("companies", {
+      fields: "id,name",
+      sort: "name",
+      perPage: 500,
+    });
+    companyRows = response.items.map((company) => ({
+      id: company.id,
+      name: company.name,
+    }));
+  } catch {
+    companyRows = [];
   }
 
   const folders = await getArticleFolderOptions();
@@ -183,6 +198,7 @@ export default async function ArticlesPage({
           <ArticleTable
             articles={articles}
             categories={categories}
+            companyNames={Object.fromEntries(companyRows.map((company) => [company.id, company.name]))}
             filters={{ q, category, visibility, status, companyId, sort, dir }}
           />
         </div>

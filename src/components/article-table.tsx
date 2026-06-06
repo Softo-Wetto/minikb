@@ -4,6 +4,7 @@ import {
   ArrowRight,
   ArrowUp,
   ArrowUpDown,
+  Building2,
   Check,
   ChevronDown,
   FileText,
@@ -15,6 +16,7 @@ import {
 type Article = {
   id: string;
   title: string;
+  company_id?: string | null;
   category?: string | null;
   summary?: string | null;
   created_at: string | null;
@@ -160,10 +162,12 @@ function HeaderFilterMenu({
 export default function ArticleTable({
   articles,
   categories,
+  companyNames,
   filters,
 }: {
   articles: Article[];
   categories: string[];
+  companyNames: Record<string, string>;
   filters: TableFilters;
 }) {
   const categoryOptions = [
@@ -243,6 +247,18 @@ export default function ArticleTable({
                   >
                     {article.title}
                   </Link>
+                  {!filters.companyId && article.company_id ? (
+                    <div className="mt-2">
+                      <Link
+                        href={`/companies/${article.company_id}`}
+                        className="inline-flex items-center gap-1.5 rounded-full border border-sky-400/25 bg-sky-400/10 px-2 py-0.5 text-xs font-semibold text-sky-100 transition hover:border-sky-300/50 hover:text-white"
+                        title="Client-specific knowledge base article"
+                      >
+                        <Building2 className="h-3 w-3" />
+                        Client KB: {companyNames[article.company_id] || "Linked company"}
+                      </Link>
+                    </div>
+                  ) : null}
                   {article.summary && (
                     <p className="mt-1 line-clamp-1 text-xs text-slate-500">
                       {article.summary}

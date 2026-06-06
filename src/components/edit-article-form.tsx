@@ -13,6 +13,7 @@ import {
   Tags,
 } from "lucide-react";
 import ArticleFolderPicker from "@/components/article-folder-picker";
+import DeleteArticleButton from "@/components/delete-article-button";
 import RichTextEditor from "@/components/rich-text-editor";
 import { useUnsavedChangesGuard } from "@/hooks/use-unsaved-changes-guard";
 import { updateRecord } from "@/lib/pocketbase/client";
@@ -338,6 +339,19 @@ export default function EditArticleForm({
               />
             </label>
           </div>
+        </section>
+
+        <section className="rounded border border-red-500/20 bg-red-500/5 p-4">
+          <h2 className="text-sm font-semibold text-red-100">Danger Zone</h2>
+          <p className="mt-2 text-sm leading-6 text-red-200/75">
+            Permanently delete this KB article and its attached files.
+          </p>
+          <DeleteArticleButton
+            articleId={article.id}
+            articleTitle={article.title}
+            companyId={article.company_id}
+            className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded border border-red-500/35 bg-red-500/10 px-3 py-2.5 text-sm font-semibold text-red-200 transition hover:border-red-400 hover:bg-red-500/15 disabled:opacity-50"
+          />
         </section>
       </aside>
     </form>
