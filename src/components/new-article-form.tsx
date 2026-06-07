@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
+import AiArticleDraftButton from "@/components/ai-article-draft-button";
 import ArticleFolderPicker from "@/components/article-folder-picker";
 import RichTextEditor from "@/components/rich-text-editor";
 import { useUnsavedChangesGuard } from "@/hooks/use-unsaved-changes-guard";
@@ -119,6 +120,29 @@ export default function NewArticleForm({
   return (
     <form onSubmit={(event) => saveArticle(event, primaryDraft)} className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_340px]">
       <section className="min-w-0 rounded border border-zinc-800 bg-black">
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-zinc-800 px-4 py-3">
+          <div>
+            <p className="text-sm font-semibold text-white">Need a starting point?</p>
+            <p className="text-sm text-zinc-500">
+              Generate a structured draft, then refine it before publishing.
+            </p>
+          </div>
+          <AiArticleDraftButton
+            currentTitle={title}
+            currentSummary={summary}
+            currentContent={content}
+            currentCategory={category}
+            currentTags={tags}
+            onApply={(draft) => {
+              setTitle(draft.title);
+              setSummary(draft.summary);
+              setContent(draft.content);
+              setCategory(draft.category || "General");
+              setTags(draft.tags.join(", "));
+            }}
+          />
+        </div>
+
         <div className="border-b border-zinc-800 px-4 py-3">
           <label className="mb-2 block text-sm font-medium text-white">
             Name<span className="text-red-400">*</span>

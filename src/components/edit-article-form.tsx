@@ -12,6 +12,7 @@ import {
   Save,
   Tags,
 } from "lucide-react";
+import AiArticleDraftButton from "@/components/ai-article-draft-button";
 import ArticleFolderPicker from "@/components/article-folder-picker";
 import DeleteArticleButton from "@/components/delete-article-button";
 import RichTextEditor from "@/components/rich-text-editor";
@@ -178,6 +179,29 @@ export default function EditArticleForm({
               {copied ? "Copied" : "Copy Link"}
             </button>
           </div>
+        </div>
+
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-800 px-4 py-3">
+          <div>
+            <p className="text-sm font-semibold text-white">AI draft assistant</p>
+            <p className="text-sm text-slate-500">
+              Generate a new draft from a prompt and apply it to this article.
+            </p>
+          </div>
+          <AiArticleDraftButton
+            currentTitle={title}
+            currentSummary={summary}
+            currentContent={content}
+            currentCategory={category}
+            currentTags={tags}
+            onApply={(draft) => {
+              setTitle(draft.title);
+              setSummary(draft.summary);
+              setContent(draft.content);
+              setCategory(draft.category || "General");
+              setTags(draft.tags.join(", "));
+            }}
+          />
         </div>
 
         <div className="border-b border-slate-800 px-4 py-4">

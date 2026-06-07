@@ -281,6 +281,7 @@ button {
 .prose h2,
 .prose h3,
 .prose h4,
+.prose h5,
 .prose strong {
   color: #fff;
 }
@@ -342,6 +343,16 @@ button {
   letter-spacing: 0.04em;
   text-transform: uppercase;
   margin: 0.9rem 0 0.55rem;
+}
+
+.tiptap h5 {
+  font-size: 0.85rem;
+  line-height: 1.35;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #cbd5e1;
+  margin: 0.8rem 0 0.5rem;
 }
 
 .tiptap ul,
@@ -665,6 +676,16 @@ button {
   margin: 1rem 0 0.65rem;
 }
 
+.article-content h5 {
+  font-size: 0.85rem;
+  line-height: 1.35;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #cbd5e1;
+  margin: 0.9rem 0 0.55rem;
+}
+
 .article-content ul {
   list-style: disc;
   padding-left: 1.75rem;
@@ -771,7 +792,8 @@ button {
   .article-content h1,
   .article-content h2,
   .article-content h3,
-  .article-content h4 {
+  .article-content h4,
+  .article-content h5 {
     color: #111827 !important;
   }
 }

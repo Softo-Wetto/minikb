@@ -96,6 +96,17 @@ const BULLET_LIST_STYLES = [
   { label: "Square", value: "square" },
 ];
 
+const HEADING_OPTIONS = [
+  { label: "Paragraph", value: "paragraph", description: "Normal text" },
+  { label: "H1", value: "1", description: "Page heading" },
+  { label: "H2", value: "2", description: "Section heading" },
+  { label: "H3", value: "3", description: "Subsection heading" },
+  { label: "H4", value: "4", description: "Small heading" },
+  { label: "H5", value: "5", description: "Tiny heading" },
+] as const;
+
+type HeadingValue = (typeof HEADING_OPTIONS)[number]["value"];
+
 type ColorOption = {
   label: string;
   value: string;
@@ -446,7 +457,7 @@ export default function RichTextEditor({ value, onChange }: Props) {
     extensions: [
       StarterKit.configure({
         heading: {
-          levels: [1, 2, 3, 4],
+          levels: [1, 2, 3, 4, 5],
         },
         link: false,
         underline: false,
@@ -536,13 +547,14 @@ export default function RichTextEditor({ value, onChange }: Props) {
     }
   }, [editor, value]);
 
-  const headingLabel = useMemo(() => {
-    if (!editor) return "Paragraph";
-    if (editor.isActive("heading", { level: 1 })) return "Header Large";
-    if (editor.isActive("heading", { level: 2 })) return "Header Medium";
-    if (editor.isActive("heading", { level: 3 })) return "Header Small";
-    if (editor.isActive("heading", { level: 4 })) return "Header Tiny";
-    return "Paragraph";
+  const headingValue = useMemo<HeadingValue>(() => {
+    if (!editor) return "paragraph";
+    if (editor.isActive("heading", { level: 1 })) return "1";
+    if (editor.isActive("heading", { level: 2 })) return "2";
+    if (editor.isActive("heading", { level: 3 })) return "3";
+    if (editor.isActive("heading", { level: 4 })) return "4";
+    if (editor.isActive("heading", { level: 5 })) return "5";
+    return "paragraph";
   }, [editor]);
 
   if (!editor) {
@@ -608,11 +620,19 @@ export default function RichTextEditor({ value, onChange }: Props) {
     reader.readAsDataURL(file);
   }
 
-  function setHeadingLevel(level: 1 | 2 | 3 | 4) {
+  function setHeadingValue(value: HeadingValue) {
+    if (value === "paragraph") {
+      safeEditor.chain().focus().setParagraph().run();
+      return;
+    }
+
+    const level = Number(value) as 1 | 2 | 3 | 4 | 5;
+
     if (safeEditor.isActive("heading", { level })) {
       safeEditor.chain().focus().setParagraph().run();
       return;
     }
+
     safeEditor.chain().focus().setHeading({ level }).run();
   }
 
@@ -684,33 +704,7 @@ export default function RichTextEditor({ value, onChange }: Props) {
           <Redo2 className="h-4 w-4" />
         </ToolbarButton>
 
-        <div className="border-r border-zinc-700 px-2 py-2">
-          <select
-            value={headingLabel}
-            onChange={(e) => {
-              const selected = e.target.value;
-
-              if (selected === "Paragraph") {
-                safeEditor.chain().focus().setParagraph().run();
-              } else if (selected === "Header Large") {
-                setHeadingLevel(1);
-              } else if (selected === "Header Medium") {
-                setHeadingLevel(2);
-              } else if (selected === "Header Small") {
-                setHeadingLevel(3);
-              } else if (selected === "Header Tiny") {
-                setHeadingLevel(4);
-              }
-            }}
-            className="rounded border border-zinc-700 bg-zinc-900 px-2 py-1 text-sm text-white outline-none"
-          >
-            <option>Paragraph</option>
-            <option>Header Large</option>
-            <option>Header Medium</option>
-            <option>Header Small</option>
-            <option>Header Tiny</option>
-          </select>
-        </div>
+        <HeadingDropdown activeValue={headingValue} onSelect={setHeadingValue} />
 
         <ToolbarButton
           title="Bold"
@@ -793,30 +787,6 @@ export default function RichTextEditor({ value, onChange }: Props) {
           onClick={() => safeEditor.chain().focus().toggleCodeBlock().run()}
         >
           {"{}"}
-        </ToolbarButton>
-
-        <ToolbarButton
-          title="Heading 1"
-          active={safeEditor.isActive("heading", { level: 1 })}
-          onClick={() => setHeadingLevel(1)}
-        >
-          H1
-        </ToolbarButton>
-
-        <ToolbarButton
-          title="Heading 2"
-          active={safeEditor.isActive("heading", { level: 2 })}
-          onClick={() => setHeadingLevel(2)}
-        >
-          H2
-        </ToolbarButton>
-
-        <ToolbarButton
-          title="Heading 3"
-          active={safeEditor.isActive("heading", { level: 3 })}
-          onClick={() => setHeadingLevel(3)}
-        >
-          H3
         </ToolbarButton>
 
         <ToolbarButton
@@ -983,6 +953,50 @@ export default function RichTextEditor({ value, onChange }: Props) {
         <EditorContent editor={safeEditor} />
       </div>
     </div>
+  );
+}
+
+function HeadingDropdown({
+  activeValue,
+  onSelect,
+}: {
+  activeValue: HeadingValue;
+  onSelect: (value: HeadingValue) => void;
+}) {
+  const activeLabel =
+    HEADING_OPTIONS.find((option) => option.value === activeValue)?.label || "Paragraph";
+
+  return (
+    <details className="group relative border-r border-zinc-700">
+      <summary
+        title="Text style"
+        className={`flex h-10 min-w-24 cursor-pointer list-none items-center justify-between gap-2 px-3 text-sm font-semibold transition marker:hidden [&::-webkit-details-marker]:hidden ${
+          activeValue !== "paragraph"
+            ? "bg-zinc-700 text-white"
+            : "bg-zinc-900 text-zinc-300 hover:bg-zinc-800 hover:text-white"
+        }`}
+      >
+        <span>{activeLabel}</span>
+        <ChevronDown className="h-3.5 w-3.5 text-zinc-500 transition group-open:rotate-180" />
+      </summary>
+      <div className="absolute left-0 top-11 z-30 w-52 rounded-xl border border-zinc-700 bg-zinc-950 p-2 shadow-2xl shadow-black/40">
+        {HEADING_OPTIONS.map((option) => (
+          <button
+            key={option.value}
+            type="button"
+            onClick={() => onSelect(option.value)}
+            className={`flex w-full items-center justify-between gap-3 rounded-lg px-3 py-2 text-left transition ${
+              activeValue === option.value
+                ? "bg-orange-500/15 text-orange-100"
+                : "text-zinc-300 hover:bg-zinc-800 hover:text-white"
+            }`}
+          >
+            <span className="text-sm font-semibold">{option.label}</span>
+            <span className="text-xs text-zinc-500">{option.description}</span>
+          </button>
+        ))}
+      </div>
+    </details>
   );
 }
 
