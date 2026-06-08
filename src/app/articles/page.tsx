@@ -17,6 +17,7 @@ type SearchParams = Promise<{
   visibility?: string;
   status?: string;
   companyId?: string;
+  scope?: string;
   sort?: string;
   dir?: string;
 }>;
@@ -34,6 +35,7 @@ export default async function ArticlesPage({
     visibility = "",
     status = "",
     companyId = "",
+    scope = "all",
     sort = "updated",
     dir = "desc",
   } = await searchParams;
@@ -44,7 +46,15 @@ export default async function ArticlesPage({
   }
 
   if (category.trim()) filters.push(equalsFilter("category", category));
-  if (companyId.trim()) filters.push(equalsFilter("company_id", companyId));
+  const useSingleCompany = companyId.trim() && (scope === "single" || scope === "all");
+
+  if (useSingleCompany) {
+    filters.push(equalsFilter("company_id", companyId));
+  } else if (scope === "central") {
+    filters.push('company_id = ""');
+  } else if (scope === "clients") {
+    filters.push('company_id != ""');
+  }
   if (visibility === "internal") filters.push("is_internal = true");
   if (visibility === "public") filters.push("is_internal = false");
   if (status === "draft") filters.push("is_draft = true");
@@ -90,6 +100,15 @@ export default async function ArticlesPage({
 
   const folders = await getArticleFolderOptions();
   const categories = folders.map((folder) => folder.name);
+  const pageScopeLabel = useSingleCompany
+    ? "Single Client Knowledge Base"
+    : scope === "central"
+      ? "Central Knowledge Base"
+      : scope === "clients"
+        ? "All Client Knowledge Bases"
+        : "All Knowledge Bases";
+  const formScope = companyId && scope !== "central" && scope !== "clients" ? "single" : scope;
+  const formCompanyId = formScope === "single" ? companyId : "";
 
   return (
     <div className="space-y-4">
@@ -98,7 +117,7 @@ export default async function ArticlesPage({
           <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-orange-300/0 via-orange-300/40 to-sky-300/0" />
           <div>
             <p className="text-xs font-semibold uppercase tracking-wide text-orange-300">
-              {companyId ? "Client Knowledge Base" : "Central Knowledge Base"}
+              {pageScopeLabel}
             </p>
             <h1 className="mt-2 text-3xl font-semibold tracking-tight text-white">
               Articles
@@ -128,8 +147,7 @@ export default async function ArticlesPage({
         </div>
 
         <div className="border-b border-slate-800 p-4">
-          <form className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_220px_180px_170px_130px]">
-            {companyId && <input type="hidden" name="companyId" value={companyId} />}
+          <form className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_190px_220px_180px_170px_160px_130px]">
             <input type="hidden" name="sort" value={sort} />
             <input type="hidden" name="dir" value={dir} />
 
@@ -143,6 +161,30 @@ export default async function ArticlesPage({
                 className="h-10 w-full rounded-xl border border-slate-800 bg-slate-900/70 pl-9 pr-3 text-sm text-white outline-none transition placeholder:text-slate-500 focus:border-orange-500/70"
               />
             </label>
+
+            <select
+              name="scope"
+              defaultValue={formScope}
+              className="h-10 rounded-xl border border-slate-800 bg-slate-900/70 px-3 text-sm text-white outline-none transition focus:border-orange-500/70"
+            >
+              <option value="all">All KBs</option>
+              <option value="central">Central KB only</option>
+              <option value="clients">All client KBs</option>
+              <option value="single">Single client KB</option>
+            </select>
+
+            <select
+              name="companyId"
+              defaultValue={formCompanyId}
+              className="h-10 rounded-xl border border-slate-800 bg-slate-900/70 px-3 text-sm text-white outline-none transition focus:border-orange-500/70"
+            >
+              <option value="">Select client when needed</option>
+              {companyRows.map((company) => (
+                <option key={company.id} value={company.id}>
+                  {company.name}
+                </option>
+              ))}
+            </select>
 
             <select
               name="category"
@@ -199,7 +241,7 @@ export default async function ArticlesPage({
             articles={articles}
             categories={categories}
             companyNames={Object.fromEntries(companyRows.map((company) => [company.id, company.name]))}
-            filters={{ q, category, visibility, status, companyId, sort, dir }}
+            filters={{ q, category, visibility, status, companyId, scope, sort, dir }}
           />
         </div>
       </section>

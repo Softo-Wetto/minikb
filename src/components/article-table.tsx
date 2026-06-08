@@ -32,6 +32,7 @@ type TableFilters = {
   visibility?: string;
   status?: string;
   companyId?: string;
+  scope?: string;
   sort?: string;
   dir?: string;
 };

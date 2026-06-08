@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   EditorContent,
   NodeViewWrapper,
@@ -452,6 +452,7 @@ function ToolbarButton({
 
 export default function RichTextEditor({ value, onChange }: Props) {
   const imageInputRef = useRef<HTMLInputElement | null>(null);
+  const [toolbarVersion, setToolbarVersion] = useState(0);
   const editor = useEditor({
     immediatelyRender: false,
     extensions: [
@@ -536,6 +537,19 @@ export default function RichTextEditor({ value, onChange }: Props) {
     },
     onUpdate: ({ editor }) => {
       onChange(editor.getHTML());
+      setToolbarVersion((version) => version + 1);
+    },
+    onSelectionUpdate: () => {
+      setToolbarVersion((version) => version + 1);
+    },
+    onTransaction: () => {
+      setToolbarVersion((version) => version + 1);
+    },
+    onFocus: () => {
+      setToolbarVersion((version) => version + 1);
+    },
+    onBlur: () => {
+      setToolbarVersion((version) => version + 1);
     },
   });
 
@@ -547,7 +561,8 @@ export default function RichTextEditor({ value, onChange }: Props) {
     }
   }, [editor, value]);
 
-  const headingValue = useMemo<HeadingValue>(() => {
+  const headingValue: HeadingValue = (() => {
+    void toolbarVersion;
     if (!editor) return "paragraph";
     if (editor.isActive("heading", { level: 1 })) return "1";
     if (editor.isActive("heading", { level: 2 })) return "2";
@@ -555,7 +570,7 @@ export default function RichTextEditor({ value, onChange }: Props) {
     if (editor.isActive("heading", { level: 4 })) return "4";
     if (editor.isActive("heading", { level: 5 })) return "5";
     return "paragraph";
-  }, [editor]);
+  })();
 
   if (!editor) {
     return (

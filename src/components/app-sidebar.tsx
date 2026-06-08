@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname, useSearchParams } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import {
   BookOpenText,
@@ -27,6 +27,7 @@ type ClientSection = "overview" | "articles" | "assets";
 
 export default function AppSidebar({ role }: { role: string }) {
   const pathname = usePathname();
+  const router = useRouter();
   const searchParams = useSearchParams();
   const [hash, setHash] = useState("");
   const canEdit = role === "admin" || role === "editor";
@@ -197,9 +198,15 @@ export default function AppSidebar({ role }: { role: string }) {
   const workspaceLabel = clientId ? "Client Workspace" : "Central Workspace";
 
   function handleClientSectionClick(section: ClientSection) {
-    if (!clientId || pathname !== `/companies/${clientId}`) return;
+    if (!clientId) return;
 
     const nextHash = section === "overview" ? "" : `#${section}`;
+
+    if (pathname !== `/companies/${clientId}`) {
+      router.push(`/companies/${clientId}${nextHash}`);
+      return;
+    }
+
     setHash(nextHash);
     window.history.replaceState(null, "", `/companies/${clientId}${nextHash}`);
 
@@ -262,34 +269,40 @@ export default function AppSidebar({ role }: { role: string }) {
                   ? pathname === "/"
                   : pathname === item.href || pathname.startsWith(`${item.href}/`);
 
+              const className = cn(
+                "group flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm transition",
+                active
+                  ? clientId
+                    ? "bg-sky-400/12 text-sky-100 ring-1 ring-sky-400/25"
+                    : "bg-orange-500/12 text-orange-200 ring-1 ring-orange-500/25"
+                  : "text-slate-400 hover:bg-slate-900/85 hover:text-white"
+              );
+              const iconClassName = cn(
+                "h-4 w-4",
+                active
+                  ? clientId
+                    ? "text-sky-200"
+                    : "text-orange-300"
+                  : "text-slate-500 group-hover:text-slate-300"
+              );
+
+              if ("section" in item) {
+                return (
+                  <button
+                    key={item.href}
+                    type="button"
+                    onClick={() => handleClientSectionClick(item.section as ClientSection)}
+                    className={className}
+                  >
+                    <Icon className={iconClassName} />
+                    {item.label}
+                  </button>
+                );
+              }
+
               return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  onClick={() => {
-                    if ("section" in item) {
-                      handleClientSectionClick(item.section as ClientSection);
-                    }
-                  }}
-                  className={cn(
-                    "group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition",
-                    active
-                      ? clientId
-                        ? "bg-sky-400/12 text-sky-100 ring-1 ring-sky-400/25"
-                        : "bg-orange-500/12 text-orange-200 ring-1 ring-orange-500/25"
-                      : "text-slate-400 hover:bg-slate-900/85 hover:text-white"
-                  )}
-                >
-                  <Icon
-                    className={cn(
-                      "h-4 w-4",
-                      active
-                        ? clientId
-                          ? "text-sky-200"
-                          : "text-orange-300"
-                        : "text-slate-500 group-hover:text-slate-300"
-                    )}
-                  />
+                <Link key={item.href} href={item.href} className={className}>
+                  <Icon className={iconClassName} />
                   {item.label}
                 </Link>
               );

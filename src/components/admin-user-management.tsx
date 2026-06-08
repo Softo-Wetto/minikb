@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { CheckCircle2, Search, Shield, UserCircle2 } from "lucide-react";
+import { CheckCircle2, Search, Shield, UserCircle2, UserPlus } from "lucide-react";
 import { createRecord, getCurrentAuth, updateRecord } from "@/lib/pocketbase/client";
 import type { AppRole, RawPocketBaseRecord, UserProfile } from "@/types/database";
 
@@ -32,7 +32,15 @@ export default function AdminUserManagement({ users }: { users: AdminUser[] }) {
   const [query, setQuery] = useState("");
   const [roleFilter, setRoleFilter] = useState<AppRole | "all">("all");
   const [savingUserId, setSavingUserId] = useState<string | null>(null);
+  const [creatingUser, setCreatingUser] = useState(false);
   const [message, setMessage] = useState("");
+  const [newUser, setNewUser] = useState({
+    email: "",
+    username: "",
+    full_name: "",
+    password: "",
+    role: "viewer" as AppRole,
+  });
 
   const filteredUsers = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -74,6 +82,79 @@ export default function AdminUserManagement({ users }: { users: AdminUser[] }) {
       setMessage(error instanceof Error ? error.message : "Unable to update user role.");
     } finally {
       setSavingUserId(null);
+    }
+  }
+
+  async function createUser(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setMessage("");
+
+    const email = newUser.email.trim();
+    const username =
+      newUser.username.trim() ||
+      email.split("@")[0]?.replace(/[^a-zA-Z0-9_-]/g, "_") ||
+      "user";
+    const fullName = newUser.full_name.trim();
+    const password = newUser.password;
+
+    if (!email || !password) {
+      setMessage("Email and password are required.");
+      return;
+    }
+
+    if (password.length < 8) {
+      setMessage("Password must be at least 8 characters.");
+      return;
+    }
+
+    setCreatingUser(true);
+
+    try {
+      const auth = getCurrentAuth();
+      const created = await createRecord<RawPocketBaseRecord & UserProfile>("users", {
+        email,
+        username,
+        full_name: fullName,
+        role: newUser.role,
+        password,
+        passwordConfirm: password,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      });
+
+      await createRecord("activity_logs", {
+        action: "user.created",
+        target_collection: "users",
+        record_id: created.id,
+        record_label: created.email || created.full_name || created.username || "User",
+        detail: `Created user with ${newUser.role} role`,
+        ...(auth?.user.id ? { actor: auth.user.id } : {}),
+        created_at: new Date().toISOString(),
+      });
+
+      setItems((current) => [
+        {
+          id: created.id,
+          username: created.username,
+          full_name: created.full_name,
+          email: created.email,
+          role: created.role,
+          created_at: created.created_at,
+        },
+        ...current,
+      ]);
+      setNewUser({
+        email: "",
+        username: "",
+        full_name: "",
+        password: "",
+        role: "viewer",
+      });
+      setMessage(`Created ${email} as ${newUser.role}.`);
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "Unable to create user.");
+    } finally {
+      setCreatingUser(false);
     }
   }
 
@@ -124,6 +205,87 @@ export default function AdminUserManagement({ users }: { users: AdminUser[] }) {
           {message}
         </div>
       )}
+
+      <form
+        onSubmit={createUser}
+        className="grid gap-3 border-b border-slate-800 bg-slate-950/45 px-5 py-4 lg:grid-cols-[minmax(0,1fr)_160px_170px_170px_130px_auto]"
+      >
+        <label className="block">
+          <span className="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">
+            Email
+          </span>
+          <input
+            type="email"
+            value={newUser.email}
+            onChange={(event) => setNewUser((current) => ({ ...current, email: event.target.value }))}
+            placeholder="user@example.com"
+            className="h-10 w-full rounded-xl border border-slate-800 bg-slate-900/70 px-3 text-sm text-white outline-none transition placeholder:text-slate-500 focus:border-orange-500/70"
+          />
+        </label>
+
+        <label className="block">
+          <span className="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">
+            Username
+          </span>
+          <input
+            value={newUser.username}
+            onChange={(event) => setNewUser((current) => ({ ...current, username: event.target.value }))}
+            placeholder="optional"
+            className="h-10 w-full rounded-xl border border-slate-800 bg-slate-900/70 px-3 text-sm text-white outline-none transition placeholder:text-slate-500 focus:border-orange-500/70"
+          />
+        </label>
+
+        <label className="block">
+          <span className="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">
+            Full name
+          </span>
+          <input
+            value={newUser.full_name}
+            onChange={(event) => setNewUser((current) => ({ ...current, full_name: event.target.value }))}
+            placeholder="optional"
+            className="h-10 w-full rounded-xl border border-slate-800 bg-slate-900/70 px-3 text-sm text-white outline-none transition placeholder:text-slate-500 focus:border-orange-500/70"
+          />
+        </label>
+
+        <label className="block">
+          <span className="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">
+            Password
+          </span>
+          <input
+            type="password"
+            value={newUser.password}
+            onChange={(event) => setNewUser((current) => ({ ...current, password: event.target.value }))}
+            placeholder="8+ chars"
+            className="h-10 w-full rounded-xl border border-slate-800 bg-slate-900/70 px-3 text-sm text-white outline-none transition placeholder:text-slate-500 focus:border-orange-500/70"
+          />
+        </label>
+
+        <label className="block">
+          <span className="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">
+            Role
+          </span>
+          <select
+            value={newUser.role}
+            onChange={(event) => setNewUser((current) => ({ ...current, role: event.target.value as AppRole }))}
+            className="h-10 w-full rounded-xl border border-slate-800 bg-slate-900/70 px-3 text-sm text-white outline-none transition focus:border-orange-500/70"
+          >
+            {roleOptions.map((role) => (
+              <option key={role} value={role}>
+                {role}
+              </option>
+            ))}
+          </select>
+        </label>
+
+        <button
+          type="submit"
+          disabled={creatingUser}
+          className="inline-flex h-10 items-center justify-center gap-2 self-end rounded-xl bg-orange-500 px-4 text-sm font-semibold text-white transition hover:bg-orange-400 disabled:opacity-50"
+        >
+          <UserPlus className="h-4 w-4" />
+          {creatingUser ? "Adding..." : "Add user"}
+        </button>
+      </form>
 
       <div className="divide-y divide-slate-800">
         {filteredUsers.length === 0 && (
