@@ -178,7 +178,7 @@ export default async function ArticlesPage({
               defaultValue={formCompanyId}
               className="h-10 rounded-xl border border-slate-800 bg-slate-900/70 px-3 text-sm text-white outline-none transition focus:border-orange-500/70"
             >
-              <option value="">Select client when needed</option>
+              <option value="">Select client</option>
               {companyRows.map((company) => (
                 <option key={company.id} value={company.id}>
                   {company.name}
