@@ -101,10 +101,10 @@ export default async function ArticlePage({
       <div className="flex items-center justify-between gap-3">
         <Link
           href="/articles"
-          className="inline-flex items-center gap-2 text-sm text-slate-400 transition hover:text-white"
+          className="group inline-flex h-9 items-center gap-2 rounded border border-slate-800 bg-slate-950/70 px-3 text-sm font-medium text-slate-300 shadow-sm transition hover:border-orange-500/45 hover:bg-slate-900 hover:text-orange-200"
         >
-          <ArrowLeft className="h-4 w-4" />
-          Articles
+          <ArrowLeft className="h-4 w-4 transition group-hover:-translate-x-0.5" />
+          Back to articles
         </Link>
 
         <div className="flex flex-wrap gap-2">

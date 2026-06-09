@@ -430,7 +430,10 @@ export default function DashboardOverview({
           </div>
         </section>
 
-        <RecentViews />
+        <div className="grid gap-4 xl:col-span-2 2xl:grid-cols-2">
+          <RecentViews />
+          <QuickLaunch />
+        </div>
       </div>
     </div>
   );
@@ -526,6 +529,73 @@ function AttentionList({
             </div>
           </Link>
         ))}
+      </div>
+    </section>
+  );
+}
+
+function QuickLaunch() {
+  const actions = [
+    {
+      label: "Write a KB article",
+      detail: "Create a central or client-specific procedure.",
+      href: "/articles/new",
+      icon: BookOpenText,
+    },
+    {
+      label: "Add an asset",
+      detail: "Track servers, endpoints, services, or URLs.",
+      href: "/assets/new",
+      icon: Server,
+    },
+    {
+      label: "Add a client",
+      detail: "Create a workspace for a company.",
+      href: "/companies/new",
+      icon: Building2,
+    },
+    {
+      label: "Manage folders",
+      detail: "Organize KB categories and folder structure.",
+      href: "/articles/folders",
+      icon: FolderKanban,
+    },
+  ];
+
+  return (
+    <section className="surface-card rounded-2xl">
+      <div className="flex items-center justify-between border-b border-slate-800 px-4 py-3">
+        <div>
+          <h2 className="text-sm font-semibold text-white">Quick Launch</h2>
+          <p className="mt-1 text-xs text-slate-500">
+            Common actions from the dashboard.
+          </p>
+        </div>
+        <ArrowRight className="h-4 w-4 text-orange-300" />
+      </div>
+
+      <div className="grid gap-2 p-3 sm:grid-cols-2">
+        {actions.map((action) => {
+          const Icon = action.icon;
+
+          return (
+            <Link
+              key={action.href}
+              href={action.href}
+              className="group rounded border border-slate-800 bg-slate-900/35 p-3 transition hover:border-orange-500/40 hover:bg-orange-500/10"
+            >
+              <div className="mb-3 flex h-9 w-9 items-center justify-center rounded bg-slate-950 ring-1 ring-slate-800 transition group-hover:ring-orange-500/40">
+                <Icon className="h-4 w-4 text-orange-300" />
+              </div>
+              <div className="text-sm font-semibold text-white">
+                {action.label}
+              </div>
+              <p className="mt-1 text-xs leading-5 text-slate-500">
+                {action.detail}
+              </p>
+            </Link>
+          );
+        })}
       </div>
     </section>
   );

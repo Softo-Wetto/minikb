@@ -3,6 +3,8 @@
 import { useMemo, useState } from "react";
 import {
   Archive,
+  Check,
+  Copy,
   Download,
   ExternalLink,
   FileText,
@@ -70,6 +72,7 @@ export default function AttachmentManager({
 }: AttachmentManagerProps) {
   const [items, setItems] = useState(attachments);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [copiedId, setCopiedId] = useState<string | null>(null);
 
   const totalSize = useMemo(
     () => items.reduce((sum, item) => sum + (item.file_size ?? 0), 0),
@@ -82,6 +85,15 @@ export default function AttachmentManager({
       file.id,
       file.file || file.file_path
     );
+  }
+
+  async function copyLink(file: AttachmentItem) {
+    const url = fileUrl(file);
+    if (!url) return;
+
+    await navigator.clipboard.writeText(url);
+    setCopiedId(file.id);
+    window.setTimeout(() => setCopiedId(null), 1800);
   }
 
   async function deleteAttachment(file: AttachmentItem) {
@@ -175,7 +187,7 @@ export default function AttachmentManager({
                     href={url}
                     target="_blank"
                     rel="noreferrer"
-                    className="inline-flex h-7 items-center justify-center gap-1.5 rounded border border-slate-700 px-2 text-[11px] font-semibold text-slate-300 transition hover:border-orange-400/60 hover:text-orange-200"
+                    className="inline-flex h-7 items-center justify-center gap-1.5 rounded border border-slate-700 bg-slate-950/40 px-2 text-[11px] font-semibold text-slate-300 transition hover:border-orange-400/60 hover:bg-slate-900 hover:text-orange-200"
                   >
                     <ExternalLink className="h-3 w-3" />
                     Open
@@ -183,11 +195,23 @@ export default function AttachmentManager({
                   <a
                     href={url}
                     download={file.file_name}
-                    className="inline-flex h-7 items-center justify-center gap-1.5 rounded border border-slate-700 px-2 text-[11px] font-semibold text-slate-300 transition hover:border-sky-400/60 hover:text-sky-200"
+                    className="inline-flex h-7 items-center justify-center gap-1.5 rounded border border-slate-700 bg-slate-950/40 px-2 text-[11px] font-semibold text-slate-300 transition hover:border-orange-400/60 hover:bg-slate-900 hover:text-orange-200"
                   >
                     <Download className="h-3 w-3" />
                     Download
                   </a>
+                  <button
+                    type="button"
+                    onClick={() => void copyLink(file)}
+                    className="inline-flex h-7 items-center justify-center gap-1.5 rounded border border-slate-700 bg-slate-950/40 px-2 text-[11px] font-semibold text-slate-300 transition hover:border-orange-400/60 hover:bg-slate-900 hover:text-orange-200"
+                  >
+                    {copiedId === file.id ? (
+                      <Check className="h-3 w-3" />
+                    ) : (
+                      <Copy className="h-3 w-3" />
+                    )}
+                    {copiedId === file.id ? "Copied" : "Copy"}
+                  </button>
                 </>
               )}
 
@@ -196,7 +220,7 @@ export default function AttachmentManager({
                   type="button"
                   onClick={() => void deleteAttachment(file)}
                   disabled={isDeleting}
-                  className="inline-flex h-7 items-center justify-center gap-1.5 rounded border border-red-500/35 px-2 text-[11px] font-semibold text-red-200 transition hover:border-red-400 hover:bg-red-500/10 disabled:cursor-not-allowed disabled:opacity-60"
+                  className="inline-flex h-7 items-center justify-center gap-1.5 rounded border border-slate-700 bg-slate-950/40 px-2 text-[11px] font-semibold text-slate-300 transition hover:border-red-400/70 hover:bg-red-500/10 hover:text-red-200 disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   {isDeleting ? (
                     <Loader2 className="h-3 w-3 animate-spin" />
