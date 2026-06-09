@@ -3,8 +3,6 @@
 import { useMemo, useState } from "react";
 import {
   Archive,
-  Check,
-  Copy,
   Download,
   ExternalLink,
   FileText,
@@ -72,7 +70,6 @@ export default function AttachmentManager({
 }: AttachmentManagerProps) {
   const [items, setItems] = useState(attachments);
   const [deletingId, setDeletingId] = useState<string | null>(null);
-  const [copiedId, setCopiedId] = useState<string | null>(null);
 
   const totalSize = useMemo(
     () => items.reduce((sum, item) => sum + (item.file_size ?? 0), 0),
@@ -85,15 +82,6 @@ export default function AttachmentManager({
       file.id,
       file.file || file.file_path
     );
-  }
-
-  async function copyLink(file: AttachmentItem) {
-    const url = fileUrl(file);
-    if (!url) return;
-
-    await navigator.clipboard.writeText(url);
-    setCopiedId(file.id);
-    window.setTimeout(() => setCopiedId(null), 1800);
   }
 
   async function deleteAttachment(file: AttachmentItem) {
@@ -146,11 +134,11 @@ export default function AttachmentManager({
         return (
           <div
             key={file.id}
-            className="group rounded border border-slate-800 bg-slate-900/45 p-3 transition hover:border-slate-700 hover:bg-slate-900/70"
+            className="group rounded border border-slate-800 bg-slate-900/40 p-2.5 transition hover:border-slate-700 hover:bg-slate-900/65"
           >
-            <div className="flex items-start gap-3">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded bg-slate-950 ring-1 ring-slate-800">
-                <Icon className={`h-5 w-5 ${kind.tone}`} />
+            <div className="flex items-start gap-2.5">
+              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded bg-slate-950 ring-1 ring-slate-800">
+                <Icon className={`h-4 w-4 ${kind.tone}`} />
               </div>
 
               <div className="min-w-0 flex-1">
@@ -159,20 +147,20 @@ export default function AttachmentManager({
                     href={url}
                     target="_blank"
                     rel="noreferrer"
-                    className="block truncate text-sm font-semibold text-slate-100 transition hover:text-orange-200"
+                    className="block truncate text-sm font-medium text-slate-100 transition hover:text-orange-200"
                     title={file.file_name}
                   >
                     {file.file_name}
                   </a>
                 ) : (
                   <div
-                    className="truncate text-sm font-semibold text-slate-100"
+                    className="truncate text-sm font-medium text-slate-100"
                     title={file.file_name}
                   >
                     {file.file_name}
                   </div>
                 )}
-                <div className="mt-1 flex flex-wrap gap-2 text-xs text-slate-500">
+                <div className="mt-0.5 flex flex-wrap gap-1.5 text-[11px] text-slate-500">
                   <span>{kind.label}</span>
                   <span aria-hidden="true">/</span>
                   <span>{formatFileSize(file.file_size)}</span>
@@ -180,38 +168,26 @@ export default function AttachmentManager({
               </div>
             </div>
 
-            <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
+            <div className="mt-2 grid grid-cols-2 gap-2">
               {url && (
                 <>
                   <a
                     href={url}
                     target="_blank"
                     rel="noreferrer"
-                    className="inline-flex h-8 items-center justify-center gap-1.5 rounded border border-slate-700 px-2 text-xs font-semibold text-slate-300 transition hover:border-orange-400/60 hover:text-orange-200"
+                    className="inline-flex h-7 items-center justify-center gap-1.5 rounded border border-slate-700 px-2 text-[11px] font-semibold text-slate-300 transition hover:border-orange-400/60 hover:text-orange-200"
                   >
-                    <ExternalLink className="h-3.5 w-3.5" />
+                    <ExternalLink className="h-3 w-3" />
                     Open
                   </a>
                   <a
                     href={url}
                     download={file.file_name}
-                    className="inline-flex h-8 items-center justify-center gap-1.5 rounded border border-slate-700 px-2 text-xs font-semibold text-slate-300 transition hover:border-sky-400/60 hover:text-sky-200"
+                    className="inline-flex h-7 items-center justify-center gap-1.5 rounded border border-slate-700 px-2 text-[11px] font-semibold text-slate-300 transition hover:border-sky-400/60 hover:text-sky-200"
                   >
-                    <Download className="h-3.5 w-3.5" />
+                    <Download className="h-3 w-3" />
                     Download
                   </a>
-                  <button
-                    type="button"
-                    onClick={() => void copyLink(file)}
-                    className="inline-flex h-8 items-center justify-center gap-1.5 rounded border border-slate-700 px-2 text-xs font-semibold text-slate-300 transition hover:border-emerald-400/60 hover:text-emerald-200"
-                  >
-                    {copiedId === file.id ? (
-                      <Check className="h-3.5 w-3.5" />
-                    ) : (
-                      <Copy className="h-3.5 w-3.5" />
-                    )}
-                    {copiedId === file.id ? "Copied" : "Copy"}
-                  </button>
                 </>
               )}
 
@@ -220,12 +196,12 @@ export default function AttachmentManager({
                   type="button"
                   onClick={() => void deleteAttachment(file)}
                   disabled={isDeleting}
-                  className="inline-flex h-8 items-center justify-center gap-1.5 rounded border border-red-500/35 px-2 text-xs font-semibold text-red-200 transition hover:border-red-400 hover:bg-red-500/10 disabled:cursor-not-allowed disabled:opacity-60"
+                  className="inline-flex h-7 items-center justify-center gap-1.5 rounded border border-red-500/35 px-2 text-[11px] font-semibold text-red-200 transition hover:border-red-400 hover:bg-red-500/10 disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   {isDeleting ? (
-                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    <Loader2 className="h-3 w-3 animate-spin" />
                   ) : (
-                    <Trash2 className="h-3.5 w-3.5" />
+                    <Trash2 className="h-3 w-3" />
                   )}
                   Delete
                 </button>
