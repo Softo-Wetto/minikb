@@ -12,13 +12,12 @@ import {
   Pencil,
   Server,
 } from "lucide-react";
-import AttachmentUpload from "@/components/attachment-upload";
+import AttachmentManager from "@/components/attachment-manager";
 import {
   equalsFilter,
   getRecord,
   getRecords,
 } from "@/lib/pocketbase/server";
-import { getPocketBaseFileUrl } from "@/lib/pocketbase/config";
 import { requireUser } from "@/lib/auth";
 import { canEdit } from "@/lib/roles";
 import { formatDate } from "@/lib/utils";
@@ -238,44 +237,12 @@ export default async function AssetPage({
                 Files ({attachments.length})
               </h2>
             </div>
-            <div className="space-y-3 p-4">
-              {canEdit(profile.role) && <AttachmentUpload assetId={asset.id} />}
-
-              {attachments.length === 0 && (
-                <div className="rounded border border-dashed border-slate-800 px-4 py-6 text-center text-sm text-slate-500">
-                  No files attached.
-                </div>
-              )}
-
-              {attachments.map((file) => {
-                const fileUrl = getPocketBaseFileUrl(
-                  "attachments",
-                  file.id,
-                  file.file || file.file_path
-                );
-
-                return (
-                  <div key={file.id} className="rounded border border-slate-800 bg-slate-900/40 px-3 py-2">
-                    {fileUrl ? (
-                      <a
-                        href={fileUrl}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="text-sm font-medium text-orange-200 hover:text-orange-100"
-                      >
-                        {file.file_name}
-                      </a>
-                    ) : (
-                      <div className="text-sm font-medium text-slate-100">
-                        {file.file_name}
-                      </div>
-                    )}
-                    <div className="mt-1 text-xs text-slate-500">
-                      {file.mime_type || "File"}
-                    </div>
-                  </div>
-                );
-              })}
+            <div className="p-4">
+              <AttachmentManager
+                attachments={attachments}
+                assetId={asset.id}
+                canManage={canEdit(profile.role)}
+              />
             </div>
           </section>
         </aside>
