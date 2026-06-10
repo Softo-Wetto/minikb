@@ -6,6 +6,7 @@ import {
   ExternalLink,
   FilePlus2,
   HardDrive,
+  Pencil,
   Plus,
   Server,
 } from "lucide-react";
@@ -86,6 +87,13 @@ export default async function CompanyPage({
 
         {canEdit(profile.role) && (
           <div className="flex flex-wrap gap-2">
+            <Link
+              href={`/companies/${company.id}/edit`}
+              className="inline-flex h-9 items-center gap-2 rounded border border-slate-700 px-3 text-sm font-semibold text-slate-200 transition hover:border-orange-500/50 hover:text-orange-200"
+            >
+              <Pencil className="h-4 w-4" />
+              Edit Company
+            </Link>
             <Link
               href={`/articles/new?companyId=${company.id}`}
               className="inline-flex h-9 items-center gap-2 rounded border border-slate-700 px-3 text-sm font-semibold text-slate-200 transition hover:border-orange-500/50 hover:text-orange-200"
@@ -278,6 +286,15 @@ export default async function CompanyPage({
                 <Server className="h-4 w-4" />
                 Add asset
               </Link>
+              {canEdit(profile.role) && (
+                <Link
+                  href={`/companies/${company.id}/edit`}
+                  className="inline-flex h-9 items-center gap-2 rounded border border-slate-700 px-3 text-sm font-semibold text-slate-200 transition hover:border-orange-500/50 hover:text-orange-200"
+                >
+                  <Pencil className="h-4 w-4" />
+                  Edit company details
+                </Link>
+              )}
               {company.website && (
                 <a
                   href={company.website}
