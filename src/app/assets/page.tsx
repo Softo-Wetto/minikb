@@ -1,6 +1,8 @@
 import Link from "next/link";
 import {
   Building2,
+  CalendarClock,
+  Filter,
   ExternalLink,
   HardDrive,
   Plus,
@@ -15,6 +17,18 @@ function labelForType(value?: string | null) {
   return (value || "asset")
     .replace(/_/g, " ")
     .replace(/\b\w/g, (letter) => letter.toUpperCase());
+}
+
+function formatDate(value?: string | null) {
+  if (!value) return "Recently";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "Recently";
+
+  return date.toLocaleDateString("en-AU", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  });
 }
 
 export default async function AssetsPage({
@@ -61,10 +75,14 @@ export default async function AssetsPage({
       || (asset.description || "").toLowerCase().includes(query)
       || companyName.toLowerCase().includes(query);
     const matchesType = !type || asset.asset_type === type;
-    const matchesCompany = !companyId || asset.company_id === companyId;
+    const matchesCompany = !companyId
+      || (companyId === "unassigned" ? !asset.company_id : asset.company_id === companyId);
 
     return matchesQuery && matchesType && matchesCompany;
   });
+  const assignedCount = assets.filter((asset) => asset.company_id).length;
+  const unassignedCount = assets.length - assignedCount;
+  const hasFilters = Boolean(query || type || companyId);
 
   return (
     <div className="space-y-4">
@@ -90,6 +108,33 @@ export default async function AssetsPage({
             <Plus className="h-4 w-4" />
             New Asset
           </Link>
+        </div>
+
+        <div className="grid gap-px border-b border-slate-800 bg-slate-800 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="bg-slate-950/70 p-4">
+            <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+              Total Assets
+            </p>
+            <p className="mt-2 text-2xl font-semibold text-white">{assets.length}</p>
+          </div>
+          <div className="bg-slate-950/70 p-4">
+            <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+              Linked Clients
+            </p>
+            <p className="mt-2 text-2xl font-semibold text-white">{assignedCount}</p>
+          </div>
+          <div className="bg-slate-950/70 p-4">
+            <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+              Unassigned
+            </p>
+            <p className="mt-2 text-2xl font-semibold text-white">{unassignedCount}</p>
+          </div>
+          <div className="bg-slate-950/70 p-4">
+            <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+              Asset Types
+            </p>
+            <p className="mt-2 text-2xl font-semibold text-white">{types.length}</p>
+          </div>
         </div>
 
         <form className="grid gap-3 border-b border-slate-800 p-4 lg:grid-cols-[minmax(0,1fr)_220px_260px_auto]">
@@ -122,6 +167,7 @@ export default async function AssetsPage({
             className="h-10 rounded-xl border border-slate-800 bg-slate-900/70 px-3 text-sm text-white outline-none transition focus:border-orange-500/70"
           >
             <option value="">All Companies</option>
+            <option value="unassigned">Unassigned assets</option>
             {companies.map((company) => (
               <option key={company.id} value={company.id}>
                 {company.name}
@@ -136,6 +182,40 @@ export default async function AssetsPage({
             Filter
           </button>
         </form>
+
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-800 bg-slate-950/45 px-4 py-3">
+          <div className="flex flex-wrap items-center gap-2 text-xs text-slate-500">
+            <Filter className="h-3.5 w-3.5" />
+            <span>
+              Showing {filteredAssets.length} of {assets.length}
+            </span>
+            {type && (
+              <span className="rounded-full border border-slate-700 px-2 py-1 text-slate-300">
+                {labelForType(type)}
+              </span>
+            )}
+            {companyId && (
+              <span className="rounded-full border border-slate-700 px-2 py-1 text-slate-300">
+                {companyId === "unassigned"
+                  ? "Unassigned"
+                  : companyById.get(companyId) || "Selected company"}
+              </span>
+            )}
+            {query && (
+              <span className="rounded-full border border-slate-700 px-2 py-1 text-slate-300">
+                Search: {q}
+              </span>
+            )}
+          </div>
+          {hasFilters && (
+            <Link
+              href="/assets"
+              className="text-xs font-semibold text-orange-300 transition hover:text-orange-200"
+            >
+              Clear filters
+            </Link>
+          )}
+        </div>
 
         {error && (
           <div className="border-b border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-200">
@@ -153,11 +233,12 @@ export default async function AssetsPage({
               <Link
                 key={asset.id}
                 href={`/assets/${asset.id}`}
-                className="interactive-surface group rounded-2xl border border-slate-800 bg-slate-900/35 p-4 transition hover:border-orange-500/40 hover:bg-slate-900/70"
+                className="interactive-surface group relative overflow-hidden rounded-2xl border border-slate-800 bg-slate-900/35 p-4 transition hover:border-orange-500/40 hover:bg-slate-900/70"
               >
+                <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-orange-300/0 via-orange-300/30 to-sky-300/0 opacity-0 transition group-hover:opacity-100" />
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex min-w-0 items-center gap-3">
-                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-orange-500/10 text-orange-300 ring-1 ring-orange-500/20">
+                    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-slate-950 to-slate-900 text-orange-300 ring-1 ring-orange-500/20 transition group-hover:ring-orange-400/45">
                       <Server className="h-5 w-5" />
                     </div>
                     <div className="min-w-0">
@@ -172,20 +253,26 @@ export default async function AssetsPage({
                   <HardDrive className="h-4 w-4 text-slate-600 transition group-hover:text-orange-300" />
                 </div>
 
-                <div className="mt-4 flex items-center gap-2 text-xs text-slate-500">
-                  <Building2 className="h-3.5 w-3.5" />
-                  <span className="truncate">
-                    {asset.company_id
-                      ? companyById.get(asset.company_id) || "Linked company"
-                      : "Unassigned"}
+                <div className="mt-4 flex flex-wrap items-center gap-2 text-xs">
+                  <span className="inline-flex min-w-0 items-center gap-1.5 rounded-full border border-slate-700 bg-slate-950/55 px-2.5 py-1 text-slate-400">
+                    <Building2 className="h-3.5 w-3.5 shrink-0 text-slate-500" />
+                    <span className="truncate">
+                      {asset.company_id
+                        ? companyById.get(asset.company_id) || "Linked company"
+                        : "Unassigned"}
+                    </span>
+                  </span>
+                  <span className="inline-flex items-center gap-1.5 rounded-full border border-slate-700 bg-slate-950/55 px-2.5 py-1 text-slate-400">
+                    <CalendarClock className="h-3.5 w-3.5 text-slate-500" />
+                    {formatDate(asset.updated_at || asset.created_at)}
                   </span>
                 </div>
 
-                <p className="mt-4 line-clamp-3 text-sm leading-6 text-slate-400">
+                <p className="mt-4 min-h-[3rem] line-clamp-2 text-sm leading-6 text-slate-400">
                   {asset.description || "No description yet."}
                 </p>
 
-                <div className="mt-4 inline-flex items-center gap-2 text-xs font-semibold text-orange-300 opacity-0 transition group-hover:opacity-100">
+                <div className="mt-4 inline-flex items-center gap-2 text-xs font-semibold text-orange-300 transition group-hover:translate-x-0.5">
                   View asset
                   <ExternalLink className="h-3.5 w-3.5" />
                 </div>
