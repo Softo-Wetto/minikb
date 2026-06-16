@@ -167,25 +167,28 @@ export default function DashboardOverview({
           </div>
         </div>
 
-        <div className="grid gap-px bg-slate-800 sm:grid-cols-2 xl:grid-cols-4">
+        <div className="stagger-children grid gap-px bg-slate-800 sm:grid-cols-2 xl:grid-cols-4">
           {primaryStats.map((item) => {
             const Icon = item.icon;
             return (
               <Link
                 key={item.label}
                 href={item.href}
-                className="group bg-slate-950/80 p-5 transition hover:bg-slate-900/75"
+                className="group relative bg-slate-950/80 p-5 transition hover:bg-slate-900/75"
               >
+                <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-orange-300/0 to-transparent opacity-0 transition duration-300 group-hover:via-orange-300/40 group-hover:opacity-100" />
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-slate-400">{item.label}</span>
-                  <Icon className="h-4 w-4 text-orange-300" />
+                  <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-orange-500/10 ring-1 ring-orange-500/20 transition group-hover:bg-orange-500/18 group-hover:ring-orange-500/35">
+                    <Icon className="h-3.5 w-3.5 text-orange-300" />
+                  </div>
                 </div>
                 <div className="mt-3 text-3xl font-semibold text-white">
                   {item.value}
                 </div>
                 <div className="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-slate-500 transition group-hover:text-orange-300">
                   Open
-                  <ArrowRight className="h-3.5 w-3.5" />
+                  <ArrowRight className="h-3.5 w-3.5 transition group-hover:translate-x-0.5" />
                 </div>
               </Link>
             );
@@ -304,11 +307,11 @@ export default function DashboardOverview({
                 <div key={type}>
                   <div className="mb-1 flex justify-between gap-3 text-sm">
                     <span className="text-slate-300">{assetTypeLabel(type)}</span>
-                    <span className="text-slate-500">{count}</span>
+                    <span className="font-semibold text-orange-300">{count}</span>
                   </div>
-                  <div className="h-2 rounded bg-slate-900">
+                  <div className="h-1.5 overflow-hidden rounded-full bg-slate-900">
                     <div
-                      className="h-full rounded bg-orange-500"
+                      className="progress-bar-animated h-full rounded-full bg-gradient-to-r from-orange-500 to-amber-400 shadow-[0_0_6px_rgba(249,115,22,0.35)]"
                       style={{ width: `${percent(count, assetCount)}%` }}
                     />
                   </div>
@@ -419,12 +422,15 @@ export default function DashboardOverview({
               <Link
                 key={article.id}
                 href={`/articles/${article.id}`}
-                className="block rounded border border-slate-800 bg-slate-900/40 px-3 py-3 transition hover:border-orange-500/40 hover:bg-orange-500/10"
+                className="group flex items-center justify-between gap-2 rounded-xl border border-slate-800 bg-slate-900/40 px-3 py-2.5 transition hover:border-orange-500/40 hover:bg-orange-500/[0.07]"
               >
-                <div className="text-sm font-medium text-white">{article.title}</div>
-                <div className="mt-1 text-xs text-slate-500">
-                  {article.category || "General"}
+                <div className="min-w-0">
+                  <div className="truncate text-sm font-medium text-white group-hover:text-orange-100">{article.title}</div>
+                  <div className="mt-0.5 text-xs text-slate-500">
+                    {article.category || "General"}
+                  </div>
                 </div>
+                <ArrowRight className="h-3.5 w-3.5 shrink-0 text-slate-600 transition group-hover:translate-x-0.5 group-hover:text-orange-300" />
               </Link>
             ))}
           </div>
@@ -453,12 +459,18 @@ function HealthCard({
   tone: "good" | "warn";
 }) {
   return (
-    <div className="surface-card interactive-surface rounded-2xl p-4">
+    <div className={`surface-card card-lift rounded-2xl p-4 ${tone === "good" ? "surface-good" : "surface-warn"}`}>
       <div className="flex items-center justify-between gap-3">
         <p className="text-sm text-slate-400">{label}</p>
-        <Icon className={tone === "good" ? "h-4 w-4 text-emerald-300" : "h-4 w-4 text-orange-300"} />
+        <div className={`flex h-7 w-7 items-center justify-center rounded-lg ring-1 transition ${
+          tone === "good"
+            ? "bg-emerald-400/10 ring-emerald-400/20"
+            : "bg-orange-500/10 ring-orange-500/20"
+        }`}>
+          <Icon className={tone === "good" ? "h-3.5 w-3.5 text-emerald-300" : "h-3.5 w-3.5 text-orange-300"} />
+        </div>
       </div>
-      <p className="mt-3 text-2xl font-semibold text-white">{value}</p>
+      <p className={`mt-3 text-2xl font-semibold ${tone === "good" ? "text-emerald-100" : "text-white"}`}>{value}</p>
       <p className="mt-1 text-xs leading-5 text-slate-500">{detail}</p>
     </div>
   );
@@ -474,10 +486,10 @@ function MiniStat({
   icon: typeof BookOpenText;
 }) {
   return (
-    <div className="bg-slate-950/95 p-4">
+    <div className="group bg-slate-950/95 p-4 transition hover:bg-slate-900/70">
       <div className="flex items-center justify-between">
         <span className="text-xs text-slate-500">{label}</span>
-        <Icon className="h-4 w-4 text-slate-500" />
+        <Icon className="h-4 w-4 text-slate-600 transition group-hover:text-orange-300" />
       </div>
       <p className="mt-2 text-2xl font-semibold text-white">{value}</p>
     </div>
@@ -509,9 +521,9 @@ function AttentionList({
         </div>
         <AlertTriangle className="h-4 w-4 text-orange-300" />
       </div>
-      <div className="space-y-2 p-3">
+      <div className="space-y-1.5 p-3">
         {items.length === 0 && (
-          <div className="rounded border border-dashed border-slate-800 px-4 py-6 text-sm text-slate-400">
+          <div className="rounded-xl border border-dashed border-slate-800 px-4 py-6 text-center text-sm text-emerald-300/70">
             {empty}
           </div>
         )}
@@ -519,14 +531,17 @@ function AttentionList({
           <Link
             key={item.id}
             href={item.href}
-            className="block rounded border border-slate-800 bg-slate-900/35 px-3 py-3 transition hover:border-orange-500/40 hover:bg-orange-500/10"
+            className="group flex items-center justify-between gap-2 rounded-xl border border-slate-800 bg-slate-900/35 px-3 py-2.5 transition hover:border-orange-500/40 hover:bg-orange-500/[0.07]"
           >
-            <div className="truncate text-sm font-medium text-white">
-              {item.label}
+            <div className="min-w-0">
+              <div className="truncate text-sm font-medium text-white">
+                {item.label}
+              </div>
+              <div className="mt-0.5 truncate text-xs text-slate-500">
+                {item.detail}
+              </div>
             </div>
-            <div className="mt-1 truncate text-xs text-slate-500">
-              {item.detail}
-            </div>
+            <ArrowRight className="h-3.5 w-3.5 shrink-0 text-slate-600 transition group-hover:translate-x-0.5 group-hover:text-orange-300" />
           </Link>
         ))}
       </div>
@@ -582,10 +597,11 @@ function QuickLaunch() {
             <Link
               key={action.href}
               href={action.href}
-              className="group rounded border border-slate-800 bg-slate-900/35 p-3 transition hover:border-orange-500/40 hover:bg-orange-500/10"
+              className="group relative overflow-hidden rounded-xl border border-slate-800 bg-slate-900/35 p-3 transition hover:border-orange-500/40 hover:bg-orange-500/[0.07]"
             >
-              <div className="mb-3 flex h-9 w-9 items-center justify-center rounded bg-slate-950 ring-1 ring-slate-800 transition group-hover:ring-orange-500/40">
-                <Icon className="h-4 w-4 text-orange-300" />
+              <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-orange-300/0 to-transparent transition group-hover:via-orange-300/35" />
+              <div className="mb-3 flex h-9 w-9 items-center justify-center rounded-lg bg-slate-950 ring-1 ring-slate-800 transition group-hover:bg-orange-500/12 group-hover:ring-orange-500/35 group-hover:shadow-[0_0_14px_rgba(249,115,22,0.15)]">
+                <Icon className="h-4 w-4 text-orange-300 transition group-hover:scale-110" />
               </div>
               <div className="text-sm font-semibold text-white">
                 {action.label}

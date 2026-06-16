@@ -296,6 +296,7 @@ export default function AppHeader({ profile }: { profile: Profile | null }) {
 
   return (
     <header className="sticky top-0 z-40 border-b border-slate-800/80 bg-slate-950/88 shadow-[0_12px_42px_rgba(0,0,0,0.22)] backdrop-blur-xl">
+      <div className="pointer-events-none absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-orange-400/20 to-transparent" />
       <div className="flex h-16 items-center justify-between gap-3 px-4 lg:px-5">
         <div className="flex min-w-0 items-center gap-3">
           <Link href="/" className="flex items-center gap-2">
@@ -431,7 +432,7 @@ export default function AppHeader({ profile }: { profile: Profile | null }) {
           {canEdit && (
             <Link
               href="/articles/new"
-              className="inline-flex h-10 items-center gap-2 rounded-2xl bg-gradient-to-r from-orange-500 to-amber-500 px-3 text-sm font-semibold text-white shadow-lg shadow-orange-950/30 transition hover:from-orange-400 hover:to-amber-400"
+              className="btn-shimmer btn-press inline-flex h-10 items-center gap-2 rounded-2xl bg-gradient-to-r from-orange-500 to-amber-500 px-3 text-sm font-semibold text-white shadow-lg shadow-orange-950/30 hover:from-orange-400 hover:to-amber-400"
             >
               <FilePlus2 className="h-4 w-4" />
               <span className="hidden sm:inline">New Article</span>
@@ -444,7 +445,7 @@ export default function AppHeader({ profile }: { profile: Profile | null }) {
               className="inline-flex h-10 items-center gap-1 rounded-2xl border border-slate-800 bg-slate-900/70 px-2.5 text-slate-200 transition hover:border-orange-500/40 hover:bg-slate-900"
             >
               <UserCircle2 className="h-5 w-5" />
-              <ChevronDown className="h-3.5 w-3.5 text-slate-500" />
+              <ChevronDown className={`h-3.5 w-3.5 text-slate-500 transition-transform duration-200 ${menuOpen ? "rotate-180" : ""}`} />
             </button>
 
             {menuOpen && (

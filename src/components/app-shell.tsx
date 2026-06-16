@@ -30,10 +30,11 @@ export default function AppShell({
     <>
       <AppHeader profile={profile} />
       <div className="relative flex min-h-[calc(100vh-4rem)] w-full overflow-hidden">
-        <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(rgba(148,163,184,0.035)_1px,transparent_1px),linear-gradient(90deg,rgba(148,163,184,0.035)_1px,transparent_1px)] bg-[size:42px_42px]" />
-        <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-orange-300/30 to-transparent" />
+        <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(rgba(148,163,184,0.028)_1px,transparent_1px),linear-gradient(90deg,rgba(148,163,184,0.028)_1px,transparent_1px)] bg-[size:42px_42px]" />
+        <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-orange-300/35 to-transparent" />
+        <div className="pointer-events-none absolute inset-x-0 top-0 h-64 bg-gradient-to-b from-orange-500/[0.025] to-transparent" />
         <AppSidebar role={profile?.role ?? "viewer"} />
-        <main className="relative min-w-0 flex-1 animate-fade-in px-4 py-4 lg:px-5">
+        <main className="relative min-w-0 flex-1 animate-slide-up px-4 py-4 lg:px-5" style={{ animationDuration: "240ms" }}>
           {children}
         </main>
       </div>

@@ -17,7 +17,7 @@ export default function MiniKbLogo({
     <span className={cn("inline-flex items-center gap-2", className)}>
       <span
         className={cn(
-          "group/logo relative grid h-8 w-8 shrink-0 place-items-center overflow-hidden rounded-md border border-orange-300/35 bg-slate-950 shadow-lg shadow-orange-950/30",
+          "group/logo relative grid h-8 w-8 shrink-0 place-items-center overflow-hidden rounded-md border border-orange-300/35 bg-slate-950 shadow-lg shadow-orange-950/30 transition duration-300 hover:border-orange-300/55 hover:shadow-[0_0_18px_rgba(249,115,22,0.22)]",
           markClassName
         )}
         aria-hidden="true"
@@ -65,7 +65,8 @@ export default function MiniKbLogo({
       {showWordmark && (
         <span
           className={cn(
-            "hidden text-sm font-semibold tracking-wide text-white sm:block",
+            "hidden text-sm font-semibold tracking-wide sm:block",
+            "bg-gradient-to-r from-orange-300 via-amber-200 to-orange-400 bg-clip-text text-transparent",
             wordmarkClassName
           )}
         >
