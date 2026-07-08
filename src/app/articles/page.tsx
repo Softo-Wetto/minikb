@@ -2,6 +2,7 @@ import Link from "next/link";
 import { FilePlus2, Filter, FolderCog, Search } from "lucide-react";
 import KbCategoryList from "@/components/kb-category-list";
 import ArticleTable from "@/components/article-table";
+import FavoriteArticles from "@/components/favorite-articles";
 import { getArticleFolderOptions } from "@/lib/article-folders";
 import {
   equalsFilter,
@@ -236,7 +237,10 @@ export default async function ArticlesPage({
         )}
 
         <div className="grid gap-4 p-4 xl:grid-cols-[360px_minmax(0,1fr)]">
-          <KbCategoryList articles={articles} folderOrder={categories} />
+          <div className="space-y-4">
+            <FavoriteArticles />
+            <KbCategoryList articles={articles} folderOrder={categories} />
+          </div>
           <ArticleTable
             articles={articles}
             categories={categories}
