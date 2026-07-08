@@ -182,7 +182,12 @@ export default async function ArticlePage({
         </article>
 
         <aside className="space-y-4">
-          <ArticleUtilities articleId={article.id} title={article.title} />
+          <ArticleUtilities
+            articleId={article.id}
+            title={article.title}
+            category={article.category}
+            companyId={article.company_id}
+          />
 
           <section className="rounded border border-red-500/20 bg-red-500/5 p-4">
             <h2 className="text-sm font-semibold text-red-100">Danger Zone</h2>

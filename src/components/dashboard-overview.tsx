@@ -13,6 +13,7 @@ import {
   Server,
   ShieldCheck,
 } from "lucide-react";
+import FavoriteArticles from "@/components/favorite-articles";
 import RecentViews from "@/components/recent-views";
 
 type ArticleSummary = {
@@ -436,7 +437,8 @@ export default function DashboardOverview({
           </div>
         </section>
 
-        <div className="grid gap-4 xl:col-span-2 2xl:grid-cols-2">
+        <div className="grid gap-4 xl:col-span-2 2xl:grid-cols-3">
+          <FavoriteArticles />
           <RecentViews />
           <QuickLaunch />
         </div>

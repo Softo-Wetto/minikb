@@ -1,7 +1,17 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { Check, Copy, ListTree, Printer } from "lucide-react";
+import { useEffect, useState, useSyncExternalStore } from "react";
+import { Check, Copy, ListTree, Printer, Star } from "lucide-react";
+import type { FavoriteArticle } from "@/lib/article-favorites";
+
+import {
+  isFavoriteArticle,
+  readFavoriteArticles,
+  subscribeToFavoriteArticles,
+  toggleFavoriteArticle,
+} from "@/lib/article-favorites";
+
+const emptyFavoriteArticlesSnapshot: FavoriteArticle[] = [];
 
 type Heading = {
   id: string;
@@ -12,13 +22,24 @@ type Heading = {
 export default function ArticleUtilities({
   articleId,
   title,
+  category,
+  companyId,
 }: {
   articleId: string;
   title: string;
+  category?: string | null;
+  companyId?: string | null;
 }) {
   const [copied, setCopied] = useState(false);
   const [progress, setProgress] = useState(0);
   const [headings, setHeadings] = useState<Heading[]>([]);
+  const isCentralArticle = !companyId;
+  useSyncExternalStore(
+    subscribeToFavoriteArticles,
+    readFavoriteArticles,
+    () => emptyFavoriteArticlesSnapshot
+  );
+  const isFavorite = isFavoriteArticle(articleId);
 
   useEffect(() => {
     const stored = window.localStorage.getItem("minikb_recent_articles");
@@ -80,6 +101,14 @@ export default function ArticleUtilities({
     return () => window.removeEventListener("scroll", updateProgress);
   }, []);
 
+  function toggleFavorite() {
+    toggleFavoriteArticle({
+      id: articleId,
+      title,
+      category: category || "General",
+    });
+  }
+
   async function copyLink() {
     await navigator.clipboard.writeText(window.location.href);
     setCopied(true);
@@ -113,6 +142,21 @@ export default function ArticleUtilities({
           <Printer className="h-4 w-4" />
           Print
         </button>
+
+        {isCentralArticle ? (
+          <button
+            type="button"
+            onClick={toggleFavorite}
+            className={`inline-flex h-9 flex-1 items-center justify-center gap-2 rounded border text-sm font-medium transition ${
+              isFavorite
+                ? "border-orange-500/45 bg-orange-500/10 text-orange-100"
+                : "border-slate-700 bg-slate-900 text-slate-200 hover:border-orange-500/50 hover:text-white"
+            }`}
+          >
+            <Star className={`h-4 w-4 ${isFavorite ? "fill-orange-300 text-orange-300" : ""}`} />
+            {isFavorite ? "Favorited" : "Favorite"}
+          </button>
+        ) : null}
       </div>
 
       <div className="p-4">
