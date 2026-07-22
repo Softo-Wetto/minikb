@@ -293,6 +293,51 @@ async function main() {
   });
 
   await upsertCollection(token, {
+    name: "article_revisions",
+    type: "base",
+    ...editableRules(),
+    indexes: [
+      "CREATE UNIQUE INDEX idx_article_revisions_article_number ON article_revisions (article_id, revision_number)",
+    ],
+    fields: [
+      relation("article_id", articles.id, { required: true }),
+      number("revision_number", { required: true, onlyInt: true }),
+      text("title", { required: true }),
+      text("summary"),
+      editor("content", { required: true }),
+      relation("company_id", companies.id),
+      text("category"),
+      json("tags"),
+      bool("is_pinned"),
+      bool("is_internal"),
+      bool("is_draft"),
+      select("save_mode", ["publish", "draft"], { required: true }),
+      relation("created_by", users.id),
+      date("created_at"),
+    ],
+  });
+
+  await upsertCollection(token, {
+    name: "article_templates",
+    type: "base",
+    ...editableRules(),
+    fields: [
+      text("name", { required: true }),
+      text("description"),
+      text("title", { required: true }),
+      text("summary"),
+      editor("content", { required: true }),
+      relation("company_id", companies.id),
+      text("category"),
+      json("tags"),
+      bool("is_pinned"),
+      bool("is_internal"),
+      relation("created_by", users.id),
+      date("created_at"),
+      date("updated_at"),
+    ],
+  });
+  await upsertCollection(token, {
     name: "article_folders",
     type: "base",
     ...editableRules(),

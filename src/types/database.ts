@@ -4,6 +4,8 @@ export type {
   AppSetting,
   Article,
   ArticleFolder,
+  ArticleRevision,
+  ArticleTemplate,
   Asset,
   AssetType,
   Attachment,

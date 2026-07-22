@@ -63,6 +63,35 @@ export type Article = PocketBaseRecord & {
   created_by: string | null;
 };
 
+export type ArticleRevision = PocketBaseRecord & {
+  article_id: string;
+  revision_number: number;
+  title: string;
+  summary: string | null;
+  content: string;
+  company_id: string | null;
+  category: string | null;
+  tags: string[] | null;
+  is_pinned: boolean;
+  is_internal: boolean;
+  is_draft: boolean;
+  save_mode: "publish" | "draft";
+  created_by: string | null;
+};
+
+export type ArticleTemplate = PocketBaseRecord & {
+  name: string;
+  description: string | null;
+  title: string;
+  summary: string | null;
+  content: string;
+  company_id: string | null;
+  category: string | null;
+  tags: string[] | null;
+  is_pinned: boolean;
+  is_internal: boolean;
+  created_by: string | null;
+};
 export type ArticleFolder = PocketBaseRecord & {
   name: string;
   sort_order: number | null;

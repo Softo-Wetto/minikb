@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
+import type { ArticleTemplate } from "./pocketbase/types.ts";
 
 import {
   buildRecoveryKey,
@@ -65,19 +66,27 @@ test("keeps the newest thirty revisions", () => {
 });
 
 test("applies a template without erasing the selected company", () => {
-  const fields = templateToArticleFields(
-    {
-      title: "Server handover",
-      summary: "A repeatable handover checklist.",
-      content: "<p>Document credentials.</p>",
-      category: "Operations",
-      tags: ["handover", "server"],
-      company_id: null,
-      is_pinned: true,
-      is_internal: false,
-    },
-    "company_123"
-  );
+  const template = {
+    title: "Server handover",
+    summary: "A repeatable handover checklist.",
+    content: "<p>Document credentials.</p>",
+    category: "Operations",
+    tags: ["handover", "server"],
+    company_id: null,
+    is_pinned: true,
+    is_internal: false,
+  } as Pick<
+    ArticleTemplate,
+    | "title"
+    | "summary"
+    | "content"
+    | "category"
+    | "tags"
+    | "company_id"
+    | "is_pinned"
+    | "is_internal"
+  >;
+  const fields = templateToArticleFields(template, "company_123");
 
   assert.deepEqual(fields, {
     title: "Server handover",
