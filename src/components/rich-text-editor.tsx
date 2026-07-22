@@ -24,7 +24,6 @@ import { Table, TableCell, TableHeader, TableRow } from "@tiptap/extension-table
 import TaskList from "@tiptap/extension-task-list";
 import TaskItem from "@tiptap/extension-task-item";
 import {
-  AlertTriangle,
   Bold,
   CircleSlash,
   Italic,
@@ -32,9 +31,6 @@ import {
   Strikethrough,
   List,
   ListOrdered,
-  ListChecks,
-  Quote,
-  Code,
   AlignLeft,
   AlignCenter,
   AlignRight,
@@ -45,12 +41,8 @@ import {
   Image as ImageIcon,
   Undo2,
   Redo2,
-  Minus,
   Highlighter,
-  Info,
   Table as TableIcon,
-  Rows3,
-  Columns3,
   Trash2,
   ChevronDown,
   Type,
@@ -439,7 +431,7 @@ function ToolbarButton({
       type="button"
       onClick={onClick}
       title={title}
-      className={`inline-flex h-10 min-w-10 items-center justify-center border-r border-zinc-700 px-3 text-sm transition ${
+      className={`inline-flex h-9 min-w-9 shrink-0 items-center justify-center border-r border-zinc-800 px-2.5 text-sm transition ${
         active
           ? "bg-zinc-700 text-white"
           : "bg-zinc-900 text-zinc-300 hover:bg-zinc-800 hover:text-white"
@@ -687,6 +679,46 @@ export default function RichTextEditor({ value, onChange }: Props) {
     safeEditor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run();
   }
 
+  function runMoreAction(action: string) {
+    switch (action) {
+      case "inline-code":
+        safeEditor.chain().focus().toggleCode().run();
+        break;
+      case "code-block":
+        safeEditor.chain().focus().toggleCodeBlock().run();
+        break;
+      case "task-list":
+        safeEditor.chain().focus().toggleTaskList().run();
+        break;
+      case "quote":
+        safeEditor.chain().focus().toggleBlockquote().run();
+        break;
+      case "info-callout":
+        insertCallout("info");
+        break;
+      case "warning-callout":
+        insertCallout("warning");
+        break;
+      case "rule":
+        safeEditor.chain().focus().setHorizontalRule().run();
+        break;
+      case "image-url":
+        addImage();
+        break;
+      case "table-row":
+        safeEditor.chain().focus().addRowAfter().run();
+        break;
+      case "table-column":
+        safeEditor.chain().focus().addColumnAfter().run();
+        break;
+      case "delete-table":
+        safeEditor.chain().focus().deleteTable().run();
+        break;
+      default:
+        break;
+    }
+  }
+
   const currentOrderedStyle = safeEditor.getAttributes("orderedList").listStyle || "decimal";
   const currentBulletStyle = safeEditor.getAttributes("bulletList").listStyle || "disc";
   const hasTextColor = Boolean(safeEditor.getAttributes("textStyle").color);
@@ -704,266 +736,198 @@ export default function RichTextEditor({ value, onChange }: Props) {
           event.currentTarget.value = "";
         }}
       />
-      <div className="sticky top-0 z-50 flex flex-wrap items-center rounded-t border-b border-zinc-800 bg-zinc-950 shadow-lg shadow-black/30">
-        <ToolbarButton
-          title="Undo"
-          onClick={() => safeEditor.chain().focus().undo().run()}
-        >
-          <Undo2 className="h-4 w-4" />
-        </ToolbarButton>
-
-        <ToolbarButton
-          title="Redo"
-          onClick={() => safeEditor.chain().focus().redo().run()}
-        >
-          <Redo2 className="h-4 w-4" />
-        </ToolbarButton>
-
-        <HeadingDropdown activeValue={headingValue} onSelect={setHeadingValue} />
-
-        <ToolbarButton
-          title="Bold"
-          active={safeEditor.isActive("bold")}
-          onClick={() => safeEditor.chain().focus().toggleBold().run()}
-        >
-          <Bold className="h-4 w-4" />
-        </ToolbarButton>
-
-        <ToolbarButton
-          title="Italic"
-          active={safeEditor.isActive("italic")}
-          onClick={() => safeEditor.chain().focus().toggleItalic().run()}
-        >
-          <Italic className="h-4 w-4" />
-        </ToolbarButton>
-
-        <ToolbarButton
-          title="Underline"
-          active={safeEditor.isActive("underline")}
-          onClick={() => safeEditor.chain().focus().toggleUnderline().run()}
-        >
-          <UnderlineIcon className="h-4 w-4" />
-        </ToolbarButton>
-
-        <ToolbarButton
-          title="Strike"
-          active={safeEditor.isActive("strike")}
-          onClick={() => safeEditor.chain().focus().toggleStrike().run()}
-        >
-          <Strikethrough className="h-4 w-4" />
-        </ToolbarButton>
-
-        <ColorDropdown
-          active={hasTextColor}
-          colors={TEXT_COLORS}
-          icon={<Type className="h-4 w-4" />}
-          label="Text color"
-          onClear={() => safeEditor.chain().focus().unsetColor().run()}
-          onSelect={(color) => safeEditor.chain().focus().setColor(color).run()}
-        />
-
-        <ColorDropdown
-          active={safeEditor.isActive("highlight")}
-          colors={HIGHLIGHT_COLORS}
-          icon={<Highlighter className="h-4 w-4" />}
-          label="Highlight"
-          onClear={() => safeEditor.chain().focus().unsetHighlight().run()}
-          onSelect={(color) => safeEditor.chain().focus().setHighlight({ color }).run()}
-          swatchShape="rounded"
-        />
-
-        <ToolbarButton
-          title="Superscript"
-          active={safeEditor.isActive("superscript")}
-          onClick={() => safeEditor.chain().focus().toggleSuperscript().run()}
-        >
-          x2
-        </ToolbarButton>
-
-        <ToolbarButton
-          title="Subscript"
-          active={safeEditor.isActive("subscript")}
-          onClick={() => safeEditor.chain().focus().toggleSubscript().run()}
-        >
-          x_
-        </ToolbarButton>
-
-        <ToolbarButton
-          title="Inline Code"
-          active={safeEditor.isActive("code")}
-          onClick={() => safeEditor.chain().focus().toggleCode().run()}
-        >
-          <Code className="h-4 w-4" />
-        </ToolbarButton>
-
-        <ToolbarButton
-          title="Code Block"
-          active={safeEditor.isActive("codeBlock")}
-          onClick={() => safeEditor.chain().focus().toggleCodeBlock().run()}
-        >
-          {"{}"}
-        </ToolbarButton>
-
-        <ToolbarButton
-          title="Bullet List"
-          active={safeEditor.isActive("bulletList")}
-          onClick={() => safeEditor.chain().focus().toggleBulletList().run()}
-        >
-          <List className="h-4 w-4" />
-        </ToolbarButton>
-
-        <div className="border-r border-zinc-700 bg-zinc-900 px-2 py-2">
-          <select
-            value={currentBulletStyle}
-            onChange={(event) => setBulletListStyle(event.target.value)}
-            className="max-w-24 rounded border border-zinc-700 bg-zinc-900 px-2 py-1 text-xs text-white outline-none"
-            title="Bullet style"
+      <div
+        data-editor-toolbar
+        className="sticky top-16 z-30 rounded-t border-b border-zinc-800 bg-zinc-950 shadow-lg shadow-black/30"
+      >
+        <div className="flex w-full flex-nowrap items-center overflow-x-auto lg:overflow-visible">
+          <ToolbarButton
+            title="Undo"
+            onClick={() => safeEditor.chain().focus().undo().run()}
           >
-            {BULLET_LIST_STYLES.map((style) => (
-              <option key={style.value} value={style.value}>
-                {style.label}
-              </option>
-            ))}
-          </select>
-        </div>
+            <Undo2 className="h-4 w-4" />
+          </ToolbarButton>
 
-        <ToolbarButton
-          title="Ordered List"
-          active={safeEditor.isActive("orderedList")}
-          onClick={() => safeEditor.chain().focus().toggleOrderedList().run()}
-        >
-          <ListOrdered className="h-4 w-4" />
-        </ToolbarButton>
-
-        <div className="border-r border-zinc-700 bg-zinc-900 px-2 py-2">
-          <select
-            value={currentOrderedStyle}
-            onChange={(event) => setOrderedListStyle(event.target.value)}
-            className="max-w-28 rounded border border-zinc-700 bg-zinc-900 px-2 py-1 text-xs text-white outline-none"
-            title="Numbered list style"
+          <ToolbarButton
+            title="Redo"
+            onClick={() => safeEditor.chain().focus().redo().run()}
           >
-            {ORDERED_LIST_STYLES.map((style) => (
-              <option key={style.value} value={style.value}>
-                {style.label}
+            <Redo2 className="h-4 w-4" />
+          </ToolbarButton>
+
+          <HeadingDropdown activeValue={headingValue} onSelect={setHeadingValue} />
+
+          <ToolbarButton
+            title="Bold"
+            active={safeEditor.isActive("bold")}
+            onClick={() => safeEditor.chain().focus().toggleBold().run()}
+          >
+            <Bold className="h-4 w-4" />
+          </ToolbarButton>
+
+          <ToolbarButton
+            title="Italic"
+            active={safeEditor.isActive("italic")}
+            onClick={() => safeEditor.chain().focus().toggleItalic().run()}
+          >
+            <Italic className="h-4 w-4" />
+          </ToolbarButton>
+
+          <ToolbarButton
+            title="Underline"
+            active={safeEditor.isActive("underline")}
+            onClick={() => safeEditor.chain().focus().toggleUnderline().run()}
+          >
+            <UnderlineIcon className="h-4 w-4" />
+          </ToolbarButton>
+
+          <ToolbarButton
+            title="Strike"
+            active={safeEditor.isActive("strike")}
+            onClick={() => safeEditor.chain().focus().toggleStrike().run()}
+          >
+            <Strikethrough className="h-4 w-4" />
+          </ToolbarButton>
+
+          <ColorDropdown
+            active={hasTextColor}
+            colors={TEXT_COLORS}
+            icon={<Type className="h-4 w-4" />}
+            label="Text color"
+            onClear={() => safeEditor.chain().focus().unsetColor().run()}
+            onSelect={(color) => safeEditor.chain().focus().setColor(color).run()}
+          />
+
+          <ColorDropdown
+            active={safeEditor.isActive("highlight")}
+            colors={HIGHLIGHT_COLORS}
+            icon={<Highlighter className="h-4 w-4" />}
+            label="Highlight"
+            onClear={() => safeEditor.chain().focus().unsetHighlight().run()}
+            onSelect={(color) => safeEditor.chain().focus().setHighlight({ color }).run()}
+            swatchShape="rounded"
+          />
+
+          <ToolbarButton
+            title="Bullet List"
+            active={safeEditor.isActive("bulletList")}
+            onClick={() => safeEditor.chain().focus().toggleBulletList().run()}
+          >
+            <List className="h-4 w-4" />
+          </ToolbarButton>
+
+          <div className="shrink-0 border-r border-zinc-800 bg-zinc-900 px-2 py-1.5">
+            <select
+              value={currentBulletStyle}
+              onChange={(event) => setBulletListStyle(event.target.value)}
+              className="h-6 max-w-20 rounded border border-zinc-700 bg-zinc-900 px-1.5 text-xs text-white outline-none"
+              title="Bullet style"
+              aria-label="Bullet style"
+            >
+              {BULLET_LIST_STYLES.map((style) => (
+                <option key={style.value} value={style.value}>
+                  {style.label}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <ToolbarButton
+            title="Ordered List"
+            active={safeEditor.isActive("orderedList")}
+            onClick={() => safeEditor.chain().focus().toggleOrderedList().run()}
+          >
+            <ListOrdered className="h-4 w-4" />
+          </ToolbarButton>
+
+          <div className="shrink-0 border-r border-zinc-800 bg-zinc-900 px-2 py-1.5">
+            <select
+              value={currentOrderedStyle}
+              onChange={(event) => setOrderedListStyle(event.target.value)}
+              className="h-6 max-w-24 rounded border border-zinc-700 bg-zinc-900 px-1.5 text-xs text-white outline-none"
+              title="Numbered list style"
+              aria-label="Numbered list style"
+            >
+              {ORDERED_LIST_STYLES.map((style) => (
+                <option key={style.value} value={style.value}>
+                  {style.label}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <ToolbarButton
+            title="Align Left"
+            active={safeEditor.isActive({ textAlign: "left" })}
+            onClick={() => safeEditor.chain().focus().setTextAlign("left").run()}
+          >
+            <AlignLeft className="h-4 w-4" />
+          </ToolbarButton>
+
+          <ToolbarButton
+            title="Align Center"
+            active={safeEditor.isActive({ textAlign: "center" })}
+            onClick={() => safeEditor.chain().focus().setTextAlign("center").run()}
+          >
+            <AlignCenter className="h-4 w-4" />
+          </ToolbarButton>
+
+          <ToolbarButton
+            title="Align Right"
+            active={safeEditor.isActive({ textAlign: "right" })}
+            onClick={() => safeEditor.chain().focus().setTextAlign("right").run()}
+          >
+            <AlignRight className="h-4 w-4" />
+          </ToolbarButton>
+
+          <ToolbarButton
+            title="Link"
+            active={safeEditor.isActive("link")}
+            onClick={setLink}
+          >
+            <LinkIcon className="h-4 w-4" />
+          </ToolbarButton>
+
+          <ToolbarButton
+            title="Upload image from computer"
+            onClick={() => imageInputRef.current?.click()}
+          >
+            <ImageIcon className="h-4 w-4" />
+          </ToolbarButton>
+
+          <ToolbarButton title="Insert Table" onClick={insertTable}>
+            <TableIcon className="h-4 w-4" />
+          </ToolbarButton>
+
+          <div className="shrink-0 border-r border-zinc-800 bg-zinc-900 px-2 py-1.5">
+            <select
+              defaultValue=""
+              title="More editor actions"
+              aria-label="More editor actions"
+              className="h-6 max-w-32 rounded border border-zinc-700 bg-zinc-900 px-1.5 text-xs font-semibold text-zinc-200 outline-none"
+              onChange={(event) => {
+                runMoreAction(event.target.value);
+                event.currentTarget.value = "";
+              }}
+            >
+              <option value="" disabled>
+                More
               </option>
-            ))}
-          </select>
+              <option value="inline-code">Inline code</option>
+              <option value="code-block">Code block</option>
+              <option value="task-list">Task list</option>
+              <option value="quote">Blockquote</option>
+              <option value="info-callout">Info callout</option>
+              <option value="warning-callout">Warning callout</option>
+              <option value="rule">Horizontal rule</option>
+              <option value="image-url">Image from URL</option>
+              <option value="table-row">Add table row</option>
+              <option value="table-column">Add table column</option>
+              <option value="delete-table">Delete table</option>
+            </select>
+          </div>
         </div>
-
-        <ToolbarButton
-          title="Task List"
-          active={safeEditor.isActive("taskList")}
-          onClick={() => safeEditor.chain().focus().toggleTaskList().run()}
-        >
-          <ListChecks className="h-4 w-4" />
-        </ToolbarButton>
-
-        <ToolbarButton
-          title="Blockquote"
-          active={safeEditor.isActive("blockquote")}
-          onClick={() => safeEditor.chain().focus().toggleBlockquote().run()}
-        >
-          <Quote className="h-4 w-4" />
-        </ToolbarButton>
-
-        <ToolbarButton
-          title="Info Callout"
-          active={safeEditor.isActive("callout", { type: "info" })}
-          onClick={() => insertCallout("info")}
-        >
-          <Info className="h-4 w-4" />
-        </ToolbarButton>
-
-        <ToolbarButton
-          title="Warning Callout"
-          active={safeEditor.isActive("callout", { type: "warning" })}
-          onClick={() => insertCallout("warning")}
-        >
-          <AlertTriangle className="h-4 w-4" />
-        </ToolbarButton>
-
-        <ToolbarButton
-          title="Horizontal Rule"
-          onClick={() => safeEditor.chain().focus().setHorizontalRule().run()}
-        >
-          <Minus className="h-4 w-4" />
-        </ToolbarButton>
-
-        <ToolbarButton
-          title="Align Left"
-          active={safeEditor.isActive({ textAlign: "left" })}
-          onClick={() => safeEditor.chain().focus().setTextAlign("left").run()}
-        >
-          <AlignLeft className="h-4 w-4" />
-        </ToolbarButton>
-
-        <ToolbarButton
-          title="Align Center"
-          active={safeEditor.isActive({ textAlign: "center" })}
-          onClick={() => safeEditor.chain().focus().setTextAlign("center").run()}
-        >
-          <AlignCenter className="h-4 w-4" />
-        </ToolbarButton>
-
-        <ToolbarButton
-          title="Align Right"
-          active={safeEditor.isActive({ textAlign: "right" })}
-          onClick={() => safeEditor.chain().focus().setTextAlign("right").run()}
-        >
-          <AlignRight className="h-4 w-4" />
-        </ToolbarButton>
-
-        <ToolbarButton
-          title="Link"
-          active={safeEditor.isActive("link")}
-          onClick={setLink}
-        >
-          <LinkIcon className="h-4 w-4" />
-        </ToolbarButton>
-
-        <ToolbarButton
-          title="Upload image from computer"
-          onClick={() => imageInputRef.current?.click()}
-        >
-          <ImageIcon className="h-4 w-4" />
-        </ToolbarButton>
-
-        <ToolbarButton
-          title="Insert image from URL"
-          onClick={addImage}
-        >
-          URL
-        </ToolbarButton>
-
-        <ToolbarButton
-          title="Insert Table"
-          onClick={insertTable}
-        >
-          <TableIcon className="h-4 w-4" />
-        </ToolbarButton>
-
-        <ToolbarButton
-          title="Add Row"
-          onClick={() => safeEditor.chain().focus().addRowAfter().run()}
-        >
-          <Rows3 className="h-4 w-4" />
-        </ToolbarButton>
-
-        <ToolbarButton
-          title="Add Column"
-          onClick={() => safeEditor.chain().focus().addColumnAfter().run()}
-        >
-          <Columns3 className="h-4 w-4" />
-        </ToolbarButton>
-
-        <ToolbarButton
-          title="Delete Table"
-          onClick={() => safeEditor.chain().focus().deleteTable().run()}
-        >
-          <Trash2 className="h-4 w-4" />
-        </ToolbarButton>
       </div>
-
       <div className="bg-black">
         <EditorContent editor={safeEditor} />
       </div>
@@ -982,10 +946,10 @@ function HeadingDropdown({
     HEADING_OPTIONS.find((option) => option.value === activeValue)?.label || "Paragraph";
 
   return (
-    <details className="group relative border-r border-zinc-700">
+    <details className="group relative shrink-0 border-r border-zinc-800">
       <summary
         title="Text style"
-        className={`flex h-10 min-w-24 cursor-pointer list-none items-center justify-between gap-2 px-3 text-sm font-semibold transition marker:hidden [&::-webkit-details-marker]:hidden ${
+        className={`flex h-9 min-w-24 cursor-pointer list-none items-center justify-between gap-2 px-3 text-sm font-semibold transition marker:hidden [&::-webkit-details-marker]:hidden ${
           activeValue !== "paragraph"
             ? "bg-zinc-700 text-white"
             : "bg-zinc-900 text-zinc-300 hover:bg-zinc-800 hover:text-white"
@@ -994,7 +958,7 @@ function HeadingDropdown({
         <span>{activeLabel}</span>
         <ChevronDown className="h-3.5 w-3.5 text-zinc-500 transition group-open:rotate-180" />
       </summary>
-      <div className="absolute left-0 top-11 z-30 w-52 rounded-xl border border-zinc-700 bg-zinc-950 p-2 shadow-2xl shadow-black/40">
+      <div className="absolute left-0 top-10 z-50 w-52 rounded-xl border border-zinc-700 bg-zinc-950 p-2 shadow-2xl shadow-black/40">
         {HEADING_OPTIONS.map((option) => (
           <button
             key={option.value}
@@ -1033,10 +997,10 @@ function ColorDropdown({
   swatchShape?: string;
 }) {
   return (
-    <details className="group relative border-r border-zinc-700">
+    <details className="group relative shrink-0 border-r border-zinc-800">
       <summary
         title={label}
-        className={`flex h-10 cursor-pointer list-none items-center gap-2 px-3 text-sm transition marker:hidden [&::-webkit-details-marker]:hidden ${
+        className={`flex h-9 cursor-pointer list-none items-center gap-2 px-3 text-sm transition marker:hidden [&::-webkit-details-marker]:hidden ${
           active
             ? "bg-zinc-700 text-white"
             : "bg-zinc-900 text-zinc-300 hover:bg-zinc-800 hover:text-white"
@@ -1045,7 +1009,7 @@ function ColorDropdown({
         {icon}
         <ChevronDown className="h-3.5 w-3.5 text-zinc-500 transition group-open:rotate-180" />
       </summary>
-      <div className="absolute left-0 top-11 z-30 min-w-48 rounded-xl border border-zinc-700 bg-zinc-950 p-2 shadow-2xl shadow-black/40">
+      <div className="absolute left-0 top-10 z-50 min-w-48 rounded-xl border border-zinc-700 bg-zinc-950 p-2 shadow-2xl shadow-black/40">
         <button
           type="button"
           onClick={onClear}

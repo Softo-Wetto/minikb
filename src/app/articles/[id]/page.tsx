@@ -108,11 +108,7 @@ export default async function ArticlePage({
         </Link>
 
         <div className="flex flex-wrap gap-2">
-          <DeleteArticleButton
-            articleId={article.id}
-            articleTitle={article.title}
-            companyId={article.company_id}
-          />
+
           <Link
             href={`/articles/${article.id}/edit`}
             className="inline-flex h-9 items-center gap-2 rounded bg-orange-500 px-3 text-sm font-semibold text-white transition hover:bg-orange-400"

@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import test from "node:test";
 import type { ArticleTemplate } from "./pocketbase/types.ts";
 
@@ -99,4 +100,36 @@ test("applies a template without erasing the selected company", () => {
     isInternal: false,
     isDraft: false,
   });
+});
+test("keeps the editor toolbar sticky, compact, and scrollable", () => {
+  const source = readFileSync(
+    new URL("../components/rich-text-editor.tsx", import.meta.url),
+    "utf8"
+  );
+  const match = source.match(
+    /<div\s+data-editor-toolbar\s+className="([^"]+)"/
+  );
+
+  assert.ok(match, "toolbar should have a stable test hook");
+  assert.match(match[1], /sticky/);
+  assert.match(match[1], /top-16/);
+  assert.match(source, /overflow-x-auto/);
+  assert.doesNotMatch(match[1], /flex-wrap/);
+});
+
+test("keeps article deletion in one detail-page danger zone", () => {
+  const source = readFileSync(
+    new URL("../app/articles/[id]/page.tsx", import.meta.url),
+    "utf8"
+  );
+
+  assert.equal((source.match(/<DeleteArticleButton/g) || []).length, 1);
+});
+test("does not trap the sticky toolbar inside an overflow-hidden editor panel", () => {
+  const source = readFileSync(
+    new URL("../components/edit-article-form.tsx", import.meta.url),
+    "utf8"
+  );
+
+  assert.doesNotMatch(source, /section className="min-w-0 overflow-hidden/);
 });

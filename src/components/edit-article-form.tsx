@@ -152,7 +152,7 @@ export default function EditArticleForm({
       onSubmit={(event) => saveArticle(event, false)}
       className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_360px]"
     >
-      <section className="min-w-0 overflow-hidden rounded border border-slate-800 bg-slate-950/85">
+      <section className="min-w-0 overflow-visible rounded border border-slate-800 bg-slate-950/85">
         <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-800 px-4 py-3">
           <Link
             href={`/articles/${article.id}`}
