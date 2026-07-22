@@ -25,6 +25,41 @@ export type ArticleTemplateFields = {
   is_internal: boolean;
 };
 
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null;
+}
+
+export function parseRecoverySnapshot(value: string | null): RecoverySnapshot | null {
+  if (!value) return null;
+
+  try {
+    const parsed: unknown = JSON.parse(value);
+    if (!isRecord(parsed)) return null;
+
+    const stringFields = [
+      "title",
+      "summary",
+      "content",
+      "category",
+      "tags",
+      "companyId",
+      "savedAt",
+    ] as const;
+    const booleanFields = ["isPinned", "isInternal", "isDraft"] as const;
+
+    if (
+      stringFields.some((field) => typeof parsed[field] !== "string") ||
+      booleanFields.some((field) => typeof parsed[field] !== "boolean")
+    ) {
+      return null;
+    }
+
+    return parsed as RecoverySnapshot;
+  } catch {
+    return null;
+  }
+}
 export function buildRecoveryKey(articleId?: string) {
   return `minikb_article_recovery_${articleId || "new"}`;
 }

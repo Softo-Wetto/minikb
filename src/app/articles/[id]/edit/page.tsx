@@ -1,8 +1,8 @@
 import EditArticleForm from "@/components/edit-article-form";
-import { getRecord, getRecords } from "@/lib/pocketbase/server";
+import { equalsFilter, getRecord, getRecords } from "@/lib/pocketbase/server";
 import { requireEditor } from "@/lib/auth";
 import { getArticleFolderOptions } from "@/lib/article-folders";
-import type { Article, Company } from "@/types/database";
+import type { Article, ArticleRevision, Company } from "@/types/database";
 
 export default async function EditArticlePage({
   params,
@@ -14,6 +14,7 @@ export default async function EditArticlePage({
   const { id } = await params;
   let article: Article | null = null;
   let companies: Pick<Company, "id" | "name">[] = [];
+  let revisions: ArticleRevision[] = [];
 
   try {
     article = await getRecord<Article>("articles", id);
@@ -42,6 +43,19 @@ export default async function EditArticlePage({
     );
   }
 
+  if (article) {
+    try {
+      const response = await getRecords<ArticleRevision>("article_revisions", {
+        filter: equalsFilter("article_id", id),
+        sort: "-revision_number",
+        perPage: 30,
+      });
+      revisions = response.items;
+    } catch {
+      revisions = [];
+    }
+  }
+
   const folders = (await getArticleFolderOptions()).map((folder) => folder.name);
 
   return (
@@ -49,6 +63,7 @@ export default async function EditArticlePage({
       article={article}
       companies={companies}
       folders={folders}
+      revisions={revisions}
     />
   );
 }

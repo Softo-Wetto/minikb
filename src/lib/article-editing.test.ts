@@ -1,11 +1,12 @@
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import test from "node:test";
 import type { ArticleTemplate } from "./pocketbase/types.ts";
 
 import {
   buildRecoveryKey,
   hasMeaningfulRecovery,
+  parseRecoverySnapshot,
   shouldOfferRecovery,
   templateToArticleFields,
   trimRevisions,
@@ -54,6 +55,26 @@ test("offers a newer meaningful recovery draft", () => {
   );
 });
 
+
+test("parses only complete recovery snapshots", () => {
+  const snapshot = parseRecoverySnapshot(
+    JSON.stringify({
+      title: "Recovered notes",
+      summary: "",
+      content: "<p>Draft content</p>",
+      category: "General",
+      tags: "",
+      companyId: "",
+      isPinned: false,
+      isInternal: true,
+      isDraft: true,
+      savedAt: "2026-07-22T10:05:00.000Z",
+    })
+  );
+
+  assert.equal(snapshot?.title, "Recovered notes");
+  assert.equal(parseRecoverySnapshot('{"title":"missing fields"}'), null);
+});
 test("keeps the newest thirty revisions", () => {
   const revisions = Array.from({ length: 31 }, (_, index) => ({
     id: String(index + 1),
@@ -132,4 +153,33 @@ test("does not trap the sticky toolbar inside an overflow-hidden editor panel", 
   );
 
   assert.doesNotMatch(source, /section className="min-w-0 overflow-hidden/);
+});
+test("wires recovery and revision components into article forms", () => {
+  const root = new URL("../", import.meta.url);
+  assert.equal(
+    existsSync(new URL("components/article-recovery-banner.tsx", root)),
+    true
+  );
+  assert.equal(
+    existsSync(new URL("components/article-revision-history.tsx", root)),
+    true
+  );
+  assert.equal(
+    existsSync(new URL("hooks/use-article-recovery.ts", root)),
+    true
+  );
+
+  const newForm = readFileSync(
+    new URL("../components/new-article-form.tsx", import.meta.url),
+    "utf8"
+  );
+  const editForm = readFileSync(
+    new URL("../components/edit-article-form.tsx", import.meta.url),
+    "utf8"
+  );
+
+  assert.match(newForm, /useArticleRecovery/);
+  assert.match(editForm, /useArticleRecovery/);
+  assert.match(editForm, /ArticleRevisionHistory/);
+  assert.match(editForm, /revisions: ArticleRevision\[\]/);
 });

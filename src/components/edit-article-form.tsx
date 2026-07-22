@@ -14,10 +14,21 @@ import {
 } from "lucide-react";
 import AiArticleDraftButton from "@/components/ai-article-draft-button";
 import ArticleFolderPicker from "@/components/article-folder-picker";
+import ArticleRecoveryBanner from "@/components/article-recovery-banner";
+import ArticleRevisionHistory from "@/components/article-revision-history";
 import DeleteArticleButton from "@/components/delete-article-button";
 import RichTextEditor from "@/components/rich-text-editor";
+import { useArticleRecovery } from "@/hooks/use-article-recovery";
 import { useUnsavedChangesGuard } from "@/hooks/use-unsaved-changes-guard";
-import { updateRecord } from "@/lib/pocketbase/client";
+import { trimRevisions, type ArticleFormFields } from "@/lib/article-editing";
+import {
+  createRecord,
+  deleteRecord,
+  getClientRecords,
+  getCurrentAuth,
+  updateRecord,
+} from "@/lib/pocketbase/client";
+import type { ArticleRevision, RawPocketBaseRecord } from "@/types/database";
 import { formatDateTime } from "@/lib/utils";
 
 type Article = {
@@ -44,10 +55,12 @@ export default function EditArticleForm({
   article,
   companies,
   folders,
+  revisions,
 }: {
   article: Article;
   companies: CompanyOption[];
   folders: string[];
+  revisions: ArticleRevision[];
 }) {
   const [title, setTitle] = useState(article.title || "");
   const [summary, setSummary] = useState(article.summary || "");
@@ -99,6 +112,53 @@ export default function EditArticleForm({
 
   const allowNextNavigation = useUnsavedChangesGuard(isDirty);
 
+  const formFields = useMemo<ArticleFormFields>(
+    () => ({
+      title,
+      summary,
+      content,
+      category,
+      tags,
+      companyId,
+      isPinned,
+      isInternal,
+      isDraft,
+    }),
+    [category, companyId, content, isDraft, isInternal, isPinned, summary, tags, title]
+  );
+  const { recovery, clearRecovery, discardRecovery } = useArticleRecovery({
+    articleId: article.id,
+    fields: formFields,
+    isDirty,
+    serverUpdatedAt: article.updated_at || article.created_at,
+  });
+
+  function applyFormFields(fields: ArticleFormFields) {
+    setTitle(fields.title);
+    setSummary(fields.summary);
+    setContent(fields.content);
+    setCategory(fields.category || "General");
+    setTags(fields.tags);
+    setCompanyId(fields.companyId);
+    setIsPinned(fields.isPinned);
+    setIsInternal(fields.isInternal);
+    setIsDraft(fields.isDraft);
+  }
+
+  function restoreRevision(revision: ArticleRevision) {
+    applyFormFields({
+      title: revision.title,
+      summary: revision.summary || "",
+      content: revision.content,
+      category: revision.category || "General",
+      tags: (revision.tags || []).join(", "),
+      companyId: revision.company_id || "",
+      isPinned: revision.is_pinned,
+      isInternal: revision.is_internal,
+      isDraft: revision.is_draft,
+    });
+  }
+
   const stats = useMemo(() => {
     const plain = content.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
     const words = plain ? plain.split(" ").length : 0;
@@ -117,6 +177,55 @@ export default function EditArticleForm({
     setSavingMode(draft ? "draft" : "publish");
 
     try {
+      const response = await getClientRecords<RawPocketBaseRecord & ArticleRevision>(
+        "article_revisions",
+        new URLSearchParams({
+          filter: `article_id = "${article.id}"`,
+          sort: "-revision_number",
+          perPage: "30",
+        })
+      );
+      const priorRevisions = response.items;
+      const revisionNumber =
+        Math.max(0, ...priorRevisions.map((revision) => Number(revision.revision_number) || 0)) +
+        1;
+      const auth = getCurrentAuth();
+      const revision = await createRecord<RawPocketBaseRecord & ArticleRevision>(
+        "article_revisions",
+        {
+          article_id: article.id,
+          revision_number: revisionNumber,
+          title: article.title,
+          summary: article.summary || "",
+          content: article.content,
+          category: article.category || "General",
+          company_id: article.company_id || null,
+          tags: article.tags || [],
+          is_pinned: !!article.is_pinned,
+          is_internal: article.is_internal ?? true,
+          is_draft: !!article.is_draft,
+          save_mode: article.is_draft ? "draft" : "publish",
+          created_by: auth?.user.id || null,
+          created_at: new Date().toISOString(),
+        }
+      );
+
+      const retainedIds = new Set(
+        trimRevisions([...priorRevisions, revision], 30).map((item) => item.id)
+      );
+      const staleRevisions = [...priorRevisions, revision].filter(
+        (item) => !retainedIds.has(item.id)
+      );
+      if (staleRevisions.length) {
+        try {
+          await Promise.all(
+            staleRevisions.map((item) => deleteRecord("article_revisions", item.id))
+          );
+        } catch (error) {
+          console.warn("Unable to trim old article revisions", error);
+        }
+      }
+
       await updateRecord("articles", article.id, {
         title,
         summary,
@@ -133,6 +242,7 @@ export default function EditArticleForm({
         updated_at: new Date().toISOString(),
       });
       setIsDraft(draft);
+      clearRecovery();
       allowNextNavigation();
       window.location.href = `/articles/${article.id}`;
     } catch (error) {
@@ -140,7 +250,6 @@ export default function EditArticleForm({
       setSavingMode(null);
     }
   }
-
   async function copyArticleLink() {
     await navigator.clipboard.writeText(`${window.location.origin}/articles/${article.id}`);
     setCopied(true);
@@ -153,6 +262,16 @@ export default function EditArticleForm({
       className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_360px]"
     >
       <section className="min-w-0 overflow-visible rounded border border-slate-800 bg-slate-950/85">
+        {recovery && (
+          <ArticleRecoveryBanner
+            snapshot={recovery}
+            onRestore={() => {
+              applyFormFields(recovery);
+              discardRecovery();
+            }}
+            onDiscard={discardRecovery}
+          />
+        )}
         <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-800 px-4 py-3">
           <Link
             href={`/articles/${article.id}`}
@@ -364,6 +483,8 @@ export default function EditArticleForm({
             </label>
           </div>
         </section>
+
+        <ArticleRevisionHistory revisions={revisions} onRestore={restoreRevision} />
 
         <section className="rounded border border-red-500/20 bg-red-500/5 p-4">
           <h2 className="text-sm font-semibold text-red-100">Danger Zone</h2>

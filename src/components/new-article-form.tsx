@@ -4,9 +4,12 @@ import { useMemo, useState } from "react";
 import Link from "next/link";
 import AiArticleDraftButton from "@/components/ai-article-draft-button";
 import ArticleFolderPicker from "@/components/article-folder-picker";
+import ArticleRecoveryBanner from "@/components/article-recovery-banner";
 import RichTextEditor from "@/components/rich-text-editor";
+import { useArticleRecovery } from "@/hooks/use-article-recovery";
 import { useUnsavedChangesGuard } from "@/hooks/use-unsaved-changes-guard";
 import { createRecord, getCurrentAuth } from "@/lib/pocketbase/client";
+import type { ArticleFormFields } from "@/lib/article-editing";
 import type { Article, RawPocketBaseRecord } from "@/types/database";
 
 type Company = {
@@ -57,15 +60,49 @@ export default function NewArticleForm({
 
   const allowNextNavigation = useUnsavedChangesGuard(isDirty);
 
-  const lastAutosaved = useMemo(() => {
-    return new Date().toLocaleString("en-AU", {
-      day: "2-digit",
-      month: "short",
-      year: "numeric",
-      hour: "numeric",
-      minute: "2-digit",
+  const formFields = useMemo<ArticleFormFields>(
+    () => ({
+      title,
+      summary,
+      content,
+      category,
+      tags,
+      companyId,
+      isPinned,
+      isInternal: allowPublicArticles ? isInternal : true,
+      isDraft: primaryDraft,
+    }),
+    [
+      allowPublicArticles,
+      category,
+      companyId,
+      content,
+      isInternal,
+      isPinned,
+      primaryDraft,
+      summary,
+      tags,
+      title,
+    ]
+  );
+  const { recovery, lastSavedAt, clearRecovery, discardRecovery } =
+    useArticleRecovery({
+      articleId: initialCompanyId ? `new_${initialCompanyId}` : undefined,
+      fields: formFields,
+      isDirty,
     });
-  }, []);
+
+  function applyRecovery(fields: ArticleFormFields) {
+    setTitle(fields.title);
+    setSummary(fields.summary);
+    setContent(fields.content);
+    setCategory(fields.category || "General");
+    setTags(fields.tags);
+    setCompanyId(fields.companyId);
+    setIsPinned(fields.isPinned);
+    setIsInternal(allowPublicArticles ? fields.isInternal : true);
+  }
+
 
   function slugify(value: string) {
     return value
@@ -109,6 +146,7 @@ export default function NewArticleForm({
 
     try {
       const data = await createRecord<RawPocketBaseRecord & Pick<Article, "id">>("articles", payload);
+      clearRecovery();
       allowNextNavigation();
       window.location.href = `/articles/${data.id}`;
     } catch (error) {
@@ -120,6 +158,16 @@ export default function NewArticleForm({
   return (
     <form onSubmit={(event) => saveArticle(event, primaryDraft)} className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_340px]">
       <section className="min-w-0 rounded border border-zinc-800 bg-black">
+        {recovery && (
+          <ArticleRecoveryBanner
+            snapshot={recovery}
+            onRestore={() => {
+              applyRecovery(recovery);
+              discardRecovery();
+            }}
+            onDiscard={discardRecovery}
+          />
+        )}
         <div className="flex flex-wrap items-center justify-between gap-3 border-b border-zinc-800 px-4 py-3">
           <div>
             <p className="text-sm font-semibold text-white">Need a starting point?</p>
@@ -175,7 +223,8 @@ export default function NewArticleForm({
       <aside className="rounded border border-zinc-800 bg-zinc-900/70">
         <div className="border-b border-zinc-800 px-4 py-4">
           <div className="text-sm text-zinc-300">
-            <span className="font-semibold">Last autosaved:</span> {lastAutosaved}
+            <span className="font-semibold">Local recovery:</span>{" "}
+            {lastSavedAt ? "Saved in this browser" : "Ready while you write"}
           </div>
 
           <div className="mt-4 space-y-3">
