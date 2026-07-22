@@ -16,11 +16,18 @@ import AiArticleDraftButton from "@/components/ai-article-draft-button";
 import ArticleFolderPicker from "@/components/article-folder-picker";
 import ArticleRecoveryBanner from "@/components/article-recovery-banner";
 import ArticleRevisionHistory from "@/components/article-revision-history";
+import ArticleTemplatePicker from "@/components/article-template-picker";
+import SaveArticleTemplateButton from "@/components/save-article-template-button";
 import DeleteArticleButton from "@/components/delete-article-button";
 import RichTextEditor from "@/components/rich-text-editor";
 import { useArticleRecovery } from "@/hooks/use-article-recovery";
 import { useUnsavedChangesGuard } from "@/hooks/use-unsaved-changes-guard";
-import { trimRevisions, type ArticleFormFields } from "@/lib/article-editing";
+import {
+  hasMeaningfulRecovery,
+  templateToArticleFields,
+  trimRevisions,
+  type ArticleFormFields,
+} from "@/lib/article-editing";
 import {
   createRecord,
   deleteRecord,
@@ -28,7 +35,7 @@ import {
   getCurrentAuth,
   updateRecord,
 } from "@/lib/pocketbase/client";
-import type { ArticleRevision, RawPocketBaseRecord } from "@/types/database";
+import type { ArticleRevision, ArticleTemplate, RawPocketBaseRecord } from "@/types/database";
 import { formatDateTime } from "@/lib/utils";
 
 type Article = {
@@ -56,11 +63,13 @@ export default function EditArticleForm({
   companies,
   folders,
   revisions,
+  templates,
 }: {
   article: Article;
   companies: CompanyOption[];
   folders: string[];
   revisions: ArticleRevision[];
+  templates: ArticleTemplate[];
 }) {
   const [title, setTitle] = useState(article.title || "");
   const [summary, setSummary] = useState(article.summary || "");
@@ -159,6 +168,9 @@ export default function EditArticleForm({
     });
   }
 
+  function applyTemplate(template: ArticleTemplate) {
+    applyFormFields(templateToArticleFields(template, companyId));
+  }
   const stats = useMemo(() => {
     const plain = content.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
     const words = plain ? plain.split(" ").length : 0;
@@ -297,6 +309,7 @@ export default function EditArticleForm({
               <Copy className="h-4 w-4" />
               {copied ? "Copied" : "Copy Link"}
             </button>
+            <SaveArticleTemplateButton fields={formFields} />
           </div>
         </div>
 
@@ -483,6 +496,12 @@ export default function EditArticleForm({
             </label>
           </div>
         </section>
+
+        <ArticleTemplatePicker
+          templates={templates}
+          hasContent={hasMeaningfulRecovery(formFields)}
+          onApply={applyTemplate}
+        />
 
         <ArticleRevisionHistory revisions={revisions} onRestore={restoreRevision} />
 

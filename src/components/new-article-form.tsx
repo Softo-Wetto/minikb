@@ -5,12 +5,17 @@ import Link from "next/link";
 import AiArticleDraftButton from "@/components/ai-article-draft-button";
 import ArticleFolderPicker from "@/components/article-folder-picker";
 import ArticleRecoveryBanner from "@/components/article-recovery-banner";
+import ArticleTemplatePicker from "@/components/article-template-picker";
 import RichTextEditor from "@/components/rich-text-editor";
 import { useArticleRecovery } from "@/hooks/use-article-recovery";
 import { useUnsavedChangesGuard } from "@/hooks/use-unsaved-changes-guard";
 import { createRecord, getCurrentAuth } from "@/lib/pocketbase/client";
-import type { ArticleFormFields } from "@/lib/article-editing";
-import type { Article, RawPocketBaseRecord } from "@/types/database";
+import {
+  hasMeaningfulRecovery,
+  templateToArticleFields,
+  type ArticleFormFields,
+} from "@/lib/article-editing";
+import type { Article, ArticleTemplate, RawPocketBaseRecord } from "@/types/database";
 
 type Company = {
   id: string;
@@ -25,6 +30,8 @@ export default function NewArticleForm({
   initialInternal = true,
   primaryDraft = false,
   allowPublicArticles = true,
+  templates,
+  initialTemplateId,
 }: {
   companies: Company[];
   folders: string[];
@@ -33,6 +40,8 @@ export default function NewArticleForm({
   initialInternal?: boolean;
   primaryDraft?: boolean;
   allowPublicArticles?: boolean;
+  templates: ArticleTemplate[];
+  initialTemplateId?: string;
 }) {
   const [title, setTitle] = useState("");
   const [summary, setSummary] = useState("");
@@ -104,6 +113,9 @@ export default function NewArticleForm({
   }
 
 
+  function applyTemplate(template: ArticleTemplate) {
+    applyRecovery(templateToArticleFields(template, companyId));
+  }
   function slugify(value: string) {
     return value
       .toLowerCase()
@@ -168,6 +180,12 @@ export default function NewArticleForm({
             onDiscard={discardRecovery}
           />
         )}
+        <ArticleTemplatePicker
+          templates={templates}
+          initialTemplateId={initialTemplateId}
+          hasContent={hasMeaningfulRecovery(formFields)}
+          onApply={applyTemplate}
+        />
         <div className="flex flex-wrap items-center justify-between gap-3 border-b border-zinc-800 px-4 py-3">
           <div>
             <p className="text-sm font-semibold text-white">Need a starting point?</p>

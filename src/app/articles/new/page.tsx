@@ -3,7 +3,7 @@ import { getAdminSettings, getSettingValue } from "@/lib/admin-settings";
 import { getRecords } from "@/lib/pocketbase/server";
 import { requireEditor } from "@/lib/auth";
 import { getArticleFolderOptions } from "@/lib/article-folders";
-import type { RawPocketBaseRecord } from "@/types/database";
+import type { ArticleTemplate, RawPocketBaseRecord } from "@/types/database";
 
 type CompanyRow = RawPocketBaseRecord & {
   name: string;
@@ -12,12 +12,13 @@ type CompanyRow = RawPocketBaseRecord & {
 export default async function NewArticlePage({
   searchParams,
 }: {
-  searchParams: Promise<{ companyId?: string }>;
+  searchParams: Promise<{ companyId?: string; template?: string }>;
 }) {
   await requireEditor();
-  const { companyId = "" } = await searchParams;
+  const { companyId = "", template: initialTemplateId = "" } = await searchParams;
 
   let companyRows: CompanyRow[] = [];
+  let templates: ArticleTemplate[] = [];
 
   try {
     const response = await getRecords<CompanyRow>("companies", {
@@ -29,6 +30,15 @@ export default async function NewArticlePage({
     companyRows = [];
   }
 
+  try {
+    const response = await getRecords<ArticleTemplate>("article_templates", {
+      sort: "name",
+      perPage: 200,
+    });
+    templates = response.items;
+  } catch {
+    templates = [];
+  }
   const companies = companyRows.map((company) => ({
     id: company.id,
     name: company.name,
@@ -67,6 +77,8 @@ export default async function NewArticlePage({
       initialInternal={visibility !== "public"}
       primaryDraft={primaryDraft}
       allowPublicArticles={allowPublicArticles}
+      templates={templates}
+      initialTemplateId={initialTemplateId}
     />
   );
 }

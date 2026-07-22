@@ -183,3 +183,31 @@ test("wires recovery and revision components into article forms", () => {
   assert.match(editForm, /ArticleRevisionHistory/);
   assert.match(editForm, /revisions: ArticleRevision\[\]/);
 });
+test("wires reusable templates into article creation and editing", () => {
+  const root = new URL("../", import.meta.url);
+  for (const path of [
+    "components/article-template-picker.tsx",
+    "components/save-article-template-button.tsx",
+    "components/article-template-manager.tsx",
+    "app/articles/templates/page.tsx",
+  ]) {
+    assert.equal(existsSync(new URL(path, root)), true, `${path} should exist`);
+  }
+
+  const newForm = readFileSync(
+    new URL("../components/new-article-form.tsx", import.meta.url),
+    "utf8"
+  );
+  const editForm = readFileSync(
+    new URL("../components/edit-article-form.tsx", import.meta.url),
+    "utf8"
+  );
+
+  assert.match(newForm, /ArticleTemplatePicker/);
+  assert.match(editForm, /SaveArticleTemplateButton/);
+  const templatePicker = readFileSync(
+    new URL("../components/article-template-picker.tsx", import.meta.url),
+    "utf8"
+  );
+  assert.doesNotMatch(templatePicker, /setSelectedId\(template\.id\)/);
+});
