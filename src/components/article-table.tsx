@@ -29,6 +29,7 @@ type Article = {
 type TableFilters = {
   q?: string;
   category?: string;
+  tag?: string;
   visibility?: string;
   status?: string;
   companyId?: string;

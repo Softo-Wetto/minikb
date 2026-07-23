@@ -14,6 +14,9 @@ import {
   ShieldCheck,
 } from "lucide-react";
 import FavoriteArticles from "@/components/favorite-articles";
+import QuickCapture from "@/components/quick-capture";
+import WorkItemBoard from "@/components/work-item-board";
+import type { WorkItem } from "@/types/database";
 import RecentViews from "@/components/recent-views";
 
 type ArticleSummary = {
@@ -61,6 +64,7 @@ type DashboardOverviewProps = {
   articlesMissingSummary: ArticleSummary[];
   staleArticles: ArticleSummary[];
   assets: AssetSummary[];
+  workItems: WorkItem[];
 };
 
 function formatDate(value?: string | null) {
@@ -105,6 +109,7 @@ export default function DashboardOverview({
   articlesMissingSummary,
   staleArticles,
   assets,
+  workItems,
 }: DashboardOverviewProps) {
   const docCoverage = percent(companyCount - companiesWithoutDocs.length, companyCount);
   const assetCoverage = percent(companyCount - companiesWithoutAssets.length, companyCount);
@@ -195,6 +200,11 @@ export default function DashboardOverview({
             );
           })}
         </div>
+      </section>
+
+      <section className="grid gap-4 xl:grid-cols-[minmax(0,1.2fr)_minmax(340px,0.8fr)]">
+        <QuickCapture />
+        <WorkItemBoard items={workItems} />
       </section>
 
       <section className="grid gap-4 lg:grid-cols-4">

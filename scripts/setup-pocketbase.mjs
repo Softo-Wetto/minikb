@@ -351,6 +351,24 @@ async function main() {
     ],
   });
 
+  await upsertCollection(token, {
+    name: "work_items",
+    type: "base",
+    ...editableRules(),
+    fields: [
+      select("kind", ["task", "note", "idea"], { required: true }),
+      select("status", ["open", "done"], { required: true }),
+      text("title", { required: true }),
+      text("note"),
+      date("due_at"),
+      relation("article_id", articles.id),
+      relation("company_id", companies.id),
+      relation("created_by", users.id),
+      date("created_at"),
+      date("updated_at"),
+    ],
+  });
+
   const appSettings = await upsertCollection(token, {
     name: "app_settings",
     type: "base",

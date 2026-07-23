@@ -92,6 +92,20 @@ export type ArticleTemplate = PocketBaseRecord & {
   is_internal: boolean;
   created_by: string | null;
 };
+export type WorkItemKind = "task" | "note" | "idea";
+export type WorkItemStatus = "open" | "done";
+
+export type WorkItem = PocketBaseRecord & {
+  kind: WorkItemKind;
+  status: WorkItemStatus;
+  title: string;
+  note: string | null;
+  due_at: string | null;
+  article_id: string | null;
+  company_id: string | null;
+  created_by: string | null;
+};
+
 export type ArticleFolder = PocketBaseRecord & {
   name: string;
   sort_order: number | null;

@@ -121,3 +121,22 @@ export function templateToArticleFields(
     isDraft: false,
   };
 }
+
+export function extractArticleLinkIds(content: string) {
+  const ids = new Set<string>();
+  const linkPattern = /href\s*=\s*(["'])\/articles\/([^\/?#"']+)(?:[?#][^"']*)?\1/gi;
+
+  for (const match of content.matchAll(linkPattern)) {
+    ids.add(match[2]);
+  }
+
+  return [...ids];
+}
+
+export function findLinkedArticles<T extends { id: string }>(
+  content: string,
+  articles: T[]
+) {
+  const linkedIds = new Set(extractArticleLinkIds(content));
+  return articles.filter((article) => linkedIds.has(article.id));
+}

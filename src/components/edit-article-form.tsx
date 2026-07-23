@@ -53,6 +53,11 @@ type Article = {
   updated_at?: string | null;
 };
 
+type ArticleLinkOption = {
+  id: string;
+  title: string;
+};
+
 type CompanyOption = {
   id: string;
   name: string;
@@ -64,12 +69,14 @@ export default function EditArticleForm({
   folders,
   revisions,
   templates,
+  articleOptions,
 }: {
   article: Article;
   companies: CompanyOption[];
   folders: string[];
   revisions: ArticleRevision[];
   templates: ArticleTemplate[];
+  articleOptions: ArticleLinkOption[];
 }) {
   const [title, setTitle] = useState(article.title || "");
   const [summary, setSummary] = useState(article.summary || "");
@@ -370,7 +377,7 @@ export default function EditArticleForm({
               </div>
             </article>
           ) : (
-            <RichTextEditor value={content} onChange={setContent} />
+            <RichTextEditor value={content} onChange={setContent} articleOptions={articleOptions} />
           )}
         </div>
       </section>

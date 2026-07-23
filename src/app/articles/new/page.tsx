@@ -5,6 +5,10 @@ import { requireEditor } from "@/lib/auth";
 import { getArticleFolderOptions } from "@/lib/article-folders";
 import type { ArticleTemplate, RawPocketBaseRecord } from "@/types/database";
 
+type ArticleLinkRow = RawPocketBaseRecord & {
+  title: string;
+};
+
 type CompanyRow = RawPocketBaseRecord & {
   name: string;
 };
@@ -19,6 +23,7 @@ export default async function NewArticlePage({
 
   let companyRows: CompanyRow[] = [];
   let templates: ArticleTemplate[] = [];
+  let articleOptions: ArticleLinkRow[] = [];
 
   try {
     const response = await getRecords<CompanyRow>("companies", {
@@ -38,6 +43,17 @@ export default async function NewArticlePage({
     templates = response.items;
   } catch {
     templates = [];
+  }
+
+  try {
+    const response = await getRecords<ArticleLinkRow>("articles", {
+      fields: "id,title",
+      sort: "title",
+      perPage: 500,
+    });
+    articleOptions = response.items;
+  } catch {
+    articleOptions = [];
   }
   const companies = companyRows.map((company) => ({
     id: company.id,
@@ -79,6 +95,7 @@ export default async function NewArticlePage({
       allowPublicArticles={allowPublicArticles}
       templates={templates}
       initialTemplateId={initialTemplateId}
+      articleOptions={articleOptions}
     />
   );
 }

@@ -17,6 +17,11 @@ import {
 } from "@/lib/article-editing";
 import type { Article, ArticleTemplate, RawPocketBaseRecord } from "@/types/database";
 
+type ArticleLinkOption = {
+  id: string;
+  title: string;
+};
+
 type Company = {
   id: string;
   name: string;
@@ -32,6 +37,7 @@ export default function NewArticleForm({
   allowPublicArticles = true,
   templates,
   initialTemplateId,
+  articleOptions,
 }: {
   companies: Company[];
   folders: string[];
@@ -42,6 +48,7 @@ export default function NewArticleForm({
   allowPublicArticles?: boolean;
   templates: ArticleTemplate[];
   initialTemplateId?: string;
+  articleOptions: ArticleLinkOption[];
 }) {
   const [title, setTitle] = useState("");
   const [summary, setSummary] = useState("");
@@ -234,7 +241,7 @@ export default function NewArticleForm({
         </div>
 
         <div className="px-4 py-4">
-          <RichTextEditor value={content} onChange={setContent} />
+          <RichTextEditor value={content} onChange={setContent} articleOptions={articleOptions} />
         </div>
       </section>
 

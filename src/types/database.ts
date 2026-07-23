@@ -13,4 +13,7 @@ export type {
   Json,
   RawPocketBaseRecord,
   UserProfile,
+  WorkItem,
+  WorkItemKind,
+  WorkItemStatus,
 } from "@/lib/pocketbase/types";

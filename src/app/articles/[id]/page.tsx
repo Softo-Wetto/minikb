@@ -19,12 +19,13 @@ import {
 } from "@/lib/pocketbase/server";
 import { requireUser } from "@/lib/auth";
 import { canEdit } from "@/lib/roles";
+import { extractArticleLinkIds, findLinkedArticles } from "@/lib/article-editing";
 import type { Article, Attachment } from "@/types/database";
 
-type RelatedArticle = Pick<Article, "id" | "title"> & {
-  created_at: string;
-  updated_at: string;
-};
+type RelatedArticle = Pick<
+  Article,
+  "id" | "title" | "content" | "category" | "company_id"
+>;
 
 function estimateReadTime(text?: string | null) {
   if (!text) return "0 min read";
@@ -43,6 +44,36 @@ function formatDate(value?: string | null) {
     month: "short",
     year: "numeric",
   });
+}
+
+function KnowledgeConnectionList({
+  label,
+  empty,
+  items,
+}: {
+  label: string;
+  empty: string;
+  items: RelatedArticle[];
+}) {
+  return (
+    <div className="p-3">
+      <p className="px-1 text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+        {label} ({items.length})
+      </p>
+      <div className="mt-2 space-y-1">
+        {items.length === 0 && <p className="px-1 py-2 text-xs leading-5 text-slate-500">{empty}</p>}
+        {items.map((item) => (
+          <Link
+            key={item.id}
+            href={`/articles/${item.id}`}
+            className="block rounded px-2 py-1.5 text-sm text-slate-300 transition hover:bg-slate-900 hover:text-orange-200"
+          >
+            {item.title}
+          </Link>
+        ))}
+      </div>
+    </div>
+  );
 }
 
 export default async function ArticlePage({
@@ -71,6 +102,8 @@ export default async function ArticlePage({
 
   let attachments: Attachment[] = [];
   let relatedArticles: RelatedArticle[] = [];
+  let linkedArticles: RelatedArticle[] = [];
+  let backlinkArticles: RelatedArticle[] = [];
 
   try {
     const response = await getRecords<Attachment>("attachments", {
@@ -84,16 +117,29 @@ export default async function ArticlePage({
 
   try {
     const response = await getRecords<RelatedArticle>("articles", {
-      fields: "id,title",
-      filter: [
-        equalsFilter("category", article.category || "General"),
-        notEqualsFilter("id", article.id),
-      ].join(" && "),
-      perPage: 5,
+      fields: "id,title,content,category,company_id",
+      filter: notEqualsFilter("id", article.id),
+      sort: "title",
+      perPage: 500,
     });
-    relatedArticles = response.items;
+    const candidates = response.items;
+    linkedArticles = findLinkedArticles(article.content || "", candidates);
+    backlinkArticles = candidates.filter((candidate) =>
+      extractArticleLinkIds(candidate.content || "").includes(article.id)
+    );
+    const connectedIds = new Set([
+      ...linkedArticles.map((item) => item.id),
+      ...backlinkArticles.map((item) => item.id),
+    ]);
+    relatedArticles = candidates
+      .filter(
+        (candidate) =>
+          candidate.category === (article.category || "General") &&
+          !connectedIds.has(candidate.id)
+      )
+      .slice(0, 5);
   } catch (error) {
-    console.error("Unable to load related articles", error);
+    console.error("Unable to load connected articles", error);
   }
 
   return (
@@ -142,6 +188,15 @@ export default async function ArticlePage({
                   Internal
                 </span>
               )}
+              {article.tags?.map((tag) => (
+                <Link
+                  key={tag}
+                  href={`/articles?tag=${encodeURIComponent(tag)}`}
+                  className="rounded border border-slate-700 bg-slate-900 px-2 py-1 text-slate-300 transition hover:border-orange-500/45 hover:text-orange-200"
+                >
+                  #{tag}
+                </Link>
+              ))}
               {article.is_pinned && (
                 <span className="inline-flex items-center gap-1 rounded border border-orange-500/30 bg-orange-500/10 px-2 py-1 text-orange-300">
                   <Pin className="h-3 w-3" />
@@ -245,14 +300,33 @@ export default async function ArticlePage({
 
           <section className="rounded border border-slate-800 bg-slate-950/80">
             <div className="border-b border-slate-800 px-4 py-3">
+              <h2 className="text-sm font-semibold text-white">Connected Knowledge</h2>
+              <p className="mt-1 text-xs text-slate-500">Deliberate links across central and client knowledge.</p>
+            </div>
+            <div className="divide-y divide-slate-800">
+              <KnowledgeConnectionList
+                label="Linked from this article"
+                empty="Use Link KB in the editor to connect another article."
+                items={linkedArticles}
+              />
+              <KnowledgeConnectionList
+                label="Linked from elsewhere"
+                empty="No other articles link here yet."
+                items={backlinkArticles}
+              />
+            </div>
+          </section>
+
+          <section className="rounded border border-slate-800 bg-slate-950/80">
+            <div className="border-b border-slate-800 px-4 py-3">
               <h2 className="text-sm font-semibold text-white">
-                Related Articles ({relatedArticles.length})
+                More in this folder ({relatedArticles.length})
               </h2>
             </div>
             <div className="space-y-1 p-3">
               {relatedArticles.length === 0 && (
                 <p className="px-1 py-3 text-sm text-slate-500">
-                  No related articles in this category.
+                  No other articles in this folder yet.
                 </p>
               )}
 

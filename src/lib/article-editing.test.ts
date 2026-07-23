@@ -122,6 +122,29 @@ test("applies a template without erasing the selected company", () => {
     isDraft: false,
   });
 });
+test("extracts unique internal article links without treating external links as KB links", async () => {
+  const moduleUnderTest = await import("./article-editing.ts") as unknown as {
+    extractArticleLinkIds?: unknown;
+  };
+  const extract = moduleUnderTest.extractArticleLinkIds;
+
+  assert.equal(typeof extract, "function");
+  if (typeof extract !== "function") return;
+
+  assert.deepEqual(
+    (extract as (content: string) => string[])(
+      [
+        '<p><a href="/articles/backup-plan">Backup plan</a></p>',
+        '<a href="/articles/network-map?view=compact">Network map</a>',
+        '<a href="/articles/backup-plan">Duplicate</a>',
+        '<a href="https://example.com/articles/external">External</a>',
+        '<a href="/assets/server-01">Asset</a>',
+      ].join(""),
+    ),
+    ["backup-plan", "network-map"],
+  );
+});
+
 test("keeps the editor toolbar sticky, compact, and scrollable", () => {
   const source = readFileSync(
     new URL("../components/rich-text-editor.tsx", import.meta.url),
@@ -210,4 +233,24 @@ test("wires reusable templates into article creation and editing", () => {
     "utf8"
   );
   assert.doesNotMatch(templatePicker, /setSelectedId\(template\.id\)/);
+});
+test("wires internal article links through the editor and article forms", () => {
+  const root = new URL("../", import.meta.url);
+  const editor = readFileSync(
+    new URL("components/rich-text-editor.tsx", root),
+    "utf8"
+  );
+  const newForm = readFileSync(
+    new URL("components/new-article-form.tsx", root),
+    "utf8"
+  );
+  const editForm = readFileSync(
+    new URL("components/edit-article-form.tsx", root),
+    "utf8"
+  );
+
+  assert.match(editor, /articleOptions/);
+  assert.match(editor, /insertArticleLink/);
+  assert.match(newForm, /articleOptions/);
+  assert.match(editForm, /articleOptions/);
 });

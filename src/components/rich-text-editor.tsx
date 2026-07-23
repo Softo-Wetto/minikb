@@ -51,6 +51,7 @@ import {
 type Props = {
   value: string;
   onChange: (html: string) => void;
+  articleOptions?: Array<{ id: string; title: string }>;
 };
 
 const TEXT_COLORS = [
@@ -442,7 +443,7 @@ function ToolbarButton({
   );
 }
 
-export default function RichTextEditor({ value, onChange }: Props) {
+export default function RichTextEditor({ value, onChange, articleOptions = [] }: Props) {
   const imageInputRef = useRef<HTMLInputElement | null>(null);
   const [toolbarVersion, setToolbarVersion] = useState(0);
   const editor = useEditor({
@@ -585,6 +586,21 @@ export default function RichTextEditor({ value, onChange }: Props) {
     }
 
     safeEditor.chain().focus().setLink({ href: url }).run();
+  }
+
+  function insertArticleLink(articleId: string) {
+    const article = articleOptions.find((option) => option.id === articleId);
+    if (!article) return;
+
+    safeEditor
+      .chain()
+      .focus()
+      .insertContent({
+        type: "text",
+        text: article.title,
+        marks: [{ type: "link", attrs: { href: `/articles/${article.id}` } }],
+      })
+      .run();
   }
 
   function addImage() {
@@ -887,6 +903,30 @@ export default function RichTextEditor({ value, onChange }: Props) {
           >
             <LinkIcon className="h-4 w-4" />
           </ToolbarButton>
+
+          {articleOptions.length > 0 && (
+            <div className="shrink-0 border-r border-zinc-800 bg-zinc-900 px-2 py-1.5">
+              <select
+                defaultValue=""
+                title="Insert internal knowledge-base link"
+                aria-label="Insert internal knowledge-base link"
+                className="h-6 max-w-40 rounded border border-zinc-700 bg-zinc-900 px-1.5 text-xs font-semibold text-zinc-200 outline-none"
+                onChange={(event) => {
+                  insertArticleLink(event.target.value);
+                  event.currentTarget.value = "";
+                }}
+              >
+                <option value="" disabled>
+                  Link KB
+                </option>
+                {articleOptions.map((article) => (
+                  <option key={article.id} value={article.id}>
+                    {article.title}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
 
           <ToolbarButton
             title="Upload image from computer"

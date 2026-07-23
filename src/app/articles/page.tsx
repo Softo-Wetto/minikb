@@ -15,6 +15,7 @@ import type { Article, Company } from "@/types/database";
 type SearchParams = Promise<{
   q?: string;
   category?: string;
+  tag?: string;
   visibility?: string;
   status?: string;
   companyId?: string;
@@ -33,6 +34,7 @@ export default async function ArticlesPage({
   const {
     q = "",
     category = "",
+    tag = "",
     visibility = "",
     status = "",
     companyId = "",
@@ -76,11 +78,11 @@ export default async function ArticlesPage({
 
   try {
     const response = await getRecords<Article>("articles", {
-      fields: "id,title,category,summary,company_id,created_at,updated_at,is_pinned,is_internal,is_draft",
+      fields: "id,title,category,summary,tags,company_id,created_at,updated_at,is_pinned,is_internal,is_draft",
       sort: `${sortDirection}${sortField}`,
       filter: filters.join(" && "),
     });
-    articles = response.items;
+    articles = tag ? response.items.filter((article) => article.tags?.includes(tag)) : response.items;
   } catch (caught) {
     error = caught as Error;
   }
@@ -101,6 +103,7 @@ export default async function ArticlesPage({
 
   const folders = await getArticleFolderOptions();
   const categories = folders.map((folder) => folder.name);
+  const availableTags = Array.from(new Set(articles.flatMap((article) => article.tags || []))).sort((left, right) => left.localeCompare(right));
   const pageScopeLabel = useSingleCompany
     ? "Single Client Knowledge Base"
     : scope === "central"
@@ -148,7 +151,7 @@ export default async function ArticlesPage({
         </div>
 
         <div className="border-b border-slate-800 p-4">
-          <form className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_190px_220px_180px_170px_160px_130px]">
+          <form className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_170px_190px_220px_160px_170px_160px_130px]">
             <input type="hidden" name="sort" value={sort} />
             <input type="hidden" name="dir" value={dir} />
 
@@ -183,6 +186,19 @@ export default async function ArticlesPage({
               {companyRows.map((company) => (
                 <option key={company.id} value={company.id}>
                   {company.name}
+                </option>
+              ))}
+            </select>
+
+            <select
+              name="tag"
+              defaultValue={tag}
+              className="h-10 rounded-xl border border-slate-800 bg-slate-900/70 px-3 text-sm text-white outline-none transition focus:border-orange-500/70"
+            >
+              <option value="">All Tags</option>
+              {availableTags.map((item) => (
+                <option key={item} value={item}>
+                  #{item}
                 </option>
               ))}
             </select>
@@ -239,13 +255,38 @@ export default async function ArticlesPage({
         <div className="grid gap-4 p-4 xl:grid-cols-[360px_minmax(0,1fr)]">
           <div className="space-y-4">
             <FavoriteArticles />
+            <section className="rounded border border-slate-800 bg-slate-950/70">
+              <div className="flex items-center justify-between border-b border-slate-800 px-4 py-3">
+                <div>
+                  <p className="text-sm font-semibold text-white">Tag Explorer</p>
+                  <p className="mt-1 text-xs text-slate-500">Your personal map across central and client knowledge.</p>
+                </div>
+                <span className="rounded bg-slate-900 px-2 py-1 text-xs text-slate-400">{availableTags.length}</span>
+              </div>
+              <div className="flex flex-wrap gap-1.5 p-3">
+                {availableTags.length === 0 && <p className="text-sm text-slate-500">Add tags while editing an article to build your map.</p>}
+                {availableTags.map((item) => (
+                  <Link
+                    key={item}
+                    href={`/articles?tag=${encodeURIComponent(item)}`}
+                    className={`rounded-full border px-2.5 py-1 text-xs font-medium transition ${
+                      tag === item
+                        ? "border-orange-400/50 bg-orange-500/15 text-orange-100"
+                        : "border-slate-700 bg-slate-900 text-slate-300 hover:border-orange-500/40 hover:text-orange-200"
+                    }`}
+                  >
+                    #{item}
+                  </Link>
+                ))}
+              </div>
+            </section>
             <KbCategoryList articles={articles} folderOrder={categories} />
           </div>
           <ArticleTable
             articles={articles}
             categories={categories}
             companyNames={Object.fromEntries(companyRows.map((company) => [company.id, company.name]))}
-            filters={{ q, category, visibility, status, companyId, scope, sort, dir }}
+            filters={{ q, category, tag, visibility, status, companyId, scope, sort, dir }}
           />
         </div>
       </section>

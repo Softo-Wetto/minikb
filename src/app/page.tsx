@@ -1,7 +1,7 @@
 import DashboardOverview from "@/components/dashboard-overview";
 import { getRecords } from "@/lib/pocketbase/server";
 import { requireUser } from "@/lib/auth";
-import type { Article, Asset, Attachment, Company } from "@/types/database";
+import type { Article, Asset, Attachment, Company, WorkItem } from "@/types/database";
 
 export default async function HomePage() {
   await requireUser();
@@ -10,6 +10,7 @@ export default async function HomePage() {
   let safeAssets: Asset[] = [];
   let safeCompanies: Company[] = [];
   let safeAttachments: Attachment[] = [];
+  let safeWorkItems: WorkItem[] = [];
 
   try {
     const { items } = await getRecords<Article>("articles", {
@@ -49,6 +50,16 @@ export default async function HomePage() {
     safeAttachments = items;
   } catch {
     safeAttachments = [];
+  }
+
+  try {
+    const { items } = await getRecords<WorkItem>("work_items", {
+      fields: "id,kind,status,title,note,due_at,article_id,company_id,created_by,created_at,updated_at",
+      sort: "due_at",
+    });
+    safeWorkItems = items;
+  } catch {
+    safeWorkItems = [];
   }
 
   const categoryCount = new Set(
@@ -107,6 +118,7 @@ export default async function HomePage() {
         articlesMissingSummary={articlesMissingSummary}
         staleArticles={staleArticles}
         assets={safeAssets}
+        workItems={safeWorkItems}
       />
     </div>
   );
