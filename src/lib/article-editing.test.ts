@@ -254,3 +254,27 @@ test("wires internal article links through the editor and article forms", () => 
   assert.match(newForm, /articleOptions/);
   assert.match(editForm, /articleOptions/);
 });
+
+test("keeps advanced editor actions visible instead of hiding them in a more menu", () => {
+  const source = readFileSync(
+    new URL("../components/rich-text-editor.tsx", import.meta.url),
+    "utf8"
+  );
+
+  assert.doesNotMatch(source, /More editor actions/);
+  for (const title of [
+    "Inline code",
+    "Code block",
+    "Task list",
+    "Blockquote",
+    "Info callout",
+    "Warning callout",
+    "Horizontal rule",
+    "Image from URL",
+    "Add table row",
+    "Add table column",
+    "Delete table",
+  ]) {
+    assert.match(source, new RegExp(`title="${title}"`));
+  }
+});

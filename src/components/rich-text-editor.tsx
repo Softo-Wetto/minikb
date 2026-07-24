@@ -46,6 +46,16 @@ import {
   Trash2,
   ChevronDown,
   Type,
+  Code,
+  ImagePlus,
+  Info,
+  ListTodo,
+  Minus,
+  Quote,
+  SquareCode,
+  TableColumnsSplit,
+  TableRowsSplit,
+  TriangleAlert,
 } from "lucide-react";
 
 type Props = {
@@ -695,46 +705,6 @@ export default function RichTextEditor({ value, onChange, articleOptions = [] }:
     safeEditor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run();
   }
 
-  function runMoreAction(action: string) {
-    switch (action) {
-      case "inline-code":
-        safeEditor.chain().focus().toggleCode().run();
-        break;
-      case "code-block":
-        safeEditor.chain().focus().toggleCodeBlock().run();
-        break;
-      case "task-list":
-        safeEditor.chain().focus().toggleTaskList().run();
-        break;
-      case "quote":
-        safeEditor.chain().focus().toggleBlockquote().run();
-        break;
-      case "info-callout":
-        insertCallout("info");
-        break;
-      case "warning-callout":
-        insertCallout("warning");
-        break;
-      case "rule":
-        safeEditor.chain().focus().setHorizontalRule().run();
-        break;
-      case "image-url":
-        addImage();
-        break;
-      case "table-row":
-        safeEditor.chain().focus().addRowAfter().run();
-        break;
-      case "table-column":
-        safeEditor.chain().focus().addColumnAfter().run();
-        break;
-      case "delete-table":
-        safeEditor.chain().focus().deleteTable().run();
-        break;
-      default:
-        break;
-    }
-  }
-
   const currentOrderedStyle = safeEditor.getAttributes("orderedList").listStyle || "decimal";
   const currentBulletStyle = safeEditor.getAttributes("bulletList").listStyle || "disc";
   const hasTextColor = Boolean(safeEditor.getAttributes("textStyle").color);
@@ -939,33 +909,77 @@ export default function RichTextEditor({ value, onChange, articleOptions = [] }:
             <TableIcon className="h-4 w-4" />
           </ToolbarButton>
 
-          <div className="shrink-0 border-r border-zinc-800 bg-zinc-900 px-2 py-1.5">
-            <select
-              defaultValue=""
-              title="More editor actions"
-              aria-label="More editor actions"
-              className="h-6 max-w-32 rounded border border-zinc-700 bg-zinc-900 px-1.5 text-xs font-semibold text-zinc-200 outline-none"
-              onChange={(event) => {
-                runMoreAction(event.target.value);
-                event.currentTarget.value = "";
-              }}
-            >
-              <option value="" disabled>
-                More
-              </option>
-              <option value="inline-code">Inline code</option>
-              <option value="code-block">Code block</option>
-              <option value="task-list">Task list</option>
-              <option value="quote">Blockquote</option>
-              <option value="info-callout">Info callout</option>
-              <option value="warning-callout">Warning callout</option>
-              <option value="rule">Horizontal rule</option>
-              <option value="image-url">Image from URL</option>
-              <option value="table-row">Add table row</option>
-              <option value="table-column">Add table column</option>
-              <option value="delete-table">Delete table</option>
-            </select>
-          </div>
+          <ToolbarButton
+            title="Inline code"
+            active={safeEditor.isActive("code")}
+            onClick={() => safeEditor.chain().focus().toggleCode().run()}
+          >
+            <Code className="h-4 w-4" />
+          </ToolbarButton>
+
+          <ToolbarButton
+            title="Code block"
+            active={safeEditor.isActive("codeBlock")}
+            onClick={() => safeEditor.chain().focus().toggleCodeBlock().run()}
+          >
+            <SquareCode className="h-4 w-4" />
+          </ToolbarButton>
+
+          <ToolbarButton
+            title="Task list"
+            active={safeEditor.isActive("taskList")}
+            onClick={() => safeEditor.chain().focus().toggleTaskList().run()}
+          >
+            <ListTodo className="h-4 w-4" />
+          </ToolbarButton>
+
+          <ToolbarButton
+            title="Blockquote"
+            active={safeEditor.isActive("blockquote")}
+            onClick={() => safeEditor.chain().focus().toggleBlockquote().run()}
+          >
+            <Quote className="h-4 w-4" />
+          </ToolbarButton>
+
+          <ToolbarButton title="Info callout" onClick={() => insertCallout("info")}>
+            <Info className="h-4 w-4" />
+          </ToolbarButton>
+
+          <ToolbarButton title="Warning callout" onClick={() => insertCallout("warning")}>
+            <TriangleAlert className="h-4 w-4" />
+          </ToolbarButton>
+
+          <ToolbarButton
+            title="Horizontal rule"
+            onClick={() => safeEditor.chain().focus().setHorizontalRule().run()}
+          >
+            <Minus className="h-4 w-4" />
+          </ToolbarButton>
+
+          <ToolbarButton title="Image from URL" onClick={addImage}>
+            <ImagePlus className="h-4 w-4" />
+          </ToolbarButton>
+
+          <ToolbarButton
+            title="Add table row"
+            onClick={() => safeEditor.chain().focus().addRowAfter().run()}
+          >
+            <TableRowsSplit className="h-4 w-4" />
+          </ToolbarButton>
+
+          <ToolbarButton
+            title="Add table column"
+            onClick={() => safeEditor.chain().focus().addColumnAfter().run()}
+          >
+            <TableColumnsSplit className="h-4 w-4" />
+          </ToolbarButton>
+
+          <ToolbarButton
+            title="Delete table"
+            onClick={() => safeEditor.chain().focus().deleteTable().run()}
+          >
+            <Trash2 className="h-4 w-4" />
+          </ToolbarButton>
         </div>
       </div>
       <div className="bg-black">
