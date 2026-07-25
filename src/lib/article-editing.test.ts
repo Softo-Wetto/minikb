@@ -161,6 +161,21 @@ test("keeps the editor toolbar sticky, compact, and scrollable", () => {
   assert.doesNotMatch(match[1], /flex-wrap/);
 });
 
+test("contains the expanded editor toolbar within the editor panel", () => {
+  const source = readFileSync(
+    new URL("../components/rich-text-editor.tsx", import.meta.url),
+    "utf8"
+  );
+  const match = source.match(
+    /data-editor-toolbar[\s\S]*?<div className="([^"]+)"/
+  );
+
+  assert.ok(match, "toolbar actions should be inside the toolbar container");
+  assert.match(match[1], /max-w-full/);
+  assert.match(match[1], /overflow-x-auto/);
+  assert.doesNotMatch(match[1], /overflow-visible/);
+});
+
 test("keeps article deletion in one detail-page danger zone", () => {
   const source = readFileSync(
     new URL("../app/articles/[id]/page.tsx", import.meta.url),

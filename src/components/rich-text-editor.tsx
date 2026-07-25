@@ -726,7 +726,7 @@ export default function RichTextEditor({ value, onChange, articleOptions = [] }:
         data-editor-toolbar
         className="sticky top-16 z-30 rounded-t border-b border-zinc-800 bg-zinc-950 shadow-lg shadow-black/30"
       >
-        <div className="flex w-full flex-nowrap items-center overflow-x-auto lg:overflow-visible">
+        <div className="flex min-w-0 w-full max-w-full flex-nowrap items-center overflow-x-auto">
           <ToolbarButton
             title="Undo"
             onClick={() => safeEditor.chain().focus().undo().run()}
