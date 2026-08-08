@@ -14,6 +14,7 @@ import {
   ReactNodeViewRenderer,
   useEditor,
   useEditorState,
+  type Editor,
   type NodeViewProps,
 } from "@tiptap/react";
 import { mergeAttributes, Node } from "@tiptap/core";
@@ -973,6 +974,48 @@ function ImageUrlPanel({
   );
 }
 
+/** Everything the toolbar needs to render, derived from the editor's state. */
+function readToolbarState(editor: Editor) {
+  const heading: HeadingValue =
+    (([1, 2, 3, 4, 5] as const)
+      .find((level) => editor.isActive("heading", { level }))
+      ?.toString() as HeadingValue | undefined) ?? "paragraph";
+
+  const align: AlignValue =
+    ALIGN_OPTIONS.find((option) => editor.isActive({ textAlign: option.value }))?.value || "left";
+
+  return {
+    canUndo: editor.can().undo(),
+    canRedo: editor.can().redo(),
+    heading,
+    align,
+    bold: editor.isActive("bold"),
+    italic: editor.isActive("italic"),
+    underline: editor.isActive("underline"),
+    strike: editor.isActive("strike"),
+    code: editor.isActive("code"),
+    codeBlock: editor.isActive("codeBlock"),
+    subscript: editor.isActive("subscript"),
+    superscript: editor.isActive("superscript"),
+    bulletList: editor.isActive("bulletList"),
+    orderedList: editor.isActive("orderedList"),
+    taskList: editor.isActive("taskList"),
+    blockquote: editor.isActive("blockquote"),
+    bulletStyle: (editor.getAttributes("bulletList").listStyle as string) || "disc",
+    orderedStyle: (editor.getAttributes("orderedList").listStyle as string) || "decimal",
+    link: editor.isActive("link"),
+    linkHref: (editor.getAttributes("link").href as string) || "",
+    textColor: (editor.getAttributes("textStyle").color as string) || null,
+    highlight: editor.isActive("highlight"),
+    calloutType: editor.isActive("callout")
+      ? (editor.getAttributes("callout").type as string) || "info"
+      : null,
+    inTable: editor.isActive("table"),
+    words: editor.storage.characterCount?.words() ?? 0,
+    characters: editor.storage.characterCount?.characters() ?? 0,
+  };
+}
+
 export default function RichTextEditor({ value, onChange, articleOptions = [] }: Props) {
   const imageInputRef = useRef<HTMLInputElement | null>(null);
 
@@ -1049,50 +1092,9 @@ export default function RichTextEditor({ value, onChange, articleOptions = [] }:
     },
   });
 
-  const state = useEditorState({
+  const editorState = useEditorState({
     editor,
-    selector: ({ editor }) => {
-      if (!editor) return null;
-
-      const headingValue: HeadingValue =
-        ([1, 2, 3, 4, 5] as const).find((level) => editor.isActive("heading", { level }))?.toString() as
-          | HeadingValue
-          | undefined ?? "paragraph";
-
-      const align: AlignValue =
-        ALIGN_OPTIONS.find((option) => editor.isActive({ textAlign: option.value }))?.value || "left";
-
-      return {
-        canUndo: editor.can().undo(),
-        canRedo: editor.can().redo(),
-        heading: headingValue,
-        align,
-        bold: editor.isActive("bold"),
-        italic: editor.isActive("italic"),
-        underline: editor.isActive("underline"),
-        strike: editor.isActive("strike"),
-        code: editor.isActive("code"),
-        codeBlock: editor.isActive("codeBlock"),
-        subscript: editor.isActive("subscript"),
-        superscript: editor.isActive("superscript"),
-        bulletList: editor.isActive("bulletList"),
-        orderedList: editor.isActive("orderedList"),
-        taskList: editor.isActive("taskList"),
-        blockquote: editor.isActive("blockquote"),
-        bulletStyle: (editor.getAttributes("bulletList").listStyle as string) || "disc",
-        orderedStyle: (editor.getAttributes("orderedList").listStyle as string) || "decimal",
-        link: editor.isActive("link"),
-        linkHref: (editor.getAttributes("link").href as string) || "",
-        textColor: (editor.getAttributes("textStyle").color as string) || null,
-        highlight: editor.isActive("highlight"),
-        calloutType: editor.isActive("callout")
-          ? ((editor.getAttributes("callout").type as string) || "info")
-          : null,
-        inTable: editor.isActive("table"),
-        words: editor.storage.characterCount.words(),
-        characters: editor.storage.characterCount.characters(),
-      };
-    },
+    selector: ({ editor }) => (editor ? readToolbarState(editor) : null),
   });
 
   useEffect(() => {
@@ -1103,13 +1105,20 @@ export default function RichTextEditor({ value, onChange, articleOptions = [] }:
     }
   }, [editor, value]);
 
-  if (!editor || !state) {
+  if (!editor) {
     return (
       <div className="rounded border border-zinc-800 bg-black p-4 text-zinc-400">
         Loading editor...
       </div>
     );
   }
+
+  // useEditorState caches the snapshot it took when `editor` was still null and
+  // only refreshes it on the editor's first `transaction` event. Rendering must
+  // never wait on that: EditorContent has to mount before any transaction can
+  // fire, so gating on it would deadlock. Read straight from the editor until
+  // the store catches up.
+  const state = editorState ?? readToolbarState(editor);
 
   const safeEditor = editor;
 
