@@ -454,10 +454,22 @@ button {
   border-left-color: #38bdf8;
 }
 
+.kb-callout-success {
+  background: rgba(34, 197, 94, 0.08);
+  border-color: rgba(74, 222, 128, 0.24);
+  border-left-color: #4ade80;
+}
+
 .kb-callout-warning {
   background: rgba(249, 115, 22, 0.09);
   border-color: rgba(251, 146, 60, 0.24);
   border-left-color: #fb923c;
+}
+
+.kb-callout-danger {
+  background: rgba(239, 68, 68, 0.09);
+  border-color: rgba(248, 113, 113, 0.26);
+  border-left-color: #f87171;
 }
 
 .tiptap code {
@@ -870,6 +882,28 @@ button {
   color: #fff7ed;
   padding: 0.1rem 0.25rem;
   border-radius: 0.2rem;
+}
+
+/*
+ * Multicolour highlights use pastel backgrounds, so the default near-white
+ * text is unreadable on them. Any explicitly coloured highlight gets dark text.
+ */
+.tiptap mark[data-color],
+.article-content mark[data-color] {
+  color: #1f2937;
+}
+
+/*
+ * Tiptap placeholder. Scoped to `is-editor-empty` so the hint only shows on a
+ * blank document, not on every new blank line. Must stay after
+ * `.tiptap p:empty::before` to win the equal-specificity tie.
+ */
+.tiptap .is-editor-empty::before {
+  content: attr(data-placeholder);
+  color: #52525b;
+  float: left;
+  height: 0;
+  pointer-events: none;
 }
 @keyframes minikb-logo-scan {
   0%,

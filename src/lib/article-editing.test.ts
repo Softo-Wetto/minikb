@@ -145,7 +145,7 @@ test("extracts unique internal article links without treating external links as 
   );
 });
 
-test("keeps the editor toolbar sticky, compact, and scrollable", () => {
+test("keeps the editor toolbar sticky and compact", () => {
   const source = readFileSync(
     new URL("../components/rich-text-editor.tsx", import.meta.url),
     "utf8"
@@ -157,11 +157,9 @@ test("keeps the editor toolbar sticky, compact, and scrollable", () => {
   assert.ok(match, "toolbar should have a stable test hook");
   assert.match(match[1], /sticky/);
   assert.match(match[1], /top-16/);
-  assert.match(source, /overflow-x-auto/);
-  assert.doesNotMatch(match[1], /flex-wrap/);
 });
 
-test("contains the expanded editor toolbar within the editor panel", () => {
+test("wraps the editor toolbar instead of putting it in a scroll container", () => {
   const source = readFileSync(
     new URL("../components/rich-text-editor.tsx", import.meta.url),
     "utf8"
@@ -171,9 +169,24 @@ test("contains the expanded editor toolbar within the editor panel", () => {
   );
 
   assert.ok(match, "toolbar actions should be inside the toolbar container");
-  assert.match(match[1], /max-w-full/);
-  assert.match(match[1], /overflow-x-auto/);
-  assert.doesNotMatch(match[1], /overflow-visible/);
+  // An overflow scroll container clips the dropdown panels anchored to the
+  // toolbar buttons, which makes them look like they never open. The row wraps
+  // instead so every action stays visible and nothing is clipped.
+  assert.match(match[1], /flex-wrap/);
+  assert.doesNotMatch(source, /overflow-x-auto/);
+});
+
+test("renders editor dropdown panels in a portal so nothing can clip them", () => {
+  const source = readFileSync(
+    new URL("../components/rich-text-editor.tsx", import.meta.url),
+    "utf8"
+  );
+
+  assert.match(source, /createPortal\(/);
+  assert.match(source, /document\.body/);
+  // <details>/<summary> dropdowns cannot be positioned outside their ancestor's
+  // overflow context; the portalled popover replaced them.
+  assert.doesNotMatch(source, /<summary/);
 });
 
 test("keeps article deletion in one detail-page danger zone", () => {
