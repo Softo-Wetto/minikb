@@ -110,7 +110,7 @@ export default async function CompaniesPage({
   const hasFilters = Boolean(query || status || sort !== "name");
 
   return (
-    <div className="space-y-4">
+    <div className="minikb-collection-page space-y-5">
       <section className="surface-panel overflow-hidden rounded-2xl">
         <div className="relative flex flex-col justify-between gap-4 border-b border-slate-800 bg-slate-900/35 px-5 py-5 sm:flex-row sm:items-end">
           <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-orange-300/0 via-orange-300/40 to-sky-300/0" />

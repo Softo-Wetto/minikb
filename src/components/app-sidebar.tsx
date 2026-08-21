@@ -226,7 +226,7 @@ export default function AppSidebar({ role }: { role: string }) {
   }
 
   return (
-    <aside className="hidden w-72 shrink-0 border-r border-slate-800/80 bg-slate-950/76 backdrop-blur-xl xl:block">
+    <aside className="minikb-client-sidebar hidden w-72 shrink-0 border-r border-slate-800/80 bg-slate-950/76 backdrop-blur-xl xl:block">
       <div className="sticky top-16 space-y-3 p-3">
         <div className="surface-panel rounded-2xl p-3">
           <div className="mb-3 flex items-center gap-2 px-2 text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">

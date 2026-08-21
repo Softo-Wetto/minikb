@@ -295,7 +295,7 @@ export default function AppHeader({ profile }: { profile: Profile | null }) {
   }, [search]);
 
   return (
-    <header className="sticky top-0 z-40 border-b border-slate-800/80 bg-slate-950/88 shadow-[0_12px_42px_rgba(0,0,0,0.22)] backdrop-blur-xl">
+    <header className="minikb-header sticky top-0 z-40 border-b border-slate-800/80 bg-slate-950/88 backdrop-blur-xl">
       <div className="pointer-events-none absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-orange-400/20 to-transparent" />
       <div className="flex h-16 items-center justify-between gap-3 px-4 lg:px-5">
         <div className="flex min-w-0 items-center gap-3">

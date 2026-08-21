@@ -183,7 +183,7 @@ export default function ArticleTable({
   ];
 
   return (
-    <div className="overflow-hidden rounded border border-slate-800 bg-slate-950/80">
+    <div className="minikb-article-table overflow-hidden rounded border border-slate-800 bg-slate-950/80">
       <div className="flex items-center justify-between border-b border-slate-800 px-4 py-3">
         <div>
           <p className="text-sm font-semibold text-white">Articles</p>

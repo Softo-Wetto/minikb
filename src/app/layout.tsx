@@ -1,7 +1,15 @@
 import "@/app/globals.css";
+import "@/app/workspace-polish.css";
 import type { Metadata } from "next";
+import { Geist } from "next/font/google";
 import AppShell from "@/components/app-shell";
 import { getCurrentProfile } from "@/lib/auth";
+
+const geist = Geist({
+  subsets: ["latin"],
+  display: "swap",
+  variable: "--font-sans",
+});
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://docs.softowetto.com"),
@@ -70,9 +78,9 @@ export default async function RootLayout({
   const profile = await getCurrentProfile();
 
   return (
-    <html lang="en" data-scroll-behavior="smooth">
-      <body className="bg-slate-950 text-white">
-        <div className="min-h-screen bg-[radial-gradient(ellipse_at_top_left,rgba(249,115,22,0.13),transparent_34rem),radial-gradient(ellipse_at_top_right,rgba(14,165,233,0.10),transparent_32rem),linear-gradient(180deg,#020617,#020617_58%,#030712)] text-white">
+    <html lang="en" data-scroll-behavior="smooth" className={geist.variable}>
+      <body className="minikb-root bg-slate-950 text-white">
+        <div className="min-h-screen text-white">
           <AppShell profile={profile}>{children}</AppShell>
         </div>
       </body>
