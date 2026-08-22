@@ -68,6 +68,16 @@ npm run pb:setup
 The script creates/updates `users`, `companies`, `articles`, `assets`, and
 `attachments` using PocketBase's Collections API.
 
+### Closed registration
+
+MiniKB does not allow public account creation. Only an authenticated
+administrator can create a user, and regular users cannot change their own
+role. Add approved users from **Admin > User & Role Management**, then share
+their temporary password securely.
+
+Run `npm run pb:setup` whenever the schema is restored or recreated so these
+access rules are reapplied.
+
 CSV imports update existing users without changing their password. To reset
 imported user passwords intentionally, set:
 

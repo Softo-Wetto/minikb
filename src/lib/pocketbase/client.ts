@@ -52,23 +52,6 @@ export async function signInWithPassword(email: string, password: string) {
   return auth;
 }
 
-export async function signUpWithPassword(email: string, password: string) {
-  const record = await pbRequest<RawPocketBaseRecord>(
-    "/api/collections/users/records",
-    {
-      method: "POST",
-      body: JSON.stringify({
-        email,
-        password,
-        passwordConfirm: password,
-        role: "viewer",
-      }),
-    }
-  );
-
-  return normalizeUser(record);
-}
-
 export function signOut() {
   clearBrowserAuth();
 }

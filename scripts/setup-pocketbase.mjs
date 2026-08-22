@@ -1,5 +1,6 @@
 import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
+import { userCollectionRules } from "./access-policy.mjs";
 
 function loadEnvFile(fileName) {
   const filePath = resolve(process.cwd(), fileName);
@@ -234,11 +235,7 @@ async function main() {
   const users = await upsertCollection(token, {
     name: "users",
     type: "auth",
-    listRule: '@request.auth.role = "admin"',
-    viewRule: '@request.auth.id != ""',
-    createRule: "",
-    updateRule: '@request.auth.id = id || @request.auth.role = "admin"',
-    deleteRule: '@request.auth.role = "admin"',
+    ...userCollectionRules,
     fields: [
       text("legacy_id"),
       text("username"),
