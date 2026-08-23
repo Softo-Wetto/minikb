@@ -47,7 +47,7 @@ export default function KbCategoryList({
   }
 
   return (
-    <div className="rounded border border-slate-800 bg-slate-950/70">
+    <div className="surface-card minikb-category-list overflow-hidden rounded-lg">
       <div className="flex items-center justify-between border-b border-slate-800 px-4 py-3">
         <div>
           <p className="text-sm font-semibold text-white">Knowledge Categories</p>
@@ -72,12 +72,12 @@ export default function KbCategoryList({
             <div key={group.name}>
               <button
                 onClick={() => toggle(group.name)}
-                className="flex w-full items-center gap-2 px-4 py-3 text-left text-sm text-slate-200 transition hover:bg-slate-900/70"
+                className="group kb-interactive-folder flex w-full items-center gap-2 px-4 py-3 text-left text-sm text-slate-200"
               >
                 <ChevronRight
-                  className={`h-4 w-4 text-slate-500 transition ${isOpen ? "rotate-90" : ""}`}
+                  className={`h-4 w-4 text-slate-500 transition group-hover:text-orange-200 ${isOpen ? "rotate-90" : ""}`}
                 />
-                <Folder className="h-4 w-4 text-orange-300" />
+                <Folder className="h-4 w-4 text-orange-300 transition group-hover:text-orange-200" />
                 <span className="font-medium">{group.name}</span>
                 <span className="ml-auto rounded bg-slate-900 px-2 py-0.5 text-xs text-slate-400">
                   {group.count}
@@ -90,7 +90,7 @@ export default function KbCategoryList({
                     <Link
                       key={article.id}
                       href={`/articles/${article.id}`}
-                      className="minikb-category-link block truncate rounded px-2 py-1.5 text-xs text-slate-400 transition hover:bg-slate-900 hover:text-orange-200"
+                      className="minikb-category-link kb-interactive-row block truncate rounded-md border border-transparent bg-transparent px-2 py-1.5 text-xs text-slate-400"
                     >
                       {article.title}
                     </Link>

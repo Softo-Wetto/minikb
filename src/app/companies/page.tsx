@@ -196,7 +196,7 @@ export default async function CompaniesPage({
 
           <button
             type="submit"
-            className="rounded-xl border border-slate-700 px-4 text-sm font-semibold text-slate-200 transition hover:border-orange-500/60 hover:text-orange-200"
+            className="kb-interactive-control rounded-xl border border-slate-700 px-4 text-sm font-semibold text-slate-200"
           >
             Filter
           </button>

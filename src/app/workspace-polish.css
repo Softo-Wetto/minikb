@@ -58,9 +58,83 @@
 }
 
 .interactive-surface:hover {
-  border-color: rgba(251, 146, 60, 0.48) !important;
+  border-color: rgba(251, 146, 60, 0.58) !important;
   background-color: var(--kb-surface-hover) !important;
+  box-shadow:
+    0 14px 30px rgba(0, 0, 0, 0.2),
+    0 0 0 1px rgba(251, 146, 60, 0.08);
+  transform: translateY(-2px);
+}
+
+.minikb-root a[href],
+.minikb-root button:not(:disabled) {
+  cursor: pointer;
+}
+
+.kb-interactive-row,
+.kb-interactive-control,
+.kb-interactive-folder {
+  transition:
+    border-color 160ms ease,
+    background-color 160ms ease,
+    color 160ms ease,
+    box-shadow 160ms ease,
+    transform 160ms ease,
+    filter 160ms ease;
+}
+
+.kb-interactive-row {
+  outline: 1px solid transparent;
+  outline-offset: -1px;
+}
+
+.kb-interactive-row:hover,
+.kb-interactive-row:focus-visible {
+  background-color: rgba(251, 146, 60, 0.075) !important;
+  color: #ffedd5 !important;
+  outline-color: rgba(251, 146, 60, 0.48);
+  box-shadow:
+    inset 3px 0 0 rgba(251, 146, 60, 0.9),
+    0 8px 20px rgba(0, 0, 0, 0.12);
+  transform: translateX(2px);
+}
+
+.kb-interactive-row-client:hover,
+.kb-interactive-row-client:focus-visible {
+  background-color: rgba(56, 189, 248, 0.09) !important;
+  color: #e0f2fe !important;
+  outline-color: rgba(56, 189, 248, 0.48);
+  box-shadow:
+    inset 3px 0 0 rgba(125, 211, 252, 0.92),
+    0 8px 20px rgba(0, 0, 0, 0.12);
+}
+
+.kb-interactive-control:not(:disabled):hover,
+.kb-interactive-control:not(:disabled):focus-visible {
+  border-color: rgba(251, 146, 60, 0.6) !important;
+  background-color: rgba(251, 146, 60, 0.09) !important;
+  color: #fff7ed !important;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.16);
   transform: translateY(-1px);
+}
+
+.kb-interactive-control-client:not(:disabled):hover,
+.kb-interactive-control-client:not(:disabled):focus-visible {
+  border-color: rgba(56, 189, 248, 0.58) !important;
+  background-color: rgba(56, 189, 248, 0.1) !important;
+  color: #e0f2fe !important;
+}
+
+.kb-interactive-folder:hover,
+.kb-interactive-folder:focus-visible {
+  background-color: rgba(251, 146, 60, 0.055) !important;
+  color: #fff7ed !important;
+  box-shadow: inset 3px 0 0 rgba(251, 146, 60, 0.72);
+}
+
+.minikb-root :where(a[href], button:not(:disabled)):active {
+  filter: brightness(1.08);
+  transform: scale(0.985);
 }
 
 .minikb-header {
@@ -126,19 +200,49 @@
   color: #758194 !important;
 }
 
-.minikb-workspace [class*="border-slate-800"] {
+.minikb-workspace [class~="border-slate-800"],
+.minikb-workspace [class~="border-slate-800/70"],
+.minikb-workspace [class~="border-slate-800/80"],
+.minikb-workspace [class~="border-slate-800/90"] {
   border-color: var(--kb-line) !important;
 }
 
-.minikb-workspace [class*="border-slate-700"] {
+.minikb-workspace [class~="border-slate-700"],
+.minikb-workspace [class~="border-slate-700/60"],
+.minikb-workspace [class~="border-slate-700/80"] {
   border-color: var(--kb-line-strong) !important;
 }
 
-.minikb-workspace [class*="bg-slate-950"] {
+.minikb-workspace [class~="bg-slate-950"],
+.minikb-workspace [class~="bg-slate-950/40"],
+.minikb-workspace [class~="bg-slate-950/45"],
+.minikb-workspace [class~="bg-slate-950/50"],
+.minikb-workspace [class~="bg-slate-950/55"],
+.minikb-workspace [class~="bg-slate-950/60"],
+.minikb-workspace [class~="bg-slate-950/65"],
+.minikb-workspace [class~="bg-slate-950/70"],
+.minikb-workspace [class~="bg-slate-950/76"],
+.minikb-workspace [class~="bg-slate-950/80"],
+.minikb-workspace [class~="bg-slate-950/85"],
+.minikb-workspace [class~="bg-slate-950/88"],
+.minikb-workspace [class~="bg-slate-950/90"],
+.minikb-workspace [class~="bg-slate-950/92"],
+.minikb-workspace [class~="bg-slate-950/95"],
+.minikb-workspace [class~="bg-slate-950/98"] {
   background-color: #0b0e13 !important;
 }
 
-.minikb-workspace [class*="bg-slate-900"] {
+.minikb-workspace [class~="bg-slate-900"],
+.minikb-workspace [class~="bg-slate-900/25"],
+.minikb-workspace [class~="bg-slate-900/35"],
+.minikb-workspace [class~="bg-slate-900/40"],
+.minikb-workspace [class~="bg-slate-900/42"],
+.minikb-workspace [class~="bg-slate-900/45"],
+.minikb-workspace [class~="bg-slate-900/50"],
+.minikb-workspace [class~="bg-slate-900/55"],
+.minikb-workspace [class~="bg-slate-900/60"],
+.minikb-workspace [class~="bg-slate-900/70"],
+.minikb-workspace [class~="bg-slate-900/80"] {
   background-color: #141820 !important;
 }
 
@@ -188,10 +292,23 @@
 
 .minikb-article-table tbody tr {
   background: #0f1218 !important;
+  transition:
+    background-color 160ms ease,
+    box-shadow 160ms ease;
 }
 
 .minikb-article-table tbody tr:hover {
   background: #171b23 !important;
+  box-shadow: inset 3px 0 0 rgba(251, 146, 60, 0.85);
+}
+
+.minikb-article-table .kb-article-row:hover td:first-child > a {
+  color: #fed7aa !important;
+}
+
+.minikb-article-table .kb-article-row:hover td:last-child a {
+  background: rgba(251, 146, 60, 0.1) !important;
+  color: #fdba74 !important;
 }
 
 .minikb-article-table th {
@@ -207,9 +324,28 @@
   outline-offset: 2px;
 }
 
+
+.minikb-root .kb-interactive-row-client:focus-visible,
+.minikb-root .kb-interactive-control-client:focus-visible {
+  outline-color: #7dd3fc;
+}
+
+.minikb-root .minikb-category-link {
+  border-color: transparent;
+  background: transparent !important;
+  box-shadow: none;
+}
+
+.minikb-root .minikb-category-link:hover {
+  border-color: rgba(251, 146, 60, 0.52);
+  background: rgba(251, 146, 60, 0.075) !important;
+  color: #ffedd5 !important;
+}
+
 .minikb-root .minikb-category-link:focus-visible {
+  border-color: rgba(251, 146, 60, 0.72);
   outline: none;
-  box-shadow: inset 0 0 0 1px rgba(251, 146, 60, 0.72);
+  box-shadow: inset 3px 0 0 rgba(251, 146, 60, 0.9);
 }
 
 @media (max-width: 767px) {
@@ -224,7 +360,23 @@
 
 @media (prefers-reduced-motion: reduce) {
   .interactive-surface,
-  .minikb-article-table tbody tr {
+  .kb-interactive-row,
+  .kb-interactive-control,
+  .kb-interactive-folder,
+  .minikb-article-table tbody tr,
+  .minikb-root :where(a[href], button:not(:disabled)) {
     transition: none !important;
+  }
+
+  .interactive-surface:hover,
+  .kb-interactive-row:hover,
+  .kb-interactive-row:focus-visible,
+  .kb-interactive-control:hover,
+  .kb-interactive-control:focus-visible,
+  .kb-interactive-folder:hover,
+  .kb-interactive-folder:focus-visible,
+  .minikb-root :where(a[href], button:not(:disabled)):active {
+    filter: none !important;
+    transform: none !important;
   }
 }

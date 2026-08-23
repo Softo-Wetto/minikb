@@ -288,7 +288,7 @@ export default async function AdminPage() {
               <Link
                 key={stat.label}
                 href={stat.href}
-                className="group bg-slate-950/80 p-4 transition hover:bg-slate-900/90"
+                className="group kb-interactive-row bg-slate-950/80 p-4"
               >
                 <div className="flex items-start justify-between gap-3">
                   <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-slate-900 text-orange-300 ring-1 ring-slate-800">
@@ -421,10 +421,10 @@ function AdminAction({
   return (
     <Link
       href={href}
-      className={`inline-flex h-10 items-center gap-2 rounded-xl px-3 text-sm font-semibold transition ${
+      className={`inline-flex h-10 items-center gap-2 rounded-xl px-3 text-sm font-semibold ${
         primary
-          ? "bg-orange-500 text-white hover:bg-orange-400"
-          : "border border-slate-700 bg-slate-900 text-slate-100 hover:border-orange-500/50 hover:text-orange-200"
+          ? "btn-press bg-orange-500 text-white hover:bg-orange-400"
+          : "kb-interactive-control border border-slate-700 bg-slate-900 text-slate-100"
       }`}
     >
       <Icon className="h-4 w-4" />
@@ -472,7 +472,7 @@ function HealthCard({
             <Link
               key={`${item.href}-${item.label}`}
               href={item.href}
-              className="block rounded px-2 py-2 text-sm transition hover:bg-slate-900"
+              className="kb-interactive-row block rounded border border-transparent px-2 py-2 text-sm"
             >
               <span className="block truncate font-medium text-slate-200">{item.label}</span>
               <span className="mt-0.5 block truncate text-xs text-slate-500">{item.detail}</span>
@@ -507,7 +507,7 @@ function MaintenanceLink({ href, label }: { href: string; label: string }) {
   return (
     <Link
       href={href}
-      className="flex items-center justify-between rounded border border-slate-800 bg-slate-900/50 px-3 py-2 text-slate-300 transition hover:border-orange-500/40 hover:text-orange-200"
+      className="kb-interactive-row flex items-center justify-between rounded border border-slate-800 bg-slate-900/50 px-3 py-2 text-slate-300"
     >
       {label}
       <span className="text-slate-600">Open</span>

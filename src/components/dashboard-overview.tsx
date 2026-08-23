@@ -261,7 +261,7 @@ export default function DashboardOverview({
               <Link
                 key={article.id}
                 href={`/articles/${article.id}`}
-                className="group flex items-center justify-between gap-4 px-4 py-3 transition hover:bg-slate-900/70"
+                className="group kb-interactive-row flex items-center justify-between gap-4 px-4 py-3 transition hover:bg-slate-900/70"
               >
                 <div className="min-w-0">
                   <div className="truncate text-sm font-medium text-slate-100 group-hover:text-orange-200">
@@ -395,7 +395,7 @@ export default function DashboardOverview({
               <Link
                 key={asset.id}
                 href={`/assets/${asset.id}`}
-                className="group flex items-center justify-between gap-4 px-4 py-3 transition hover:bg-slate-900/70"
+                className="group kb-interactive-row flex items-center justify-between gap-4 px-4 py-3 transition hover:bg-slate-900/70"
               >
                 <div className="min-w-0">
                   <div className="truncate text-sm font-medium text-slate-100 group-hover:text-orange-200">
@@ -433,7 +433,7 @@ export default function DashboardOverview({
               <Link
                 key={article.id}
                 href={`/articles/${article.id}`}
-                className="group flex items-center justify-between gap-2 rounded-xl border border-slate-800 bg-slate-900/40 px-3 py-2.5 transition hover:border-orange-500/40 hover:bg-orange-500/[0.07]"
+                className="group kb-interactive-row flex items-center justify-between gap-2 rounded-xl border border-slate-800 bg-slate-900/40 px-3 py-2.5 transition hover:border-orange-500/40 hover:bg-orange-500/[0.07]"
               >
                 <div className="min-w-0">
                   <div className="truncate text-sm font-medium text-white group-hover:text-orange-100">{article.title}</div>
@@ -471,7 +471,7 @@ function HealthCard({
   tone: "good" | "warn";
 }) {
   return (
-    <div className={`surface-card card-lift rounded-2xl p-4 ${tone === "good" ? "surface-good" : "surface-warn"}`}>
+    <div className={`surface-card rounded-2xl p-4 ${tone === "good" ? "surface-good" : "surface-warn"}`}>
       <div className="flex items-center justify-between gap-3">
         <p className="text-sm text-slate-400">{label}</p>
         <div className={`flex h-7 w-7 items-center justify-center rounded-lg ring-1 transition ${
@@ -543,7 +543,7 @@ function AttentionList({
           <Link
             key={item.id}
             href={item.href}
-            className="group flex items-center justify-between gap-2 rounded-xl border border-slate-800 bg-slate-900/35 px-3 py-2.5 transition hover:border-orange-500/40 hover:bg-orange-500/[0.07]"
+            className="group kb-interactive-row flex items-center justify-between gap-2 rounded-xl border border-slate-800 bg-slate-900/35 px-3 py-2.5 transition hover:border-orange-500/40 hover:bg-orange-500/[0.07]"
           >
             <div className="min-w-0">
               <div className="truncate text-sm font-medium text-white">
@@ -609,7 +609,7 @@ function QuickLaunch() {
             <Link
               key={action.href}
               href={action.href}
-              className="group flex min-h-16 items-center gap-3 px-4 py-3 transition hover:bg-slate-900/75"
+              className="group kb-interactive-row flex min-h-16 items-center gap-3 px-4 py-3 transition hover:bg-slate-900/75"
             >
               <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-slate-950 text-orange-300 ring-1 ring-slate-800 transition group-hover:ring-orange-500/35">
                 <Icon className="h-4 w-4" />

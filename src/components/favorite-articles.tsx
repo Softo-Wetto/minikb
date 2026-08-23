@@ -50,7 +50,7 @@ export default function FavoriteArticles() {
           <Link
             key={item.id}
             href={`/articles/${item.id}`}
-            className="group flex items-center justify-between gap-3 rounded-xl border border-transparent px-3 py-2.5 text-sm text-slate-300 transition hover:border-orange-500/20 hover:bg-orange-500/[0.07] hover:text-orange-100"
+            className="group kb-interactive-row flex items-center justify-between gap-3 rounded-xl border border-transparent px-3 py-2.5 text-sm text-slate-300"
           >
             <span className="min-w-0">
               <span className="block truncate font-medium">{item.title}</span>

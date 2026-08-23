@@ -63,7 +63,7 @@ function CompanyTabs({ companyId, view }: { companyId: string; view: ClientView 
             scroll={false}
             aria-current={active ? "page" : undefined}
             className={cn(
-              "inline-flex h-9 shrink-0 items-center gap-2 rounded-md px-3 text-sm font-semibold transition",
+              "kb-interactive-control kb-interactive-control-client inline-flex h-9 shrink-0 items-center gap-2 rounded-md px-3 text-sm font-semibold",
               active
                 ? "bg-sky-400/12 text-sky-100 ring-1 ring-inset ring-sky-400/25"
                 : "text-slate-400 hover:bg-slate-900/75 hover:text-white",
@@ -105,7 +105,7 @@ function WorkspacePagination({
           <Link
             href={companyWorkspaceHref(companyId, view, currentPage - 1)}
             scroll={false}
-            className="inline-flex h-8 items-center gap-1.5 rounded-md border border-slate-700 px-2.5 text-xs font-semibold text-slate-300 transition hover:border-orange-500/50 hover:text-orange-200"
+            className="kb-interactive-control kb-interactive-control-client inline-flex h-8 items-center gap-1.5 rounded-md border border-slate-700 px-2.5 text-xs font-semibold text-slate-300"
           >
             <ArrowLeft className="h-3.5 w-3.5" />
             Previous
@@ -115,7 +115,7 @@ function WorkspacePagination({
           <Link
             href={companyWorkspaceHref(companyId, view, currentPage + 1)}
             scroll={false}
-            className="inline-flex h-8 items-center gap-1.5 rounded-md border border-slate-700 px-2.5 text-xs font-semibold text-slate-300 transition hover:border-orange-500/50 hover:text-orange-200"
+            className="kb-interactive-control kb-interactive-control-client inline-flex h-8 items-center gap-1.5 rounded-md border border-slate-700 px-2.5 text-xs font-semibold text-slate-300"
           >
             Next
             <ArrowRight className="h-3.5 w-3.5" />
@@ -173,7 +173,7 @@ function ArticlePanel({
           <Link
             key={article.id}
             href={`/articles/${article.id}`}
-            className="group flex min-h-16 items-center justify-between gap-4 px-4 py-3 transition hover:bg-slate-900/75"
+            className="group kb-interactive-row flex min-h-16 items-center justify-between gap-4 px-4 py-3 transition hover:bg-slate-900/75"
           >
             <span className="min-w-0">
               <span className="block truncate text-sm font-semibold text-slate-100 transition group-hover:text-orange-200">
@@ -248,7 +248,7 @@ function AssetPanel({
           <Link
             key={asset.id}
             href={`/assets/${asset.id}`}
-            className="group flex min-h-16 items-center gap-3 px-4 py-3 transition hover:bg-slate-900/75"
+            className="group kb-interactive-row flex min-h-16 items-center gap-3 px-4 py-3 transition hover:bg-slate-900/75"
           >
             <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-slate-950 text-orange-300 ring-1 ring-slate-800 transition group-hover:ring-orange-400/35">
               <HardDrive className="h-4 w-4" />
@@ -360,7 +360,7 @@ export default async function CompanyPage({
       <div className="flex flex-wrap items-center justify-between gap-3">
         <Link
           href="/companies"
-          className="inline-flex h-9 items-center gap-2 rounded-md border border-slate-800 bg-slate-950/65 px-3 text-sm font-semibold text-slate-400 transition hover:border-slate-700 hover:text-white"
+          className="kb-interactive-control inline-flex h-9 items-center gap-2 rounded-md border border-slate-800 bg-slate-950/65 px-3 text-sm font-semibold text-slate-400"
         >
           <ArrowLeft className="h-4 w-4" />
           Companies
@@ -370,14 +370,14 @@ export default async function CompanyPage({
           <div className="flex flex-wrap gap-2">
             <Link
               href={`/companies/${company.id}/edit`}
-              className="inline-flex h-9 items-center gap-2 rounded-md border border-slate-700 px-3 text-sm font-semibold text-slate-200 transition hover:border-orange-500/50 hover:text-orange-200"
+              className="kb-interactive-control inline-flex h-9 items-center gap-2 rounded-md border border-slate-700 px-3 text-sm font-semibold text-slate-200"
             >
               <Pencil className="h-4 w-4" />
               Edit company
             </Link>
             <Link
               href={`/articles/new?companyId=${company.id}`}
-              className="inline-flex h-9 items-center gap-2 rounded-md border border-slate-700 px-3 text-sm font-semibold text-slate-200 transition hover:border-orange-500/50 hover:text-orange-200"
+              className="kb-interactive-control inline-flex h-9 items-center gap-2 rounded-md border border-slate-700 px-3 text-sm font-semibold text-slate-200"
             >
               <FilePlus2 className="h-4 w-4" />
               New article
@@ -503,14 +503,14 @@ export default async function CompanyPage({
           <div className="flex flex-wrap gap-2">
             <Link
               href={`/articles/new?companyId=${company.id}`}
-              className="inline-flex h-9 items-center gap-2 rounded-md border border-slate-700 px-3 text-sm font-semibold text-slate-200 transition hover:border-orange-500/50 hover:text-orange-200"
+              className="kb-interactive-control inline-flex h-9 items-center gap-2 rounded-md border border-slate-700 px-3 text-sm font-semibold text-slate-200"
             >
               <FilePlus2 className="h-4 w-4" />
               Create article
             </Link>
             <Link
               href={`/assets/new?companyId=${company.id}`}
-              className="inline-flex h-9 items-center gap-2 rounded-md border border-slate-700 px-3 text-sm font-semibold text-slate-200 transition hover:border-orange-500/50 hover:text-orange-200"
+              className="kb-interactive-control inline-flex h-9 items-center gap-2 rounded-md border border-slate-700 px-3 text-sm font-semibold text-slate-200"
             >
               <Server className="h-4 w-4" />
               Add asset
@@ -520,7 +520,7 @@ export default async function CompanyPage({
                 href={company.website}
                 target="_blank"
                 rel="noreferrer"
-                className="inline-flex h-9 items-center gap-2 rounded-md border border-slate-700 px-3 text-sm font-semibold text-slate-200 transition hover:border-orange-500/50 hover:text-orange-200"
+                className="kb-interactive-control inline-flex h-9 items-center gap-2 rounded-md border border-slate-700 px-3 text-sm font-semibold text-slate-200"
               >
                 <ExternalLink className="h-4 w-4" />
                 Open website

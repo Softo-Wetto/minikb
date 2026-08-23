@@ -84,7 +84,7 @@ export default function RecentViews() {
           <Link
             key={item.id}
             href={`/articles/${item.id}`}
-            className="group flex items-center justify-between gap-3 rounded-xl border border-transparent px-3 py-2 text-sm text-slate-300 transition hover:border-orange-500/20 hover:bg-slate-900/70 hover:text-orange-200"
+            className="group kb-interactive-row flex items-center justify-between gap-3 rounded-xl border border-transparent px-3 py-2 text-sm text-slate-300"
           >
             <span className="truncate">{item.title}</span>
             <span className="shrink-0 text-xs text-slate-600 transition group-hover:text-slate-500">

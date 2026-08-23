@@ -340,7 +340,7 @@ export default function AppHeader({ profile }: { profile: Profile | null }) {
               <Link
                 key={item.href}
                 href={item.href}
-                className={`inline-flex h-9 items-center gap-2 rounded-xl px-3 text-sm font-semibold transition ${
+                className={`kb-interactive-control inline-flex h-9 items-center gap-2 rounded-xl px-3 text-sm font-semibold ${
                   active && !contextCompanyId
                     ? "bg-orange-500/14 text-orange-100 ring-1 ring-orange-500/25"
                     : "text-slate-400 hover:bg-slate-800/80 hover:text-white"
@@ -402,7 +402,7 @@ export default function AppHeader({ profile }: { profile: Profile | null }) {
                       <Link
                         key={result.id}
                         href={result.href}
-                        className="interactive-surface flex items-center gap-3 rounded-xl border border-transparent px-3 py-2.5 text-sm text-slate-300 transition hover:bg-slate-900 hover:text-orange-200"
+                        className="interactive-surface kb-interactive-row flex items-center gap-3 rounded-xl border border-transparent px-3 py-2.5 text-sm text-slate-300"
                       >
                         <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-slate-900 text-orange-300 ring-1 ring-slate-800">
                           <Icon className="h-4 w-4" />
@@ -442,7 +442,7 @@ export default function AppHeader({ profile }: { profile: Profile | null }) {
           <div className="relative">
             <button
               onClick={() => setMenuOpen((v) => !v)}
-              className="inline-flex h-10 items-center gap-1 rounded-2xl border border-slate-800 bg-slate-900/70 px-2.5 text-slate-200 transition hover:border-orange-500/40 hover:bg-slate-900"
+              className="kb-interactive-control inline-flex h-10 items-center gap-1 rounded-2xl border border-slate-800 bg-slate-900/70 px-2.5 text-slate-200"
             >
               <UserCircle2 className="h-5 w-5" />
               <ChevronDown className={`h-3.5 w-3.5 text-slate-500 transition-transform duration-200 ${menuOpen ? "rotate-180" : ""}`} />
@@ -465,7 +465,7 @@ export default function AppHeader({ profile }: { profile: Profile | null }) {
                 <Link
                   href="/profile"
                   onClick={() => setMenuOpen(false)}
-                  className="mt-2 flex w-full items-center gap-2 rounded-xl px-2 py-2 text-sm text-slate-300 transition hover:bg-slate-900 hover:text-white"
+                  className="kb-interactive-row mt-2 flex w-full items-center gap-2 rounded-xl border border-transparent px-2 py-2 text-sm text-slate-300"
                 >
                   <UserCircle2 className="h-4 w-4" />
                   Profile settings
@@ -473,7 +473,7 @@ export default function AppHeader({ profile }: { profile: Profile | null }) {
 
                 <button
                   onClick={handleLogout}
-                  className="mt-1 flex w-full items-center gap-2 rounded-xl px-2 py-2 text-sm text-slate-300 transition hover:bg-slate-900 hover:text-white"
+                  className="kb-interactive-row mt-1 flex w-full items-center gap-2 rounded-xl border border-transparent px-2 py-2 text-sm text-slate-300"
                 >
                   <LogOut className="h-4 w-4" />
                   Logout

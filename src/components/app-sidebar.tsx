@@ -267,7 +267,7 @@ export default function AppSidebar({ role }: { role: string }) {
           </div>
           <Link
             href="/companies"
-            className="group flex h-9 items-center gap-2 px-3.5 text-xs font-semibold text-slate-400 transition hover:bg-slate-900/70 hover:text-white"
+            className="group kb-interactive-row kb-interactive-row-client flex h-9 items-center gap-2 border border-transparent px-3.5 text-xs font-semibold text-slate-400"
           >
             <ChevronLeft className="h-3.5 w-3.5 transition group-hover:-translate-x-0.5" />
             All companies
@@ -285,7 +285,7 @@ export default function AppSidebar({ role }: { role: string }) {
                 type="button"
                 onClick={() => handleClientSectionClick(item.section)}
                 className={cn(
-                  "group relative flex min-h-10 w-full cursor-pointer items-center gap-3 rounded-md px-3 py-2.5 text-left text-sm transition",
+                  "group kb-interactive-row kb-interactive-row-client relative flex min-h-10 w-full cursor-pointer items-center gap-3 rounded-md px-3 py-2.5 text-left text-sm",
                   active
                     ? "bg-sky-400/12 text-sky-100 ring-1 ring-inset ring-sky-400/25"
                     : "text-slate-400 hover:bg-slate-900/85 hover:text-white",
@@ -315,14 +315,14 @@ export default function AppSidebar({ role }: { role: string }) {
           <div className="grid grid-cols-2 gap-2">
             <Link
               href={`/articles/new?companyId=${encodeURIComponent(clientId)}`}
-              className="inline-flex h-9 items-center justify-center gap-2 rounded-md border border-slate-700 bg-slate-900 px-2 text-xs font-semibold text-slate-200 transition hover:border-sky-400/50 hover:text-sky-100"
+              className="kb-interactive-control kb-interactive-control-client inline-flex h-9 items-center justify-center gap-2 rounded-md border border-slate-700 bg-slate-900 px-2 text-xs font-semibold text-slate-200"
             >
               <FilePlus2 className="h-3.5 w-3.5" />
               Article
             </Link>
             <Link
               href={`/assets/new?companyId=${encodeURIComponent(clientId)}`}
-              className="inline-flex h-9 items-center justify-center gap-2 rounded-md border border-slate-700 bg-slate-900 px-2 text-xs font-semibold text-slate-200 transition hover:border-sky-400/50 hover:text-sky-100"
+              className="kb-interactive-control kb-interactive-control-client inline-flex h-9 items-center justify-center gap-2 rounded-md border border-slate-700 bg-slate-900 px-2 text-xs font-semibold text-slate-200"
             >
               <Plus className="h-3.5 w-3.5" />
               Asset

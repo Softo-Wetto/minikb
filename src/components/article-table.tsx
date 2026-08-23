@@ -145,7 +145,7 @@ function HeaderFilterMenu({
             <Link
               key={option.value || "all"}
               href={buildHref(filters, { [param]: option.value })}
-              className={`flex items-center justify-between gap-3 rounded-lg px-3 py-2 text-xs font-semibold transition ${
+              className={`kb-interactive-row flex items-center justify-between gap-3 rounded-lg border border-transparent px-3 py-2 text-xs font-semibold ${
                 active
                   ? "bg-orange-500/10 text-orange-100"
                   : "text-slate-300 hover:bg-slate-900 hover:text-white"
@@ -241,7 +241,7 @@ export default function ArticleTable({
             )}
 
             {articles.map((article) => (
-              <tr key={article.id} className="group bg-slate-950/60 transition hover:bg-slate-900/70">
+              <tr key={article.id} className="group kb-article-row bg-slate-950/60">
                 <td className="max-w-xl px-4 py-3">
                   <Link
                     href={`/articles/${article.id}`}
