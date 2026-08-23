@@ -8,12 +8,17 @@ import {
   Building2,
   ChevronLeft,
   FilePlus2,
-  Gauge,
   Library,
   Plus,
   Server,
-  Shield,
 } from "lucide-react";
+import CompanyAvatar from "@/components/company-avatar";
+import {
+  companyWorkspaceHref,
+  normalizeClientView,
+  type ClientView,
+} from "@/lib/client-workspace";
+import { getCompanyWebsiteHostname } from "@/lib/company-branding";
 import { getClientRecords } from "@/lib/pocketbase/client";
 import { cn } from "@/lib/utils";
 import type { RawPocketBaseRecord } from "@/types/database";
@@ -23,16 +28,25 @@ type CompanySummary = RawPocketBaseRecord & {
   website?: string | null;
 };
 
-type ClientSection = "overview" | "articles" | "assets";
+type ClientCounts = {
+  articles: number;
+  assets: number;
+};
+
+const emptyCounts: ClientCounts = { articles: 0, assets: 0 };
+
+function escapedRecordFilter(field: string, value: string) {
+  return `${field} = "${value.replace(/\\/g, "\\\\").replace(/"/g, '\\"')}"`;
+}
 
 export default function AppSidebar({ role }: { role: string }) {
   const pathname = usePathname();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [hash, setHash] = useState("");
   const canEdit = role === "admin" || role === "editor";
   const [resolvedClientId, setResolvedClientId] = useState<string | null>(null);
   const [company, setCompany] = useState<CompanySummary | null>(null);
+  const [counts, setCounts] = useState<ClientCounts>(emptyCounts);
 
   const routeContext = useMemo(() => {
     const companyMatch = pathname.match(/^\/companies\/([^/]+)/);
@@ -80,23 +94,13 @@ export default function AppSidebar({ role }: { role: string }) {
       : null;
 
   useEffect(() => {
-    function syncHash() {
-      setHash(window.location.hash);
-    }
-
-    syncHash();
-    window.addEventListener("hashchange", syncHash);
-
-    return () => window.removeEventListener("hashchange", syncHash);
-  }, [pathname]);
-
-  useEffect(() => {
     let cancelled = false;
 
     async function resolveClientId() {
       if (!routeContext) {
         setResolvedClientId(null);
         setCompany(null);
+        setCounts(emptyCounts);
         return;
       }
 
@@ -112,23 +116,23 @@ export default function AppSidebar({ role }: { role: string }) {
           page: "1",
           perPage: "1",
           fields: "id,company_id",
-          filter: `id = "${routeContext.id.replace(/\\/g, "\\\\").replace(/"/g, '\\"')}"`,
+          filter: escapedRecordFilter("id", routeContext.id),
         });
-        const response = await getClientRecords<RawPocketBaseRecord & { company_id?: string | null }>(
-          collection,
-          params
-        );
+        const response = await getClientRecords<
+          RawPocketBaseRecord & { company_id?: string | null }
+        >(collection, params);
 
         if (!cancelled) setResolvedClientId(response.items[0]?.company_id || null);
       } catch {
         if (!cancelled) {
           setResolvedClientId(null);
           setCompany(null);
+          setCounts(emptyCounts);
         }
       }
     }
 
-    resolveClientId();
+    void resolveClientId();
 
     return () => {
       cancelled = true;
@@ -138,207 +142,204 @@ export default function AppSidebar({ role }: { role: string }) {
   useEffect(() => {
     let cancelled = false;
 
-    async function loadCompany() {
+    async function loadClientWorkspace() {
       if (!clientId) {
         setCompany(null);
+        setCounts(emptyCounts);
         return;
       }
 
-      try {
-        const params = new URLSearchParams({
-          page: "1",
-          perPage: "1",
-          fields: "id,name,website",
-          filter: `id = "${clientId.replace(/\\/g, "\\\\").replace(/"/g, '\\"')}"`,
-        });
-        const response = await getClientRecords<CompanySummary>("companies", params);
-        if (!cancelled) setCompany(response.items[0] ?? null);
-      } catch {
-        if (!cancelled) setCompany(null);
-      }
+      const companyFilter = escapedRecordFilter("id", clientId);
+      const linkedFilter = escapedRecordFilter("company_id", clientId);
+      const [companyResult, articleResult, assetResult] = await Promise.allSettled([
+        getClientRecords<CompanySummary>(
+          "companies",
+          new URLSearchParams({
+            page: "1",
+            perPage: "1",
+            fields: "id,name,website",
+            filter: companyFilter,
+          }),
+        ),
+        getClientRecords<RawPocketBaseRecord>(
+          "articles",
+          new URLSearchParams({
+            page: "1",
+            perPage: "1",
+            fields: "id",
+            filter: linkedFilter,
+          }),
+        ),
+        getClientRecords<RawPocketBaseRecord>(
+          "assets",
+          new URLSearchParams({
+            page: "1",
+            perPage: "1",
+            fields: "id",
+            filter: linkedFilter,
+          }),
+        ),
+      ]);
+
+      if (cancelled) return;
+
+      setCompany(
+        companyResult.status === "fulfilled"
+          ? companyResult.value.items[0] ?? null
+          : null,
+      );
+      setCounts({
+        articles:
+          articleResult.status === "fulfilled"
+            ? articleResult.value.totalItems
+            : 0,
+        assets:
+          assetResult.status === "fulfilled" ? assetResult.value.totalItems : 0,
+      });
     }
 
-    loadCompany();
+    void loadClientWorkspace();
 
     return () => {
       cancelled = true;
     };
   }, [clientId]);
 
-  const globalItems = [
-    { href: "/", label: "Dashboard", icon: Gauge },
-    { href: "/articles", label: "Knowledge Base", icon: BookOpenText },
-    { href: "/companies", label: "Companies", icon: Building2 },
-    { href: "/assets", label: "Assets", icon: Server },
-  ];
+  if (!clientId) return null;
 
-  if (role === "admin") {
-    globalItems.push({ href: "/admin", label: "Admin", icon: Shield });
-  }
-
-  const activeClientSection = pathname.startsWith("/articles/")
+  const companyPath = companyWorkspaceHref(clientId, "overview");
+  const activeClientSection: ClientView = pathname.startsWith("/articles/")
     ? "articles"
     : pathname.startsWith("/assets/")
       ? "assets"
-      : hash === "#articles"
-        ? "articles"
-        : hash === "#assets"
-          ? "assets"
-          : "overview";
+      : normalizeClientView(searchParams.get("view"));
+  const clientItems = [
+    {
+      label: "Overview",
+      icon: Building2,
+      section: "overview" as const,
+      count: counts.articles + counts.assets,
+    },
+    {
+      label: "Articles",
+      icon: BookOpenText,
+      section: "articles" as const,
+      count: counts.articles,
+    },
+    {
+      label: "Assets",
+      icon: Server,
+      section: "assets" as const,
+      count: counts.assets,
+    },
+  ];
+  const hostname = getCompanyWebsiteHostname(company?.website);
 
-  const clientItems = clientId
-    ? [
-        { href: `/companies/${clientId}`, label: "Overview", icon: Building2, section: "overview" as const },
-        { href: `/companies/${clientId}#articles`, label: "Articles", icon: BookOpenText, section: "articles" as const },
-        { href: `/companies/${clientId}#assets`, label: "Assets", icon: Server, section: "assets" as const },
-      ]
-    : [];
-
-  const items = clientId ? clientItems : globalItems;
-  const workspaceLabel = clientId ? "Client Workspace" : "Central Workspace";
-
-  function handleClientSectionClick(section: ClientSection) {
-    if (!clientId) return;
-
-    const nextHash = section === "overview" ? "" : `#${section}`;
-
-    if (pathname !== `/companies/${clientId}`) {
-      router.push(`/companies/${clientId}${nextHash}`);
-      return;
-    }
-
-    setHash(nextHash);
-    window.history.replaceState(null, "", `/companies/${clientId}${nextHash}`);
-
-    if (section === "overview") {
-      window.scrollTo({ top: 0, behavior: "smooth" });
-      return;
-    }
-
-    document.getElementById(section)?.scrollIntoView({
-      behavior: "smooth",
-      block: "start",
-    });
-  }
-
-  if (!clientId) {
-    return null;
+  function handleClientSectionClick(section: ClientView) {
+    const href = companyWorkspaceHref(clientId!, section);
+    const stayingOnCompanyPage = pathname === companyPath;
+    router.push(href, { scroll: !stayingOnCompanyPage });
   }
 
   return (
-    <aside className="minikb-client-sidebar hidden w-72 shrink-0 border-r border-slate-800/80 bg-slate-950/76 backdrop-blur-xl xl:block">
-      <div className="sticky top-16 space-y-3 p-3">
-        <div className="surface-panel rounded-2xl p-3">
-          <div className="mb-3 flex items-center gap-2 px-2 text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
-            <Library className="h-3.5 w-3.5" />
-            {workspaceLabel}
+    <aside className="minikb-client-sidebar hidden w-[18.5rem] shrink-0 border-r border-slate-800/80 bg-slate-950/76 backdrop-blur-xl xl:block">
+      <div className="sticky top-16 space-y-3 p-4">
+        <div className="flex items-center gap-2 px-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">
+          <Library className="h-3.5 w-3.5" />
+          Client Workspace
+        </div>
+
+        <section className="surface-panel overflow-hidden rounded-lg">
+          <div className="flex items-start gap-3 border-b border-slate-800 p-3.5">
+            <CompanyAvatar
+              name={company?.name || "Client"}
+              website={company?.website}
+              size="md"
+            />
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-sm font-semibold text-white">
+                {company?.name || "Client"}
+              </p>
+              <p className="mt-1 truncate text-xs text-slate-400">
+                {hostname || "No website recorded"}
+              </p>
+            </div>
           </div>
+          <Link
+            href="/companies"
+            className="group flex h-9 items-center gap-2 px-3.5 text-xs font-semibold text-slate-400 transition hover:bg-slate-900/70 hover:text-white"
+          >
+            <ChevronLeft className="h-3.5 w-3.5 transition group-hover:-translate-x-0.5" />
+            All companies
+          </Link>
+        </section>
 
-          {clientId && (
-            <div className="mb-3 rounded-2xl border border-sky-400/20 bg-sky-400/10 p-3">
-              <div className="flex items-start gap-3">
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-sky-400 to-orange-500 text-sm font-black text-white shadow-lg shadow-sky-950/30">
-                  {(company?.name || "C").slice(0, 1).toUpperCase()}
-                </div>
-                <div className="min-w-0">
-                  <p className="truncate text-sm font-semibold text-white">
-                    {company?.name || "Client"}
-                  </p>
-                  <p className="mt-1 truncate text-xs text-slate-400">
-                    {company?.website || "Company workspace"}
-                  </p>
-                </div>
-              </div>
+        <nav className="surface-panel space-y-1 rounded-lg p-2">
+          {clientItems.map((item) => {
+            const Icon = item.icon;
+            const active = item.section === activeClientSection;
 
-              <Link
-                href="/companies"
-                className="mt-3 inline-flex items-center gap-2 text-xs font-medium text-sky-100 transition hover:text-white"
+            return (
+              <button
+                key={item.section}
+                type="button"
+                onClick={() => handleClientSectionClick(item.section)}
+                className={cn(
+                  "group relative flex min-h-10 w-full cursor-pointer items-center gap-3 rounded-md px-3 py-2.5 text-left text-sm transition",
+                  active
+                    ? "bg-sky-400/12 text-sky-100 ring-1 ring-inset ring-sky-400/25"
+                    : "text-slate-400 hover:bg-slate-900/85 hover:text-white",
+                )}
               >
-                <ChevronLeft className="h-3.5 w-3.5" />
-                All companies
-              </Link>
-            </div>
-          )}
+                {active && (
+                  <span className="absolute inset-y-2 left-0 w-0.5 rounded-full bg-sky-300" />
+                )}
+                <Icon
+                  className={cn(
+                    "h-4 w-4",
+                    active
+                      ? "text-sky-200"
+                      : "text-slate-500 group-hover:text-slate-300",
+                  )}
+                />
+                <span className="font-medium">{item.label}</span>
+                <span className="ml-auto rounded-md border border-slate-800 bg-slate-950/65 px-1.5 py-0.5 text-[11px] font-semibold text-slate-500">
+                  {item.count}
+                </span>
+              </button>
+            );
+          })}
+        </nav>
 
-          <nav className="space-y-1">
-            {items.map((item) => {
-              const Icon = item.icon;
-              const active = clientId
-                ? "section" in item && item.section === activeClientSection
-                : item.href === "/"
-                  ? pathname === "/"
-                  : pathname === item.href || pathname.startsWith(`${item.href}/`);
+        {canEdit && (
+          <div className="grid grid-cols-2 gap-2">
+            <Link
+              href={`/articles/new?companyId=${encodeURIComponent(clientId)}`}
+              className="inline-flex h-9 items-center justify-center gap-2 rounded-md border border-slate-700 bg-slate-900 px-2 text-xs font-semibold text-slate-200 transition hover:border-sky-400/50 hover:text-sky-100"
+            >
+              <FilePlus2 className="h-3.5 w-3.5" />
+              Article
+            </Link>
+            <Link
+              href={`/assets/new?companyId=${encodeURIComponent(clientId)}`}
+              className="inline-flex h-9 items-center justify-center gap-2 rounded-md border border-slate-700 bg-slate-900 px-2 text-xs font-semibold text-slate-200 transition hover:border-sky-400/50 hover:text-sky-100"
+            >
+              <Plus className="h-3.5 w-3.5" />
+              Asset
+            </Link>
+          </div>
+        )}
 
-              const className = cn(
-                "group flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm transition",
-                active
-                  ? clientId
-                    ? "bg-sky-400/12 text-sky-100 ring-1 ring-sky-400/25"
-                    : "bg-orange-500/12 text-orange-200 ring-1 ring-orange-500/25"
-                  : "text-slate-400 hover:bg-slate-900/85 hover:text-white"
-              );
-              const iconClassName = cn(
-                "h-4 w-4",
-                active
-                  ? clientId
-                    ? "text-sky-200"
-                    : "text-orange-300"
-                  : "text-slate-500 group-hover:text-slate-300"
-              );
-
-              if ("section" in item) {
-                return (
-                  <button
-                    key={item.href}
-                    type="button"
-                    onClick={() => handleClientSectionClick(item.section as ClientSection)}
-                    className={className}
-                  >
-                    <Icon className={iconClassName} />
-                    {item.label}
-                  </button>
-                );
-              }
-
-              return (
-                <Link key={item.href} href={item.href} className={className}>
-                  <Icon className={iconClassName} />
-                  {item.label}
-                </Link>
-              );
-            })}
-          </nav>
-
-          {clientId && canEdit && (
-            <div className="mt-3 grid grid-cols-2 gap-2 border-t border-slate-800 pt-3">
-              <Link
-                href={`/articles/new?companyId=${encodeURIComponent(clientId)}`}
-                className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-700 bg-slate-900 px-2 py-2 text-xs font-semibold text-slate-200 transition hover:border-sky-400/50 hover:text-sky-100"
-              >
-                <FilePlus2 className="h-3.5 w-3.5" />
-                Article
-              </Link>
-              <Link
-                href={`/assets/new?companyId=${encodeURIComponent(clientId)}`}
-                className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-700 bg-slate-900 px-2 py-2 text-xs font-semibold text-slate-200 transition hover:border-sky-400/50 hover:text-sky-100"
-              >
-                <Plus className="h-3.5 w-3.5" />
-                Asset
-              </Link>
-            </div>
-          )}
-        </div>
-
-        <div className="surface-card rounded-2xl p-4">
-          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
-            {clientId ? "Client KB Mode" : "Central KB Mode"}
-          </p>
-          <p className="mt-2 text-sm leading-6 text-slate-300">
-            {clientId
-              ? "Company pages keep articles and assets filtered to the current client."
-              : "Pin important articles to make them surface on the dashboard."}
-          </p>
-        </div>
+        <section className="surface-card grid grid-cols-2 gap-px overflow-hidden rounded-lg bg-slate-800">
+          <div className="bg-slate-950/85 p-3">
+            <p className="text-[11px] uppercase text-slate-500">Articles</p>
+            <p className="mt-1 text-xl font-semibold text-white">{counts.articles}</p>
+          </div>
+          <div className="bg-slate-950/85 p-3">
+            <p className="text-[11px] uppercase text-slate-500">Assets</p>
+            <p className="mt-1 text-xl font-semibold text-white">{counts.assets}</p>
+          </div>
+        </section>
       </div>
     </aside>
   );

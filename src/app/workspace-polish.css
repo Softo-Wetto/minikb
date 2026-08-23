@@ -207,6 +207,11 @@
   outline-offset: 2px;
 }
 
+.minikb-root .minikb-category-link:focus-visible {
+  outline: none;
+  box-shadow: inset 0 0 0 1px rgba(251, 146, 60, 0.72);
+}
+
 @media (max-width: 767px) {
   .minikb-main {
     padding-inline: 0.85rem;

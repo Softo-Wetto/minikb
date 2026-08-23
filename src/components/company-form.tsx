@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Building2, ExternalLink, Loader2, Save } from "lucide-react";
+import CompanyAvatar from "@/components/company-avatar";
 import {
   createRecord,
   getCurrentAuth,
@@ -203,9 +204,11 @@ export default function CompanyForm({ mode, company }: CompanyFormProps) {
               Client Preview
             </p>
             <div className="mt-4 flex items-center gap-3">
-              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-sky-400 to-orange-500 text-lg font-black text-white">
-                {(name || "C").slice(0, 1).toUpperCase()}
-              </div>
+              <CompanyAvatar
+                name={name || "Company"}
+                website={normalizedWebsite}
+                size="md"
+              />
               <div className="min-w-0">
                 <p className="truncate text-sm font-semibold text-white">
                   {name || "Company name"}

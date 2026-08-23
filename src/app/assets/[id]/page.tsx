@@ -13,6 +13,7 @@ import {
   Server,
 } from "lucide-react";
 import AttachmentManager from "@/components/attachment-manager";
+import { companyWorkspaceHref } from "@/lib/client-workspace";
 import {
   equalsFilter,
   getRecord,
@@ -100,7 +101,7 @@ export default async function AssetPage({
     <div className="space-y-4">
       <div className="flex items-center justify-between gap-3">
         <Link
-          href={company ? `/companies/${company.id}#assets` : "/assets"}
+          href={company ? companyWorkspaceHref(company.id, "assets") : "/assets"}
           className="inline-flex items-center gap-2 text-sm text-slate-400 transition hover:text-white"
         >
           <ArrowLeft className="h-4 w-4" />

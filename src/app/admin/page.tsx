@@ -22,6 +22,7 @@ import AdminUserManagement from "@/components/admin-user-management";
 import { getAdminSettings } from "@/lib/admin-settings";
 import { getArticleFolderOptions } from "@/lib/article-folders";
 import { requireAdmin } from "@/lib/auth";
+import { companyWorkspaceHref } from "@/lib/client-workspace";
 import { getRecords } from "@/lib/pocketbase/server";
 import { POCKETBASE_URL } from "@/lib/pocketbase/config";
 import type {
@@ -206,7 +207,7 @@ export default async function AdminPage() {
       items: companiesWithoutAssets.slice(0, 5).map((company) => ({
         label: company.name,
         detail: "No linked assets yet.",
-        href: `/companies/${company.id}/assets`,
+        href: companyWorkspaceHref(company.id, "assets"),
       })),
     },
     {
@@ -279,7 +280,7 @@ export default async function AdminPage() {
           </div>
         </div>
 
-        <div className="grid gap-3 p-4 md:grid-cols-2 xl:grid-cols-3">
+        <div className="grid gap-px bg-slate-800 md:grid-cols-2 xl:grid-cols-3">
           {overviewStats.map((stat) => {
             const Icon = stat.icon;
 
@@ -287,7 +288,7 @@ export default async function AdminPage() {
               <Link
                 key={stat.label}
                 href={stat.href}
-                className="interactive-surface rounded border border-slate-800 bg-slate-950/70 p-4"
+                className="group bg-slate-950/80 p-4 transition hover:bg-slate-900/90"
               >
                 <div className="flex items-start justify-between gap-3">
                   <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-slate-900 text-orange-300 ring-1 ring-slate-800">
@@ -303,7 +304,7 @@ export default async function AdminPage() {
         </div>
       </section>
 
-      <section className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_360px]">
+      <section className="grid items-start gap-4 xl:grid-cols-[minmax(0,1fr)_360px]">
         <div className="surface-panel overflow-hidden rounded-2xl">
           <div className="border-b border-slate-800 bg-slate-900/35 px-5 py-5">
             <p className="text-xs font-semibold uppercase tracking-wide text-orange-300">
@@ -365,7 +366,7 @@ export default async function AdminPage() {
 
       <AdminSettingsForm settings={settings} folders={folders.map((folder) => folder.name)} />
 
-      <section className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_420px]">
+      <section className="grid items-start gap-4 xl:grid-cols-[minmax(0,1fr)_420px]">
         <div id="users">
           <AdminUserManagement users={users} />
         </div>

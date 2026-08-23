@@ -10,6 +10,7 @@ import {
   Search,
   Server,
 } from "lucide-react";
+import CompanyAvatar from "@/components/company-avatar";
 import { getRecords } from "@/lib/pocketbase/server";
 import { requireUser } from "@/lib/auth";
 import type { Company, RawPocketBaseRecord } from "@/types/database";
@@ -252,9 +253,11 @@ export default async function CompaniesPage({
                 <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-sky-300/0 via-sky-300/35 to-orange-300/0 opacity-0 transition group-hover:opacity-100" />
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex min-w-0 items-center gap-3">
-                    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-sky-400 to-orange-500 text-sm font-black text-white shadow-lg shadow-sky-950/20">
-                      {company.name.slice(0, 1).toUpperCase()}
-                    </div>
+                    <CompanyAvatar
+                      name={company.name}
+                      website={company.website}
+                      size="md"
+                    />
                     <div className="min-w-0">
                       <h2 className="truncate text-base font-semibold text-white">
                         {company.name}

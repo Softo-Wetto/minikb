@@ -90,7 +90,7 @@ export default function KbCategoryList({
                     <Link
                       key={article.id}
                       href={`/articles/${article.id}`}
-                      className="block truncate rounded px-2 py-1.5 text-xs text-slate-400 transition hover:bg-slate-900 hover:text-orange-200"
+                      className="minikb-category-link block truncate rounded px-2 py-1.5 text-xs text-slate-400 transition hover:bg-slate-900 hover:text-orange-200"
                     >
                       {article.title}
                     </Link>

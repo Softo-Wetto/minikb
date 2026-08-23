@@ -447,7 +447,7 @@ export default function DashboardOverview({
           </div>
         </section>
 
-        <div className="grid gap-4 xl:col-span-2 2xl:grid-cols-3">
+        <div className="grid items-start gap-4 lg:grid-cols-3 xl:col-span-2">
           <FavoriteArticles />
           <RecentViews />
           <QuickLaunch />
@@ -590,7 +590,7 @@ function QuickLaunch() {
   ];
 
   return (
-    <section className="surface-card rounded-2xl">
+    <section className="surface-card overflow-hidden rounded-lg">
       <div className="flex items-center justify-between border-b border-slate-800 px-4 py-3">
         <div>
           <h2 className="text-sm font-semibold text-white">Quick Launch</h2>
@@ -601,7 +601,7 @@ function QuickLaunch() {
         <ArrowRight className="h-4 w-4 text-orange-300" />
       </div>
 
-      <div className="grid gap-2 p-3 sm:grid-cols-2">
+      <div className="divide-y divide-slate-800">
         {actions.map((action) => {
           const Icon = action.icon;
 
@@ -609,18 +609,20 @@ function QuickLaunch() {
             <Link
               key={action.href}
               href={action.href}
-              className="group relative overflow-hidden rounded-xl border border-slate-800 bg-slate-900/35 p-3 transition hover:border-orange-500/40 hover:bg-orange-500/[0.07]"
+              className="group flex min-h-16 items-center gap-3 px-4 py-3 transition hover:bg-slate-900/75"
             >
-              <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-orange-300/0 to-transparent transition group-hover:via-orange-300/35" />
-              <div className="mb-3 flex h-9 w-9 items-center justify-center rounded-lg bg-slate-950 ring-1 ring-slate-800 transition group-hover:bg-orange-500/12 group-hover:ring-orange-500/35 group-hover:shadow-[0_0_14px_rgba(249,115,22,0.15)]">
-                <Icon className="h-4 w-4 text-orange-300 transition group-hover:scale-110" />
-              </div>
-              <div className="text-sm font-semibold text-white">
-                {action.label}
-              </div>
-              <p className="mt-1 text-xs leading-5 text-slate-500">
-                {action.detail}
-              </p>
+              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-slate-950 text-orange-300 ring-1 ring-slate-800 transition group-hover:ring-orange-500/35">
+                <Icon className="h-4 w-4" />
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="block truncate text-sm font-semibold text-white">
+                  {action.label}
+                </span>
+                <span className="mt-0.5 block truncate text-xs text-slate-500">
+                  {action.detail}
+                </span>
+              </span>
+              <ArrowRight className="h-3.5 w-3.5 shrink-0 text-slate-600 transition group-hover:translate-x-0.5 group-hover:text-orange-300" />
             </Link>
           );
         })}

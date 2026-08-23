@@ -74,7 +74,7 @@ function fileKind(mimeType?: string | null, fileName?: string | null) {
 }
 
 const actionClassName =
-  "inline-flex h-8 min-w-0 items-center justify-center gap-1.5 rounded-md border border-slate-700 bg-slate-950/55 px-2.5 text-xs font-semibold text-slate-300 transition hover:border-orange-400/60 hover:bg-slate-900 hover:text-orange-100 disabled:cursor-not-allowed disabled:opacity-55";
+  "inline-flex h-8 min-w-0 cursor-pointer items-center justify-center gap-1.5 rounded-md border border-slate-700 bg-slate-950/55 px-2.5 text-xs font-semibold text-slate-300 transition hover:border-orange-400/60 hover:bg-slate-900 hover:text-orange-100 disabled:cursor-not-allowed disabled:opacity-55";
 
 export default function AttachmentManager({
   attachments,
