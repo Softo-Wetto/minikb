@@ -116,7 +116,7 @@ export default function ArticleUtilities({
   }
 
   return (
-    <section className="rounded border border-slate-800 bg-slate-950/80">
+    <section className="overflow-hidden rounded-lg border border-slate-800 bg-slate-950/80 shadow-sm">
       <div className="h-1 bg-slate-900">
         <div
           className="h-full bg-orange-500 transition-all"
@@ -128,7 +128,7 @@ export default function ArticleUtilities({
         <button
           type="button"
           onClick={copyLink}
-          className="inline-flex h-9 flex-1 items-center justify-center gap-2 rounded border border-slate-700 bg-slate-900 text-sm font-medium text-slate-200 transition hover:border-orange-500/50 hover:text-white"
+          className="inline-flex h-9 flex-1 items-center justify-center gap-2 rounded-md border border-slate-700 bg-slate-900 text-sm font-medium text-slate-200 transition hover:border-orange-500/50 hover:text-white"
         >
           {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
           {copied ? "Copied" : "Copy Link"}
@@ -137,7 +137,7 @@ export default function ArticleUtilities({
         <button
           type="button"
           onClick={() => window.print()}
-          className="inline-flex h-9 flex-1 items-center justify-center gap-2 rounded border border-slate-700 bg-slate-900 text-sm font-medium text-slate-200 transition hover:border-orange-500/50 hover:text-white"
+          className="inline-flex h-9 flex-1 items-center justify-center gap-2 rounded-md border border-slate-700 bg-slate-900 text-sm font-medium text-slate-200 transition hover:border-orange-500/50 hover:text-white"
         >
           <Printer className="h-4 w-4" />
           Print
@@ -147,7 +147,7 @@ export default function ArticleUtilities({
           <button
             type="button"
             onClick={toggleFavorite}
-            className={`inline-flex h-9 flex-1 items-center justify-center gap-2 rounded border text-sm font-medium transition ${
+            className={`inline-flex h-9 flex-1 items-center justify-center gap-2 rounded-md border text-sm font-medium transition ${
               isFavorite
                 ? "border-orange-500/45 bg-orange-500/10 text-orange-100"
                 : "border-slate-700 bg-slate-900 text-slate-200 hover:border-orange-500/50 hover:text-white"
@@ -168,7 +168,7 @@ export default function ArticleUtilities({
         {headings.length === 0 ? (
           <p className="text-sm text-slate-500">No headings in this article.</p>
         ) : (
-          <nav className="space-y-1">
+          <nav className="max-h-64 space-y-1 overflow-y-auto pr-1">
             {headings.map((heading) => (
               <a
                 key={heading.id}

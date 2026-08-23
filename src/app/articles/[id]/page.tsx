@@ -154,7 +154,6 @@ export default async function ArticlePage({
         </Link>
 
         <div className="flex flex-wrap gap-2">
-
           <Link
             href={`/articles/${article.id}/edit`}
             className="inline-flex h-9 items-center gap-2 rounded bg-orange-500 px-3 text-sm font-semibold text-white transition hover:bg-orange-400"
@@ -165,7 +164,7 @@ export default async function ArticlePage({
         </div>
       </div>
 
-      <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_360px]">
+      <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_380px]">
         <article className="rounded border border-slate-800 bg-slate-950/85">
           <div className="border-b border-slate-800 px-6 py-6">
             <div className="flex flex-wrap items-center gap-2 text-xs text-slate-500">
@@ -232,7 +231,13 @@ export default async function ArticlePage({
           </div>
         </article>
 
-        <aside className="space-y-4">
+        <aside className="article-context-rail space-y-3">
+          <div className="flex items-center justify-between gap-3 px-1 pb-1">
+            <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">Article workspace</p>
+            <span className="rounded-md border border-slate-800 bg-slate-950/70 px-2 py-1 text-[11px] font-medium text-slate-400">
+              {attachments.length} {attachments.length === 1 ? "file" : "files"}
+            </span>
+          </div>
           <ArticleUtilities
             articleId={article.id}
             title={article.title}
@@ -240,21 +245,8 @@ export default async function ArticlePage({
             companyId={article.company_id}
           />
 
-          <section className="rounded border border-red-500/20 bg-red-500/5 p-4">
-            <h2 className="text-sm font-semibold text-red-100">Danger Zone</h2>
-            <p className="mt-2 text-sm leading-6 text-red-200/75">
-              Permanently delete this KB article and its attached files.
-            </p>
-            <DeleteArticleButton
-              articleId={article.id}
-              articleTitle={article.title}
-              companyId={article.company_id}
-              className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded border border-red-500/35 bg-red-500/10 px-3 py-2.5 text-sm font-semibold text-red-200 transition hover:border-red-400 hover:bg-red-500/15 disabled:opacity-50"
-            />
-          </section>
-
-          <section className="rounded border border-slate-800 bg-slate-950/80">
-            <div className="flex items-center gap-2 border-b border-slate-800 px-4 py-3">
+          <section className="overflow-hidden rounded-lg border border-slate-800 bg-slate-950/80 shadow-sm">
+            <div className="flex items-center gap-2 border-b border-slate-800 bg-slate-900/25 px-4 py-3">
               <FileText className="h-4 w-4 text-orange-300" />
               <h2 className="text-sm font-semibold text-white">Article Details</h2>
             </div>
@@ -282,11 +274,11 @@ export default async function ArticlePage({
             </div>
           </section>
 
-          <section className="rounded border border-slate-800 bg-slate-950/80">
-            <div className="flex items-center gap-2 border-b border-slate-800 px-4 py-3">
+          <section className="overflow-hidden rounded-lg border border-slate-800 bg-slate-950/80 shadow-sm">
+            <div className="flex items-center gap-2 border-b border-slate-800 bg-slate-900/25 px-4 py-3">
               <Paperclip className="h-4 w-4 text-orange-300" />
               <h2 className="text-sm font-semibold text-white">
-                Files ({attachments.length})
+                Attachments ({attachments.length})
               </h2>
             </div>
             <div className="p-4">
@@ -298,8 +290,8 @@ export default async function ArticlePage({
             </div>
           </section>
 
-          <section className="rounded border border-slate-800 bg-slate-950/80">
-            <div className="border-b border-slate-800 px-4 py-3">
+          <section className="overflow-hidden rounded-lg border border-slate-800 bg-slate-950/80 shadow-sm">
+            <div className="border-b border-slate-800 bg-slate-900/25 px-4 py-3">
               <h2 className="text-sm font-semibold text-white">Connected Knowledge</h2>
               <p className="mt-1 text-xs text-slate-500">Deliberate links across central and client knowledge.</p>
             </div>
@@ -317,8 +309,8 @@ export default async function ArticlePage({
             </div>
           </section>
 
-          <section className="rounded border border-slate-800 bg-slate-950/80">
-            <div className="border-b border-slate-800 px-4 py-3">
+          <section className="overflow-hidden rounded-lg border border-slate-800 bg-slate-950/80 shadow-sm">
+            <div className="border-b border-slate-800 bg-slate-900/25 px-4 py-3">
               <h2 className="text-sm font-semibold text-white">
                 More in this folder ({relatedArticles.length})
               </h2>
@@ -340,6 +332,19 @@ export default async function ArticlePage({
                 </Link>
               ))}
             </div>
+          </section>
+
+          <section className="rounded-lg border border-red-500/20 bg-red-500/5 p-4 shadow-sm">
+            <h2 className="text-sm font-semibold text-red-100">Danger Zone</h2>
+            <p className="mt-2 text-sm leading-6 text-red-200/75">
+              Permanently delete this KB article and its attached files.
+            </p>
+            <DeleteArticleButton
+              articleId={article.id}
+              articleTitle={article.title}
+              companyId={article.company_id}
+              className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded border border-red-500/35 bg-red-500/10 px-3 py-2.5 text-sm font-semibold text-red-200 transition hover:border-red-400 hover:bg-red-500/15 disabled:opacity-50"
+            />
           </section>
         </aside>
       </div>

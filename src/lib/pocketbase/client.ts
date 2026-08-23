@@ -11,9 +11,13 @@ import {
   normalizeUser,
   pbRequest as basePbRequest,
 } from "@/lib/pocketbase/shared";
-import type { PocketBaseAuth } from "@/lib/pocketbase/types";
-import type { RawPocketBaseRecord } from "@/lib/pocketbase/types";
-import type { UserProfile } from "@/lib/pocketbase/types";
+import { buildAttachmentFileFormData } from "@/lib/attachment-files";
+import type {
+  Attachment,
+  PocketBaseAuth,
+  RawPocketBaseRecord,
+  UserProfile,
+} from "@/lib/pocketbase/types";
 
 async function pbRequest<T>(
   path: string,
@@ -160,14 +164,9 @@ export async function createAttachment({
     throw new Error("Not logged in");
   }
 
-  const formData = new FormData();
+  const formData = buildAttachmentFileFormData(file);
   if (articleId) formData.append("article_id", articleId);
   if (assetId) formData.append("asset_id", assetId);
-  formData.append("file", file);
-  formData.append("file_name", file.name);
-  formData.append("file_path", file.name);
-  formData.append("file_size", String(file.size));
-  formData.append("mime_type", file.type || "");
   formData.append("uploaded_by", auth.user.id);
 
   const record = await pbRequest<RawPocketBaseRecord>(
@@ -180,6 +179,30 @@ export async function createAttachment({
   );
 
   return normalizeRecord(record);
+}
+
+export async function replaceAttachment({
+  attachmentId,
+  file,
+}: {
+  attachmentId: string;
+  file: File;
+}) {
+  const auth = getBrowserAuth();
+  if (!auth) {
+    throw new Error("Not logged in");
+  }
+
+  const record = await pbRequest<RawPocketBaseRecord>(
+    `/api/collections/attachments/records/${attachmentId}`,
+    {
+      method: "PATCH",
+      token: auth.token,
+      body: buildAttachmentFileFormData(file),
+    },
+  );
+
+  return normalizeRecord(record) as unknown as Attachment;
 }
 
 export async function getClientRecords<T extends RawPocketBaseRecord>(
