@@ -198,12 +198,18 @@ test("keeps article deletion in one detail-page danger zone", () => {
   assert.equal((source.match(/<DeleteArticleButton/g) || []).length, 1);
 });
 test("does not trap the sticky toolbar inside an overflow-hidden editor panel", () => {
-  const source = readFileSync(
+  const editorForm = readFileSync(
     new URL("../components/edit-article-form.tsx", import.meta.url),
     "utf8"
   );
+  const appShell = readFileSync(
+    new URL("../components/app-shell.tsx", import.meta.url),
+    "utf8"
+  );
 
-  assert.doesNotMatch(source, /section className="min-w-0 overflow-hidden/);
+  assert.doesNotMatch(editorForm, /section className="min-w-0 overflow-hidden/);
+  assert.doesNotMatch(appShell, /minikb-workspace[^"\n]*overflow-hidden/);
+  assert.match(appShell, /minikb-workspace[^"\n]*overflow-x-clip/);
 });
 test("wires recovery and revision components into article forms", () => {
   const root = new URL("../", import.meta.url);

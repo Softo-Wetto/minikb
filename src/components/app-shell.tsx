@@ -29,7 +29,7 @@ export default function AppShell({
   return (
     <>
       <AppHeader profile={profile} />
-      <div className="minikb-workspace relative flex min-h-[calc(100vh-4rem)] w-full overflow-hidden">
+      <div className="minikb-workspace relative flex min-h-[calc(100vh-4rem)] w-full overflow-x-clip">
         <AppSidebar role={profile?.role ?? "viewer"} />
         <main className="minikb-main relative min-w-0 flex-1 animate-slide-up px-4 py-5 sm:px-5 lg:px-6 lg:py-6 2xl:px-8" style={{ animationDuration: "240ms" }}>
           {children}
