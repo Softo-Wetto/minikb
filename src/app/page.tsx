@@ -12,56 +12,34 @@ export default async function HomePage() {
   let safeAttachments: Attachment[] = [];
   let safeWorkItems: WorkItem[] = [];
 
-  try {
-    const { items } = await getRecords<Article>("articles", {
+  const [articlesResult, assetsResult, companiesResult, attachmentsResult, workItemsResult] = await Promise.allSettled([
+    getRecords<Article>("articles", {
       fields: "id,title,category,summary,company_id,created_at,updated_at,is_pinned,is_internal",
       sort: "-updated_at",
-    });
-    safeArticles = items;
-  } catch {
-    safeArticles = [];
-  }
-
-  try {
-    const { items } = await getRecords<Asset>("assets", {
+    }),
+    getRecords<Asset>("assets", {
       fields: "id,name,asset_type,company_id,description,created_at,updated_at",
       sort: "-updated_at",
-    });
-    safeAssets = items;
-  } catch {
-    safeAssets = [];
-  }
-
-  try {
-    const { items } = await getRecords<Company>("companies", {
+    }),
+    getRecords<Company>("companies", {
       fields: "id,name,website,description,created_at,updated_at",
       sort: "name",
-    });
-    safeCompanies = items;
-  } catch {
-    safeCompanies = [];
-  }
-
-  try {
-    const { items } = await getRecords<Attachment>("attachments", {
+    }),
+    getRecords<Attachment>("attachments", {
       fields: "id,article_id,asset_id,created_at",
       sort: "-created_at",
-    });
-    safeAttachments = items;
-  } catch {
-    safeAttachments = [];
-  }
-
-  try {
-    const { items } = await getRecords<WorkItem>("work_items", {
+    }),
+    getRecords<WorkItem>("work_items", {
       fields: "id,kind,status,title,note,due_at,article_id,company_id,created_by,created_at,updated_at",
       sort: "due_at",
-    });
-    safeWorkItems = items;
-  } catch {
-    safeWorkItems = [];
-  }
+    }),
+  ]);
 
+  safeArticles = articlesResult.status === "fulfilled" ? articlesResult.value.items : [];
+  safeAssets = assetsResult.status === "fulfilled" ? assetsResult.value.items : [];
+  safeCompanies = companiesResult.status === "fulfilled" ? companiesResult.value.items : [];
+  safeAttachments = attachmentsResult.status === "fulfilled" ? attachmentsResult.value.items : [];
+  safeWorkItems = workItemsResult.status === "fulfilled" ? workItemsResult.value.items : [];
   const categoryCount = new Set(
     safeArticles.map((article) => article.category || "General")
   ).size;

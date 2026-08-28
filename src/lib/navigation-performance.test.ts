@@ -14,3 +14,15 @@ test("deduplicates authenticated user reads within one server render", () => {
   assert.match(server, /export const getServerUser = cache\(/);
   assert.match(server, /api\/collections\/users\/records/);
 });
+
+test("loads independent collection page data concurrently", () => {
+  for (const path of [
+    "../app/page.tsx",
+    "../app/articles/page.tsx",
+    "../app/assets/page.tsx",
+    "../app/companies/page.tsx",
+    "./article-folders.ts",
+  ]) {
+    assert.match(source(path), /Promise\.all(?:Settled)?\(/, path);
+  }
+});

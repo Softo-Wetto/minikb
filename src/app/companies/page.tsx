@@ -49,41 +49,33 @@ export default async function CompaniesPage({
   let articleCounts = new Map<string, number>();
   let assetCounts = new Map<string, number>();
 
-  try {
-    const { items } = await getRecords<CompanyRow>("companies", {
+  const [companyResult, articleResult, assetResult] = await Promise.allSettled([
+    getRecords<CompanyRow>("companies", {
       sort: sort === "recent" ? "-updated_at" : "name",
-    });
-    companies = items;
-  } catch {
-    companies = [];
-  }
-
-  try {
-    const { items } = await getRecords<CompanyLinkRecord>("articles", {
+    }),
+    getRecords<CompanyLinkRecord>("articles", {
       fields: "id,company_id",
       perPage: 500,
-    });
-    articleCounts = items.reduce((map, article) => {
-      incrementCount(map, article.company_id);
-      return map;
-    }, new Map<string, number>());
-  } catch {
-    articleCounts = new Map();
-  }
-
-  try {
-    const { items } = await getRecords<CompanyLinkRecord>("assets", {
+    }),
+    getRecords<CompanyLinkRecord>("assets", {
       fields: "id,company_id",
       perPage: 500,
-    });
-    assetCounts = items.reduce((map, asset) => {
-      incrementCount(map, asset.company_id);
-      return map;
-    }, new Map<string, number>());
-  } catch {
-    assetCounts = new Map();
-  }
+    }),
+  ]);
 
+  companies = companyResult.status === "fulfilled" ? companyResult.value.items : [];
+  articleCounts = articleResult.status === "fulfilled"
+    ? articleResult.value.items.reduce((map, article) => {
+        incrementCount(map, article.company_id);
+        return map;
+      }, new Map<string, number>())
+    : new Map();
+  assetCounts = assetResult.status === "fulfilled"
+    ? assetResult.value.items.reduce((map, asset) => {
+        incrementCount(map, asset.company_id);
+        return map;
+      }, new Map<string, number>())
+    : new Map();
   const query = q.trim().toLowerCase();
   const filteredCompanies = companies.filter((company) => {
     const articleCount = articleCounts.get(company.id) || 0;

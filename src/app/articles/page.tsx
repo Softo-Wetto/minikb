@@ -76,32 +76,35 @@ export default async function ArticlesPage({
   let companyRows: Pick<Company, "id" | "name">[] = [];
   let error: Error | null = null;
 
-  try {
-    const response = await getRecords<Article>("articles", {
+  const [articleResult, companyResult, folderResult] = await Promise.allSettled([
+    getRecords<Article>("articles", {
       fields: "id,title,category,summary,tags,company_id,created_at,updated_at,is_pinned,is_internal,is_draft",
       sort: `${sortDirection}${sortField}`,
       filter: filters.join(" && "),
-    });
-    articles = tag ? response.items.filter((article) => article.tags?.includes(tag)) : response.items;
-  } catch (caught) {
-    error = caught as Error;
-  }
-
-  try {
-    const response = await getRecords<Company>("companies", {
+    }),
+    getRecords<Company>("companies", {
       fields: "id,name",
       sort: "name",
       perPage: 500,
-    });
-    companyRows = response.items.map((company) => ({
-      id: company.id,
-      name: company.name,
-    }));
-  } catch {
-    companyRows = [];
+    }),
+    getArticleFolderOptions(),
+  ]);
+
+  if (articleResult.status === "fulfilled") {
+    articles = tag
+      ? articleResult.value.items.filter((article) => article.tags?.includes(tag))
+      : articleResult.value.items;
+  } else {
+    error = articleResult.reason as Error;
   }
 
-  const folders = await getArticleFolderOptions();
+  companyRows = companyResult.status === "fulfilled"
+    ? companyResult.value.items.map((company) => ({
+        id: company.id,
+        name: company.name,
+      }))
+    : [];
+  const folders = folderResult.status === "fulfilled" ? folderResult.value : [];
   const categories = folders.map((folder) => folder.name);
   const availableTags = Array.from(new Set(articles.flatMap((article) => article.tags || []))).sort((left, right) => left.localeCompare(right));
   const pageScopeLabel = useSingleCompany

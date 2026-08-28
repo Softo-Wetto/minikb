@@ -43,28 +43,28 @@ export default async function AssetsPage({
   let companies: Pick<Company, "id" | "name">[] = [];
   let error: Error | null = null;
 
-  try {
-    const response = await getRecords<Asset>("assets", {
+  const [assetResult, companyResult] = await Promise.allSettled([
+    getRecords<Asset>("assets", {
       sort: "-updated_at",
-    });
-    assets = response.items;
-  } catch (caught) {
-    error = caught as Error;
-  }
-
-  try {
-    const response = await getRecords<Company>("companies", {
+    }),
+    getRecords<Company>("companies", {
       fields: "id,name",
       sort: "name",
-    });
-    companies = response.items.map((company) => ({
-      id: company.id,
-      name: company.name,
-    }));
-  } catch {
-    companies = [];
+    }),
+  ]);
+
+  if (assetResult.status === "fulfilled") {
+    assets = assetResult.value.items;
+  } else {
+    error = assetResult.reason as Error;
   }
 
+  companies = companyResult.status === "fulfilled"
+    ? companyResult.value.items.map((company) => ({
+        id: company.id,
+        name: company.name,
+      }))
+    : [];
   const companyById = new Map(companies.map((company) => [company.id, company.name]));
   const types = Array.from(new Set(assets.map((asset) => asset.asset_type).filter(Boolean)));
   const query = q.trim().toLowerCase();

@@ -21,28 +21,23 @@ export async function getArticleFolderOptions(): Promise<ArticleFolderOption[]> 
   let managedFolders: ArticleFolder[] = [];
   let categoryRows: CategoryRow[] = [];
 
-  try {
-    const response = await getRecords<ArticleFolder>("article_folders", {
-      fields: "id,name,sort_order,created_at,updated_at",
-      sort: "sort_order,name",
-      perPage: 500,
-    });
-    managedFolders = response.items;
-  } catch {
-    managedFolders = [];
-  }
+  const folderOptions = {
+    fields: "id,name,sort_order,created_at,updated_at",
+    sort: "sort_order,name",
+    perPage: 500,
+  };
+  const categoryOptions = {
+    fields: "id,category",
+    sort: "category",
+    perPage: 500,
+  };
+  const [folderResult, categoryResult] = await Promise.allSettled([
+    getRecords<ArticleFolder>("article_folders", folderOptions),
+    getRecords<CategoryRow>("articles", categoryOptions),
+  ]);
 
-  try {
-    const response = await getRecords<CategoryRow>("articles", {
-      fields: "id,category",
-      sort: "category",
-      perPage: 500,
-    });
-    categoryRows = response.items;
-  } catch {
-    categoryRows = [];
-  }
-
+  managedFolders = folderResult.status === "fulfilled" ? folderResult.value.items : [];
+  categoryRows = categoryResult.status === "fulfilled" ? categoryResult.value.items : [];
   const counts = new Map<string, number>();
   for (const row of categoryRows) {
     const name = normalizeFolder(row.category);
