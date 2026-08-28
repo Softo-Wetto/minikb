@@ -39,3 +39,12 @@ test("loads independent detail and editor data concurrently", () => {
     assert.match(source(path), /Promise\.all(?:Settled)?\(/, path);
   }
 });
+
+test("keeps article editor folder failures fatal", () => {
+  const articleEdit = source("../app/articles/[id]/edit/page.tsx");
+
+  assert.match(
+    articleEdit,
+    /if \(folderOptionsResult\.status === "rejected"\) \{\s*throw folderOptionsResult\.reason;\s*\}/,
+  );
+});

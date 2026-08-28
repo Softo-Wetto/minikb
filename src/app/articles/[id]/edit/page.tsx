@@ -51,10 +51,6 @@ export default async function EditArticlePage({
   const articleOptions = articleOptionsResult.status === "fulfilled"
     ? articleOptionsResult.value.items.filter((item) => item.id !== id)
     : [];
-  const folders = folderOptionsResult.status === "fulfilled"
-    ? folderOptionsResult.value.map((folder) => folder.name)
-    : [];
-
   if (!article) {
     return (
       <div className="rounded border border-zinc-800 bg-zinc-950 p-6 text-zinc-300">
@@ -62,6 +58,12 @@ export default async function EditArticlePage({
       </div>
     );
   }
+
+  if (folderOptionsResult.status === "rejected") {
+    throw folderOptionsResult.reason;
+  }
+
+  const folders = folderOptionsResult.value.map((folder) => folder.name);
 
   return (
     <EditArticleForm
