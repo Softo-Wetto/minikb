@@ -1,4 +1,5 @@
 import { cookies } from "next/headers";
+import { cache } from "react";
 import { parseAuthCookie } from "@/lib/pocketbase/auth-cookie";
 import {
   escapeFilterValue,
@@ -10,12 +11,12 @@ import {
 import type { PocketBaseAuth } from "@/lib/pocketbase/types";
 import type { RawPocketBaseRecord } from "@/lib/pocketbase/types";
 
-export async function getServerAuth(): Promise<PocketBaseAuth | null> {
+export const getServerAuth = cache(async (): Promise<PocketBaseAuth | null> => {
   const cookieStore = await cookies();
   return parseAuthCookie(cookieStore.get("minikb_pb_auth")?.value);
-}
+});
 
-export async function getServerUser() {
+export const getServerUser = cache(async () => {
   const auth = await getServerAuth();
   if (!auth) return null;
 
@@ -29,7 +30,7 @@ export async function getServerUser() {
   } catch {
     return null;
   }
-}
+});
 
 export async function getRecords<T extends RawPocketBaseRecord>(
   collection: string,
