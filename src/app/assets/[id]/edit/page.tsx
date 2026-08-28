@@ -11,27 +11,21 @@ export default async function EditAssetPage({
   await requireEditor();
 
   const { id } = await params;
-  let asset: Asset | null = null;
-  let companies: Pick<Company, "id" | "name">[] = [];
-
-  try {
-    asset = await getRecord<Asset>("assets", id);
-  } catch {
-    asset = null;
-  }
-
-  try {
-    const response = await getRecords<Company>("companies", {
+  const [assetResult, companiesResult] = await Promise.allSettled([
+    getRecord<Asset>("assets", id),
+    getRecords<Company>("companies", {
       fields: "id,name",
       sort: "name",
-    });
-    companies = response.items.map((company) => ({
+    }),
+  ]);
+
+  const asset = assetResult.status === "fulfilled" ? assetResult.value : null;
+  const companies = companiesResult.status === "fulfilled"
+    ? companiesResult.value.items.map((company) => ({
       id: company.id,
       name: company.name,
-    }));
-  } catch {
-    companies = [];
-  }
+    }))
+    : [];
 
   if (!asset) {
     return (

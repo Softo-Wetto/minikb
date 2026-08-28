@@ -21,49 +21,28 @@ export default async function NewArticlePage({
   await requireEditor();
   const { companyId = "", template: initialTemplateId = "" } = await searchParams;
 
-  let companyRows: CompanyRow[] = [];
-  let templates: ArticleTemplate[] = [];
-  let articleOptions: ArticleLinkRow[] = [];
-
-  try {
-    const response = await getRecords<CompanyRow>("companies", {
-      fields: "id,name",
-      sort: "name",
-    });
-    companyRows = response.items;
-  } catch {
-    companyRows = [];
-  }
-
-  try {
-    const response = await getRecords<ArticleTemplate>("article_templates", {
-      sort: "name",
-      perPage: 200,
-    });
-    templates = response.items;
-  } catch {
-    templates = [];
-  }
-
-  try {
-    const response = await getRecords<ArticleLinkRow>("articles", {
-      fields: "id,title",
-      sort: "title",
-      perPage: 500,
-    });
-    articleOptions = response.items;
-  } catch {
-    articleOptions = [];
-  }
+  const [companyRows, templates, articleOptions, folderOptions, settings] =
+    await Promise.all([
+      getRecords<CompanyRow>("companies", {
+        fields: "id,name",
+        sort: "name",
+      }).then((response) => response.items).catch(() => []),
+      getRecords<ArticleTemplate>("article_templates", {
+        sort: "name",
+        perPage: 200,
+      }).then((response) => response.items).catch(() => []),
+      getRecords<ArticleLinkRow>("articles", {
+        fields: "id,title",
+        sort: "title",
+        perPage: 500,
+      }).then((response) => response.items).catch(() => []),
+      getArticleFolderOptions(),
+      getAdminSettings(),
+    ]);
   const companies = companyRows.map((company) => ({
     id: company.id,
     name: company.name,
   }));
-
-  const [folderOptions, settings] = await Promise.all([
-    getArticleFolderOptions(),
-    getAdminSettings(),
-  ]);
   const folders = folderOptions.map((folder) => folder.name);
   const initialCategory = getSettingValue<string>(
     settings,

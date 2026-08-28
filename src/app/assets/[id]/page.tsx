@@ -71,22 +71,24 @@ export default async function AssetPage({
   let attachments: Attachment[] = [];
   const metadata = metadataObject(asset.metadata);
 
-  if (asset.company_id) {
-    try {
-      company = await getRecord<Company>("companies", asset.company_id);
-    } catch {
-      company = null;
-    }
-  }
-
-  try {
-    const response = await getRecords<Attachment>("attachments", {
+  const [companyResult, attachmentsResult] = await Promise.allSettled([
+    asset.company_id
+      ? getRecord<Company>("companies", asset.company_id)
+      : Promise.resolve(null),
+    getRecords<Attachment>("attachments", {
       filter: equalsFilter("asset_id", asset.id),
       sort: "-created_at",
-    });
-    attachments = response.items;
-  } catch (error) {
-    console.error("Unable to load asset attachments", error);
+    }),
+  ]);
+
+  if (companyResult.status === "fulfilled") {
+    company = companyResult.value;
+  }
+
+  if (attachmentsResult.status === "fulfilled") {
+    attachments = attachmentsResult.value.items;
+  } else {
+    console.error("Unable to load asset attachments", attachmentsResult.reason);
   }
 
   const details = [

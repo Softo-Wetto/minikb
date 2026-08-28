@@ -308,41 +308,38 @@ export default async function CompanyPage({
   let articleTotalPages = 1;
   let assetTotalPages = 1;
 
-  try {
-    company = await getRecord<Company>("companies", id);
-  } catch {
-    company = null;
+  const [companyResult, articleResult, assetResult] = await Promise.allSettled([
+    getRecord<Company>("companies", id),
+    getRecords<Article>("articles", {
+      filter: equalsFilter("company_id", id),
+      sort: "-updated_at",
+      page: view === "articles" ? requestedPage : 1,
+      perPage: view === "articles" ? 50 : view === "overview" ? 5 : 1,
+    }),
+    getRecords<Asset>("assets", {
+      filter: equalsFilter("company_id", id),
+      sort: "-updated_at",
+      page: view === "assets" ? requestedPage : 1,
+      perPage: view === "assets" ? 50 : view === "overview" ? 5 : 1,
+    }),
+  ]);
+
+  if (companyResult.status === "fulfilled") {
+    company = companyResult.value;
   }
 
-  if (company) {
-    const [articleResult, assetResult] = await Promise.allSettled([
-      getRecords<Article>("articles", {
-        filter: equalsFilter("company_id", company.id),
-        sort: "-updated_at",
-        page: view === "articles" ? requestedPage : 1,
-        perPage: view === "articles" ? 50 : view === "overview" ? 5 : 1,
-      }),
-      getRecords<Asset>("assets", {
-        filter: equalsFilter("company_id", company.id),
-        sort: "-updated_at",
-        page: view === "assets" ? requestedPage : 1,
-        perPage: view === "assets" ? 50 : view === "overview" ? 5 : 1,
-      }),
-    ]);
+  if (articleResult.status === "fulfilled") {
+    articles = articleResult.value.items;
+    articleTotal = articleResult.value.totalItems;
+    articlePage = articleResult.value.page;
+    articleTotalPages = Math.max(articleResult.value.totalPages, 1);
+  }
 
-    if (articleResult.status === "fulfilled") {
-      articles = articleResult.value.items;
-      articleTotal = articleResult.value.totalItems;
-      articlePage = articleResult.value.page;
-      articleTotalPages = Math.max(articleResult.value.totalPages, 1);
-    }
-
-    if (assetResult.status === "fulfilled") {
-      assets = assetResult.value.items;
-      assetTotal = assetResult.value.totalItems;
-      assetPage = assetResult.value.page;
-      assetTotalPages = Math.max(assetResult.value.totalPages, 1);
-    }
+  if (assetResult.status === "fulfilled") {
+    assets = assetResult.value.items;
+    assetTotal = assetResult.value.totalItems;
+    assetPage = assetResult.value.page;
+    assetTotalPages = Math.max(assetResult.value.totalPages, 1);
   }
 
   if (!company) {

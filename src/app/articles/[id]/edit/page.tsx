@@ -16,30 +16,44 @@ export default async function EditArticlePage({
   await requireEditor();
 
   const { id } = await params;
-  let article: Article | null = null;
-  let companies: Pick<Company, "id" | "name">[] = [];
-  let revisions: ArticleRevision[] = [];
-  let templates: ArticleTemplate[] = [];
-  let articleOptions: ArticleLinkRow[] = [];
-
-  try {
-    article = await getRecord<Article>("articles", id);
-  } catch {
-    article = null;
-  }
-
-  try {
-    const response = await getRecords<Company>("companies", {
+  const [articleResult, companiesResult, revisionsResult, templatesResult, articleOptionsResult, folderOptionsResult] = await Promise.allSettled([
+    getRecord<Article>("articles", id),
+    getRecords<Company>("companies", {
       fields: "id,name",
       sort: "name",
-    });
-    companies = response.items.map((company) => ({
+    }),
+    getRecords<ArticleRevision>("article_revisions", {
+      filter: equalsFilter("article_id", id),
+      sort: "-revision_number",
+      perPage: 30,
+    }),
+    getRecords<ArticleTemplate>("article_templates", {
+      sort: "name",
+      perPage: 200,
+    }),
+    getRecords<ArticleLinkRow>("articles", {
+      fields: "id,title",
+      sort: "title",
+      perPage: 500,
+    }),
+    getArticleFolderOptions(),
+  ]);
+
+  const article = articleResult.status === "fulfilled" ? articleResult.value : null;
+  const companies = companiesResult.status === "fulfilled"
+    ? companiesResult.value.items.map((company) => ({
       id: company.id,
       name: company.name,
-    }));
-  } catch {
-    companies = [];
-  }
+    }))
+    : [];
+  const revisions = revisionsResult.status === "fulfilled" ? revisionsResult.value.items : [];
+  const templates = templatesResult.status === "fulfilled" ? templatesResult.value.items : [];
+  const articleOptions = articleOptionsResult.status === "fulfilled"
+    ? articleOptionsResult.value.items.filter((item) => item.id !== id)
+    : [];
+  const folders = folderOptionsResult.status === "fulfilled"
+    ? folderOptionsResult.value.map((folder) => folder.name)
+    : [];
 
   if (!article) {
     return (
@@ -48,42 +62,6 @@ export default async function EditArticlePage({
       </div>
     );
   }
-
-  if (article) {
-    try {
-      const response = await getRecords<ArticleRevision>("article_revisions", {
-        filter: equalsFilter("article_id", id),
-        sort: "-revision_number",
-        perPage: 30,
-      });
-      revisions = response.items;
-    } catch {
-      revisions = [];
-    }
-  }
-
-  try {
-    const response = await getRecords<ArticleTemplate>("article_templates", {
-      sort: "name",
-      perPage: 200,
-    });
-    templates = response.items;
-  } catch {
-    templates = [];
-  }
-
-  try {
-    const response = await getRecords<ArticleLinkRow>("articles", {
-      fields: "id,title",
-      sort: "title",
-      perPage: 500,
-    });
-    articleOptions = response.items.filter((item) => item.id !== id);
-  } catch {
-    articleOptions = [];
-  }
-
-  const folders = (await getArticleFolderOptions()).map((folder) => folder.name);
 
   return (
     <EditArticleForm

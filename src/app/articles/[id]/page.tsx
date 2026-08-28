@@ -105,24 +105,27 @@ export default async function ArticlePage({
   let linkedArticles: RelatedArticle[] = [];
   let backlinkArticles: RelatedArticle[] = [];
 
-  try {
-    const response = await getRecords<Attachment>("attachments", {
+  const [attachmentsResult, relatedArticlesResult] = await Promise.allSettled([
+    getRecords<Attachment>("attachments", {
       filter: equalsFilter("article_id", article.id),
       sort: "-created_at",
-    });
-    attachments = response.items;
-  } catch (error) {
-    console.error("Unable to load article attachments", error);
-  }
-
-  try {
-    const response = await getRecords<RelatedArticle>("articles", {
+    }),
+    getRecords<RelatedArticle>("articles", {
       fields: "id,title,content,category,company_id",
       filter: notEqualsFilter("id", article.id),
       sort: "title",
       perPage: 500,
-    });
-    const candidates = response.items;
+    }),
+  ]);
+
+  if (attachmentsResult.status === "fulfilled") {
+    attachments = attachmentsResult.value.items;
+  } else {
+    console.error("Unable to load article attachments", attachmentsResult.reason);
+  }
+
+  if (relatedArticlesResult.status === "fulfilled") {
+    const candidates = relatedArticlesResult.value.items;
     linkedArticles = findLinkedArticles(article.content || "", candidates);
     backlinkArticles = candidates.filter((candidate) =>
       extractArticleLinkIds(candidate.content || "").includes(article.id)
@@ -138,8 +141,8 @@ export default async function ArticlePage({
           !connectedIds.has(candidate.id)
       )
       .slice(0, 5);
-  } catch (error) {
-    console.error("Unable to load connected articles", error);
+  } else {
+    console.error("Unable to load connected articles", relatedArticlesResult.reason);
   }
 
   return (

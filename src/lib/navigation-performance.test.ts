@@ -26,3 +26,16 @@ test("loads independent collection page data concurrently", () => {
     assert.match(source(path), /Promise\.all(?:Settled)?\(/, path);
   }
 });
+
+test("loads independent detail and editor data concurrently", () => {
+  for (const path of [
+    "../app/articles/[id]/page.tsx",
+    "../app/articles/new/page.tsx",
+    "../app/articles/[id]/edit/page.tsx",
+    "../app/assets/[id]/page.tsx",
+    "../app/assets/[id]/edit/page.tsx",
+    "../app/companies/[id]/page.tsx",
+  ]) {
+    assert.match(source(path), /Promise\.all(?:Settled)?\(/, path);
+  }
+});
