@@ -48,3 +48,31 @@ test("keeps article editor folder failures fatal", () => {
     /if \(folderOptionsResult\.status === "rejected"\) \{\s*throw folderOptionsResult\.reason;\s*\}/,
   );
 });
+
+test("preserves the app shell during optimized internal navigation", () => {
+  const header = source("../components/app-header.tsx");
+  const sidebar = source("../components/app-sidebar.tsx");
+
+  assert.match(header, /useRouter/);
+  assert.doesNotMatch(header, /window\.location\.href = "\/articles"/);
+  assert.doesNotMatch(header, /window\.location\.href = `\/articles\?q=/);
+  assert.match(sidebar, /<Link[\s\S]*companyWorkspaceHref/);
+});
+
+test("shows immediate route loading feedback", () => {
+  const loading = source("../app/loading.tsx");
+  assert.match(loading, /role="status"/);
+  assert.match(loading, /motion-safe:animate-pulse/);
+});
+
+test("uses client routing after successful record saves", () => {
+  for (const path of [
+    "../components/new-article-form.tsx",
+    "../components/edit-article-form.tsx",
+    "../components/asset-form.tsx",
+  ]) {
+    const form = source(path);
+    assert.match(form, /useRouter/);
+    assert.doesNotMatch(form, /window\.location\.href = `\/(?:articles|assets)/);
+  }
+});

@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { HardDrive, Save } from "lucide-react";
 import {
   createRecord,
@@ -53,6 +54,7 @@ export default function AssetForm({
   companies,
   initialCompanyId = "",
 }: AssetFormProps) {
+  const router = useRouter();
   const isEditing = Boolean(asset);
   const metadata = useMemo(() => metadataObject(asset?.metadata), [asset?.metadata]);
   const [name, setName] = useState(asset?.name || "");
@@ -98,7 +100,7 @@ export default function AssetForm({
       const saved = isEditing && asset
         ? await updateRecord<Asset>("assets", asset.id, payload)
         : await createRecord<Asset>("assets", payload);
-      window.location.href = `/assets/${saved.id}`;
+      router.push(`/assets/${saved.id}`);
     } catch (error) {
       alert(error instanceof Error ? error.message : "Unable to save asset.");
       setSaving(false);

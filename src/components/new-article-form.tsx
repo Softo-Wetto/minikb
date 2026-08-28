@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import AiArticleDraftButton from "@/components/ai-article-draft-button";
 import ArticleFolderPicker from "@/components/article-folder-picker";
 import ArticleRecoveryBanner from "@/components/article-recovery-banner";
@@ -50,6 +51,7 @@ export default function NewArticleForm({
   initialTemplateId?: string;
   articleOptions: ArticleLinkOption[];
 }) {
+  const router = useRouter();
   const [title, setTitle] = useState("");
   const [summary, setSummary] = useState("");
   const [content, setContent] = useState("<p></p>");
@@ -167,7 +169,7 @@ export default function NewArticleForm({
       const data = await createRecord<RawPocketBaseRecord & Pick<Article, "id">>("articles", payload);
       clearRecovery();
       allowNextNavigation();
-      window.location.href = `/articles/${data.id}`;
+      router.push(`/articles/${data.id}`);
     } catch (error) {
       alert(error instanceof Error ? error.message : "Unable to create article.");
       setSavingMode(null);

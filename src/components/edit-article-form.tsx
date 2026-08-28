@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   ArrowLeft,
   Copy,
@@ -78,6 +79,7 @@ export default function EditArticleForm({
   templates: ArticleTemplate[];
   articleOptions: ArticleLinkOption[];
 }) {
+  const router = useRouter();
   const [title, setTitle] = useState(article.title || "");
   const [summary, setSummary] = useState(article.summary || "");
   const [content, setContent] = useState(article.content || "<p></p>");
@@ -263,7 +265,7 @@ export default function EditArticleForm({
       setIsDraft(draft);
       clearRecovery();
       allowNextNavigation();
-      window.location.href = `/articles/${article.id}`;
+      router.push(`/articles/${article.id}`);
     } catch (error) {
       alert(error instanceof Error ? error.message : "Unable to update article.");
       setSavingMode(null);

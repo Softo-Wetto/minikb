@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import {
   BookOpenText,
@@ -41,7 +41,6 @@ function escapedRecordFilter(field: string, value: string) {
 
 export default function AppSidebar({ role }: { role: string }) {
   const pathname = usePathname();
-  const router = useRouter();
   const searchParams = useSearchParams();
   const canEdit = role === "admin" || role === "editor";
   const [resolvedClientId, setResolvedClientId] = useState<string | null>(null);
@@ -235,11 +234,6 @@ export default function AppSidebar({ role }: { role: string }) {
   ];
   const hostname = getCompanyWebsiteHostname(company?.website);
 
-  function handleClientSectionClick(section: ClientView) {
-    const href = companyWorkspaceHref(clientId!, section);
-    const stayingOnCompanyPage = pathname === companyPath;
-    router.push(href, { scroll: !stayingOnCompanyPage });
-  }
 
   return (
     <aside className="minikb-client-sidebar hidden w-[18.5rem] shrink-0 border-r border-slate-800/80 bg-slate-950/76 backdrop-blur-xl xl:block">
@@ -278,12 +272,14 @@ export default function AppSidebar({ role }: { role: string }) {
           {clientItems.map((item) => {
             const Icon = item.icon;
             const active = item.section === activeClientSection;
+            const href = companyWorkspaceHref(clientId, item.section);
+            const stayingOnCompanyPage = pathname === companyPath;
 
             return (
-              <button
+              <Link
                 key={item.section}
-                type="button"
-                onClick={() => handleClientSectionClick(item.section)}
+                href={href}
+                scroll={!stayingOnCompanyPage}
                 className={cn(
                   "group kb-interactive-row kb-interactive-row-client relative flex min-h-10 w-full cursor-pointer items-center gap-3 rounded-md px-3 py-2.5 text-left text-sm",
                   active
@@ -306,7 +302,7 @@ export default function AppSidebar({ role }: { role: string }) {
                 <span className="ml-auto rounded-md border border-slate-800 bg-slate-950/65 px-1.5 py-0.5 text-[11px] font-semibold text-slate-500">
                   {item.count}
                 </span>
-              </button>
+              </Link>
             );
           })}
         </nav>

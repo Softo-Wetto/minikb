@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname, useSearchParams } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import {
   BookOpenText,
@@ -47,6 +47,7 @@ function escapeFilterValue(value: string) {
 
 export default function AppHeader({ profile }: { profile: Profile | null }) {
   const pathname = usePathname();
+  const router = useRouter();
   const searchParams = useSearchParams();
   const [search, setSearch] = useState("");
   const [menuOpen, setMenuOpen] = useState(false);
@@ -119,16 +120,16 @@ export default function AppHeader({ profile }: { profile: Profile | null }) {
     e.preventDefault();
     const q = search.trim();
     if (!q) {
-      window.location.href = "/articles";
+      router.push("/articles");
       return;
     }
 
     if (results[0]) {
-      window.location.href = results[0].href;
+      router.push(results[0].href);
       return;
     }
 
-    window.location.href = `/articles?q=${encodeURIComponent(q)}`;
+    router.push(`/articles?q=${encodeURIComponent(q)}`);
   }
 
   useEffect(() => {
