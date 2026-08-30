@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { settleConcurrent } from "@/lib/concurrent-loaders";
 import {
   ArrowLeft,
   Building2,
@@ -71,11 +72,11 @@ export default async function AssetPage({
   let attachments: Attachment[] = [];
   const metadata = metadataObject(asset.metadata);
 
-  const [companyResult, attachmentsResult] = await Promise.allSettled([
-    asset.company_id
+  const [companyResult, attachmentsResult] = await settleConcurrent([
+    () => asset.company_id
       ? getRecord<Company>("companies", asset.company_id)
       : Promise.resolve(null),
-    getRecords<Attachment>("attachments", {
+    () => getRecords<Attachment>("attachments", {
       filter: equalsFilter("asset_id", asset.id),
       sort: "-created_at",
     }),

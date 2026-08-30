@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { settleConcurrent } from "@/lib/concurrent-loaders";
 import {
   ArrowLeft,
   ArrowRight,
@@ -308,15 +309,15 @@ export default async function CompanyPage({
   let articleTotalPages = 1;
   let assetTotalPages = 1;
 
-  const [companyResult, articleResult, assetResult] = await Promise.allSettled([
-    getRecord<Company>("companies", id),
-    getRecords<Article>("articles", {
+  const [companyResult, articleResult, assetResult] = await settleConcurrent([
+    () => getRecord<Company>("companies", id),
+    () => getRecords<Article>("articles", {
       filter: equalsFilter("company_id", id),
       sort: "-updated_at",
       page: view === "articles" ? requestedPage : 1,
       perPage: view === "articles" ? 50 : view === "overview" ? 5 : 1,
     }),
-    getRecords<Asset>("assets", {
+    () => getRecords<Asset>("assets", {
       filter: equalsFilter("company_id", id),
       sort: "-updated_at",
       page: view === "assets" ? requestedPage : 1,

@@ -1,4 +1,5 @@
 import { getRecords } from "@/lib/pocketbase/server";
+import { settleConcurrent } from "@/lib/concurrent-loaders";
 import type { ArticleFolder, RawPocketBaseRecord } from "@/types/database";
 
 type CategoryRow = RawPocketBaseRecord & {
@@ -31,9 +32,9 @@ export async function getArticleFolderOptions(): Promise<ArticleFolderOption[]> 
     sort: "category",
     perPage: 500,
   };
-  const [folderResult, categoryResult] = await Promise.allSettled([
-    getRecords<ArticleFolder>("article_folders", folderOptions),
-    getRecords<CategoryRow>("articles", categoryOptions),
+  const [folderResult, categoryResult] = await settleConcurrent([
+    () => getRecords<ArticleFolder>("article_folders", folderOptions),
+    () => getRecords<CategoryRow>("articles", categoryOptions),
   ]);
 
   managedFolders = folderResult.status === "fulfilled" ? folderResult.value.items : [];

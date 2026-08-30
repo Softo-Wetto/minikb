@@ -1,4 +1,5 @@
 import NewArticleForm from "@/components/new-article-form";
+import { runConcurrent } from "@/lib/concurrent-loaders";
 import { getAdminSettings, getSettingValue } from "@/lib/admin-settings";
 import { getRecords } from "@/lib/pocketbase/server";
 import { requireEditor } from "@/lib/auth";
@@ -22,22 +23,22 @@ export default async function NewArticlePage({
   const { companyId = "", template: initialTemplateId = "" } = await searchParams;
 
   const [companyRows, templates, articleOptions, folderOptions, settings] =
-    await Promise.all([
-      getRecords<CompanyRow>("companies", {
+    await runConcurrent([
+      () => getRecords<CompanyRow>("companies", {
         fields: "id,name",
         sort: "name",
       }).then((response) => response.items).catch(() => []),
-      getRecords<ArticleTemplate>("article_templates", {
+      () => getRecords<ArticleTemplate>("article_templates", {
         sort: "name",
         perPage: 200,
       }).then((response) => response.items).catch(() => []),
-      getRecords<ArticleLinkRow>("articles", {
+      () => getRecords<ArticleLinkRow>("articles", {
         fields: "id,title",
         sort: "title",
         perPage: 500,
       }).then((response) => response.items).catch(() => []),
-      getArticleFolderOptions(),
-      getAdminSettings(),
+      () => getArticleFolderOptions(),
+      () => getAdminSettings(),
     ]);
   const companies = companyRows.map((company) => ({
     id: company.id,

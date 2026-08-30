@@ -1,4 +1,5 @@
 import DashboardOverview from "@/components/dashboard-overview";
+import { settleConcurrent } from "@/lib/concurrent-loaders";
 import { getRecords } from "@/lib/pocketbase/server";
 import { requireUser } from "@/lib/auth";
 import type { Article, Asset, Attachment, Company, WorkItem } from "@/types/database";
@@ -12,24 +13,24 @@ export default async function HomePage() {
   let safeAttachments: Attachment[] = [];
   let safeWorkItems: WorkItem[] = [];
 
-  const [articlesResult, assetsResult, companiesResult, attachmentsResult, workItemsResult] = await Promise.allSettled([
-    getRecords<Article>("articles", {
+  const [articlesResult, assetsResult, companiesResult, attachmentsResult, workItemsResult] = await settleConcurrent([
+    () => getRecords<Article>("articles", {
       fields: "id,title,category,summary,company_id,created_at,updated_at,is_pinned,is_internal",
       sort: "-updated_at",
     }),
-    getRecords<Asset>("assets", {
+    () => getRecords<Asset>("assets", {
       fields: "id,name,asset_type,company_id,description,created_at,updated_at",
       sort: "-updated_at",
     }),
-    getRecords<Company>("companies", {
+    () => getRecords<Company>("companies", {
       fields: "id,name,website,description,created_at,updated_at",
       sort: "name",
     }),
-    getRecords<Attachment>("attachments", {
+    () => getRecords<Attachment>("attachments", {
       fields: "id,article_id,asset_id,created_at",
       sort: "-created_at",
     }),
-    getRecords<WorkItem>("work_items", {
+    () => getRecords<WorkItem>("work_items", {
       fields: "id,kind,status,title,note,due_at,article_id,company_id,created_by,created_at,updated_at",
       sort: "due_at",
     }),

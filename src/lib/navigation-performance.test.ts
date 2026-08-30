@@ -15,7 +15,7 @@ test("deduplicates authenticated user reads within one server render", () => {
   assert.match(server, /api\/collections\/users\/records/);
 });
 
-test("loads independent collection page data concurrently", () => {
+test("routes collection loaders through the behavioral concurrency harness", () => {
   for (const path of [
     "../app/page.tsx",
     "../app/articles/page.tsx",
@@ -23,11 +23,11 @@ test("loads independent collection page data concurrently", () => {
     "../app/companies/page.tsx",
     "./article-folders.ts",
   ]) {
-    assert.match(source(path), /Promise\.all(?:Settled)?\(/, path);
+    assert.match(source(path), /(?:run|settle)Concurrent\(\s*\[/, path);
   }
 });
 
-test("loads independent detail and editor data concurrently", () => {
+test("routes detail and editor loaders through the behavioral concurrency harness", () => {
   for (const path of [
     "../app/articles/[id]/page.tsx",
     "../app/articles/new/page.tsx",
@@ -36,7 +36,7 @@ test("loads independent detail and editor data concurrently", () => {
     "../app/assets/[id]/edit/page.tsx",
     "../app/companies/[id]/page.tsx",
   ]) {
-    assert.match(source(path), /Promise\.all(?:Settled)?\(/, path);
+    assert.match(source(path), /(?:run|settle)Concurrent\(\s*\[/, path);
   }
 });
 

@@ -1,4 +1,5 @@
 import EditArticleForm from "@/components/edit-article-form";
+import { settleConcurrent } from "@/lib/concurrent-loaders";
 import { equalsFilter, getRecord, getRecords } from "@/lib/pocketbase/server";
 import { requireEditor } from "@/lib/auth";
 import { getArticleFolderOptions } from "@/lib/article-folders";
@@ -16,27 +17,27 @@ export default async function EditArticlePage({
   await requireEditor();
 
   const { id } = await params;
-  const [articleResult, companiesResult, revisionsResult, templatesResult, articleOptionsResult, folderOptionsResult] = await Promise.allSettled([
-    getRecord<Article>("articles", id),
-    getRecords<Company>("companies", {
+  const [articleResult, companiesResult, revisionsResult, templatesResult, articleOptionsResult, folderOptionsResult] = await settleConcurrent([
+    () => getRecord<Article>("articles", id),
+    () => getRecords<Company>("companies", {
       fields: "id,name",
       sort: "name",
     }),
-    getRecords<ArticleRevision>("article_revisions", {
+    () => getRecords<ArticleRevision>("article_revisions", {
       filter: equalsFilter("article_id", id),
       sort: "-revision_number",
       perPage: 30,
     }),
-    getRecords<ArticleTemplate>("article_templates", {
+    () => getRecords<ArticleTemplate>("article_templates", {
       sort: "name",
       perPage: 200,
     }),
-    getRecords<ArticleLinkRow>("articles", {
+    () => getRecords<ArticleLinkRow>("articles", {
       fields: "id,title",
       sort: "title",
       perPage: 500,
     }),
-    getArticleFolderOptions(),
+    () => getArticleFolderOptions(),
   ]);
 
   const article = articleResult.status === "fulfilled" ? articleResult.value : null;

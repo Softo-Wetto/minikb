@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { settleConcurrent } from "@/lib/concurrent-loaders";
 import { FilePlus2, Filter, FolderCog, Search } from "lucide-react";
 import KbCategoryList from "@/components/kb-category-list";
 import ArticleTable from "@/components/article-table";
@@ -76,18 +77,18 @@ export default async function ArticlesPage({
   let companyRows: Pick<Company, "id" | "name">[] = [];
   let error: Error | null = null;
 
-  const [articleResult, companyResult, folderResult] = await Promise.allSettled([
-    getRecords<Article>("articles", {
+  const [articleResult, companyResult, folderResult] = await settleConcurrent([
+    () => getRecords<Article>("articles", {
       fields: "id,title,category,summary,tags,company_id,created_at,updated_at,is_pinned,is_internal,is_draft",
       sort: `${sortDirection}${sortField}`,
       filter: filters.join(" && "),
     }),
-    getRecords<Company>("companies", {
+    () => getRecords<Company>("companies", {
       fields: "id,name",
       sort: "name",
       perPage: 500,
     }),
-    getArticleFolderOptions(),
+    () => getArticleFolderOptions(),
   ]);
 
   if (articleResult.status === "fulfilled") {

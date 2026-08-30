@@ -1,4 +1,5 @@
 import AssetForm from "@/components/asset-form";
+import { settleConcurrent } from "@/lib/concurrent-loaders";
 import { getRecord, getRecords } from "@/lib/pocketbase/server";
 import { requireEditor } from "@/lib/auth";
 import type { Asset, Company } from "@/types/database";
@@ -11,9 +12,9 @@ export default async function EditAssetPage({
   await requireEditor();
 
   const { id } = await params;
-  const [assetResult, companiesResult] = await Promise.allSettled([
-    getRecord<Asset>("assets", id),
-    getRecords<Company>("companies", {
+  const [assetResult, companiesResult] = await settleConcurrent([
+    () => getRecord<Asset>("assets", id),
+    () => getRecords<Company>("companies", {
       fields: "id,name",
       sort: "name",
     }),

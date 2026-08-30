@@ -6,7 +6,7 @@
     "dev": "next dev",
     "build": "next build && opennextjs-cloudflare build --skipNextBuild",
     "build:next": "next build",
-    "test": "node --no-warnings --test --experimental-strip-types src/lib/article-editing.test.ts src/lib/attachment-files.test.ts src/lib/company-workspace.test.ts src/lib/navigation-performance.test.ts src/lib/registration-security.test.ts src/lib/ui-theme.test.ts src/lib/work-items.test.ts",
+    "test": "node --no-warnings --test --experimental-strip-types src/lib/article-editing.test.ts src/lib/attachment-files.test.ts src/lib/company-workspace.test.ts src/lib/concurrent-loaders.test.ts src/lib/navigation-performance.test.ts src/lib/registration-security.test.ts src/lib/ui-theme.test.ts src/lib/work-items.test.ts",
     "start": "next start",
     "lint": "eslint",
     "preview": "opennextjs-cloudflare build && opennextjs-cloudflare preview",

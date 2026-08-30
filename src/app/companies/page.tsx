@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { settleConcurrent } from "@/lib/concurrent-loaders";
 import {
   ArrowRight,
   BookOpenText,
@@ -49,15 +50,15 @@ export default async function CompaniesPage({
   let articleCounts = new Map<string, number>();
   let assetCounts = new Map<string, number>();
 
-  const [companyResult, articleResult, assetResult] = await Promise.allSettled([
-    getRecords<CompanyRow>("companies", {
+  const [companyResult, articleResult, assetResult] = await settleConcurrent([
+    () => getRecords<CompanyRow>("companies", {
       sort: sort === "recent" ? "-updated_at" : "name",
     }),
-    getRecords<CompanyLinkRecord>("articles", {
+    () => getRecords<CompanyLinkRecord>("articles", {
       fields: "id,company_id",
       perPage: 500,
     }),
-    getRecords<CompanyLinkRecord>("assets", {
+    () => getRecords<CompanyLinkRecord>("assets", {
       fields: "id,company_id",
       perPage: 500,
     }),

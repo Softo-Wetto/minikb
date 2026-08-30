@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { settleConcurrent } from "@/lib/concurrent-loaders";
 import {
   Building2,
   CalendarClock,
@@ -43,11 +44,11 @@ export default async function AssetsPage({
   let companies: Pick<Company, "id" | "name">[] = [];
   let error: Error | null = null;
 
-  const [assetResult, companyResult] = await Promise.allSettled([
-    getRecords<Asset>("assets", {
+  const [assetResult, companyResult] = await settleConcurrent([
+    () => getRecords<Asset>("assets", {
       sort: "-updated_at",
     }),
-    getRecords<Company>("companies", {
+    () => getRecords<Company>("companies", {
       fields: "id,name",
       sort: "name",
     }),

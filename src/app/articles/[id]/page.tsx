@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { settleConcurrent } from "@/lib/concurrent-loaders";
 import {
   ArrowLeft,
   Clock3,
@@ -105,12 +106,12 @@ export default async function ArticlePage({
   let linkedArticles: RelatedArticle[] = [];
   let backlinkArticles: RelatedArticle[] = [];
 
-  const [attachmentsResult, relatedArticlesResult] = await Promise.allSettled([
-    getRecords<Attachment>("attachments", {
+  const [attachmentsResult, relatedArticlesResult] = await settleConcurrent([
+    () => getRecords<Attachment>("attachments", {
       filter: equalsFilter("article_id", article.id),
       sort: "-created_at",
     }),
-    getRecords<RelatedArticle>("articles", {
+    () => getRecords<RelatedArticle>("articles", {
       fields: "id,title,content,category,company_id",
       filter: notEqualsFilter("id", article.id),
       sort: "title",
