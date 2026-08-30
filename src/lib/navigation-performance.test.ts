@@ -56,7 +56,44 @@ test("preserves the app shell during optimized internal navigation", () => {
   assert.match(header, /useRouter/);
   assert.doesNotMatch(header, /window\.location\.href = "\/articles"/);
   assert.doesNotMatch(header, /window\.location\.href = `\/articles\?q=/);
-  assert.match(sidebar, /<Link[\s\S]*companyWorkspaceHref/);
+  assert.match(
+    sidebar,
+    /const href = companyWorkspaceHref\(clientId, item\.section\);[\s\S]*?<Link\s+key=\{item\.section\}\s+href=\{href\}/,
+  );
+});
+
+test("programmatic navigation runs only when unsaved-change guards allow it", async () => {
+  const navigation = await import("../hooks/use-unsaved-changes-guard.ts");
+  assert.equal(typeof navigation.runGuardedNavigation, "function");
+  assert.equal(typeof navigation.PROGRAMMATIC_NAVIGATION_EVENT, "string");
+
+  const cancelledTarget = new EventTarget();
+  cancelledTarget.addEventListener(
+    navigation.PROGRAMMATIC_NAVIGATION_EVENT,
+    (event) => event.preventDefault(),
+  );
+  let cancelledCalls = 0;
+  const cancelled = navigation.runGuardedNavigation(
+    () => {
+      cancelledCalls += 1;
+    },
+    cancelledTarget,
+  );
+
+  assert.equal(cancelled, false);
+  assert.equal(cancelledCalls, 0);
+
+  const allowedTarget = new EventTarget();
+  let allowedCalls = 0;
+  const allowed = navigation.runGuardedNavigation(
+    () => {
+      allowedCalls += 1;
+    },
+    allowedTarget,
+  );
+
+  assert.equal(allowed, true);
+  assert.equal(allowedCalls, 1);
 });
 
 test("shows immediate route loading feedback", () => {

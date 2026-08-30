@@ -16,6 +16,7 @@ import {
   ShieldCheck,
   UserCircle2,
 } from "lucide-react";
+import { runGuardedNavigation } from "@/hooks/use-unsaved-changes-guard";
 import { getClientRecords, signOut } from "@/lib/pocketbase/client";
 import MiniKbLogo from "@/components/minikb-logo";
 import type { RawPocketBaseRecord } from "@/types/database";
@@ -119,17 +120,11 @@ export default function AppHeader({ profile }: { profile: Profile | null }) {
   function handleSearchSubmit(e: React.FormEvent) {
     e.preventDefault();
     const q = search.trim();
-    if (!q) {
-      router.push("/articles");
-      return;
-    }
+    const destination = !q
+      ? "/articles"
+      : results[0]?.href ?? `/articles?q=${encodeURIComponent(q)}`;
 
-    if (results[0]) {
-      router.push(results[0].href);
-      return;
-    }
-
-    router.push(`/articles?q=${encodeURIComponent(q)}`);
+    runGuardedNavigation(() => router.push(destination));
   }
 
   useEffect(() => {

@@ -4,6 +4,19 @@ import { useCallback, useEffect, useRef } from "react";
 
 const DEFAULT_MESSAGE = "Are you sure you want to leave without saving changes?";
 
+export const PROGRAMMATIC_NAVIGATION_EVENT = "minikb:programmatic-navigation";
+
+export function runGuardedNavigation(
+  navigation: () => void,
+  eventTarget: EventTarget = window,
+) {
+  const event = new Event(PROGRAMMATIC_NAVIGATION_EVENT, { cancelable: true });
+  if (!eventTarget.dispatchEvent(event)) return false;
+
+  navigation();
+  return true;
+}
+
 export function useUnsavedChangesGuard(
   isDirty: boolean,
   message = DEFAULT_MESSAGE,
@@ -66,6 +79,25 @@ export function useUnsavedChangesGuard(
 
     document.addEventListener("click", handleDocumentClick, true);
     return () => document.removeEventListener("click", handleDocumentClick, true);
+  }, [isDirty, message]);
+
+  useEffect(() => {
+    if (!isDirty) return;
+
+    const handleProgrammaticNavigation = (event: Event) => {
+      if (bypassNextNavigationRef.current) return;
+      if (!window.confirm(message)) event.preventDefault();
+    };
+
+    window.addEventListener(
+      PROGRAMMATIC_NAVIGATION_EVENT,
+      handleProgrammaticNavigation,
+    );
+    return () =>
+      window.removeEventListener(
+        PROGRAMMATIC_NAVIGATION_EVENT,
+        handleProgrammaticNavigation,
+      );
   }, [isDirty, message]);
 
   useEffect(() => {
