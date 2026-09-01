@@ -6,6 +6,7 @@ import { ArrowRight, Star } from "lucide-react";
 import type { FavoriteArticle } from "@/lib/article-favorites";
 import {
   readFavoriteArticles,
+  selectFavoriteArticles,
   subscribeToFavoriteArticles,
 } from "@/lib/article-favorites";
 
@@ -25,8 +26,9 @@ export default function FavoriteArticles() {
   const items = useSyncExternalStore(
     subscribeToFavoriteArticles,
     readFavoriteArticles,
-    () => emptyFavorites
+    () => emptyFavorites,
   );
+  const previewItems = selectFavoriteArticles(items, { limit: 5 });
 
   return (
     <section className="surface-card rounded-2xl">
@@ -35,7 +37,15 @@ export default function FavoriteArticles() {
           <h2 className="text-sm font-semibold text-white">Favorite Articles</h2>
           <p className="mt-1 text-xs text-slate-500">Central KB shortcuts stored in this browser.</p>
         </div>
-        <Star className="h-4 w-4 fill-orange-300/20 text-orange-300" />
+        <Link
+          href="/articles/favorites"
+          className="inline-flex items-center gap-1.5 rounded-lg px-2 py-1 text-xs font-semibold text-orange-200 transition hover:bg-orange-500/10 hover:text-orange-100"
+          title="View all favorite articles"
+          aria-label={`View all ${items.length} favorite article${items.length === 1 ? "" : "s"}`}
+        >
+          <Star className="h-4 w-4 fill-orange-300/20 text-orange-300" />
+          {items.length}
+        </Link>
       </div>
 
       <div className="space-y-1.5 p-3">
@@ -46,7 +56,7 @@ export default function FavoriteArticles() {
           </div>
         )}
 
-        {items.map((item) => (
+        {previewItems.map((item) => (
           <Link
             key={item.id}
             href={`/articles/${item.id}`}
@@ -61,6 +71,16 @@ export default function FavoriteArticles() {
             <ArrowRight className="h-3.5 w-3.5 shrink-0 text-slate-600 transition group-hover:translate-x-0.5 group-hover:text-orange-300" />
           </Link>
         ))}
+
+        {items.length > 0 ? (
+          <Link
+            href="/articles/favorites"
+            className="group mt-2 flex items-center justify-between rounded-xl border border-slate-800 px-3 py-2.5 text-sm font-semibold text-slate-300 transition hover:border-orange-500/40 hover:bg-orange-500/5 hover:text-orange-100"
+          >
+            <span>View all favorites</span>
+            <ArrowRight className="h-3.5 w-3.5 transition group-hover:translate-x-0.5" />
+          </Link>
+        ) : null}
       </div>
     </section>
   );

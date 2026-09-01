@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { settleConcurrent } from "@/lib/concurrent-loaders";
-import { FilePlus2, Filter, FolderCog, Search } from "lucide-react";
+import { FilePlus2, Filter, FolderCog, Search, Star } from "lucide-react";
 import KbCategoryList from "@/components/kb-category-list";
 import ArticleTable from "@/components/article-table";
 import FavoriteArticles from "@/components/favorite-articles";
@@ -136,6 +136,14 @@ export default async function ArticlesPage({
           </div>
 
           <div className="flex flex-wrap gap-2">
+            <Link
+              href="/articles/favorites"
+              className="inline-flex h-10 items-center gap-2 rounded-2xl border border-orange-500/30 bg-orange-500/5 px-3 text-sm font-semibold text-orange-100 transition hover:border-orange-400/60 hover:bg-orange-500/10"
+            >
+              <Star className="h-4 w-4 fill-orange-300/15 text-orange-300" />
+              Favorites
+            </Link>
+
             <Link
               href="/articles/folders"
               className="inline-flex h-10 items-center gap-2 rounded-2xl border border-slate-700 bg-slate-900 px-3 text-sm font-semibold text-slate-100 transition hover:border-orange-500/50 hover:text-orange-200"
