@@ -3,6 +3,7 @@
 import {
   useCallback,
   useEffect,
+  useId,
   useLayoutEffect,
   useRef,
   useState,
@@ -58,6 +59,7 @@ import {
   ListOrdered,
   ListTodo,
   Maximize2,
+  Minimize2,
   Minus,
   PanelTop,
   Quote,
@@ -83,6 +85,7 @@ import {
   Upload,
   Type,
 } from "lucide-react";
+import { placeEditorPopover } from "@/lib/editor-toolbar";
 
 type Props = {
   value: string;
@@ -553,8 +556,12 @@ function ToolbarButton({
   );
 }
 
-function ToolbarDivider() {
-  return <span aria-hidden className="mx-1 h-5 w-px shrink-0 bg-zinc-800" />;
+function ToolbarGroup({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div role="group" aria-label={label} className="kb-toolbar-group">
+      {children}
+    </div>
+  );
 }
 
 function MenuItem({
@@ -576,6 +583,7 @@ function MenuItem({
       onClick={onClick}
       onMouseDown={(event) => event.preventDefault()}
       disabled={disabled}
+      aria-pressed={active}
       className={`flex w-full items-center justify-between gap-3 rounded-lg px-3 py-2 text-left transition disabled:cursor-not-allowed disabled:opacity-35 ${
         active
           ? "bg-orange-500/15 text-orange-100"
@@ -614,7 +622,9 @@ function Popover({
   children: (close: () => void) => React.ReactNode;
 }) {
   const [open, setOpen] = useState(false);
-  const [coords, setCoords] = useState<{ top: number; left: number } | null>(null);
+  const [coords, setCoords] = useState<ReturnType<typeof placeEditorPopover> | null>(null);
+  const panelId = useId();
+  const focusOnOpen = useRef(false);
   const triggerRef = useRef<HTMLButtonElement | null>(null);
   const panelRef = useRef<HTMLDivElement | null>(null);
 
@@ -624,21 +634,26 @@ function Popover({
     if (!anchor || !panel) return;
 
     const rect = anchor.getBoundingClientRect();
-    const panelWidth = panel.offsetWidth;
-    const panelHeight = panel.offsetHeight;
-    const left = Math.max(8, Math.min(rect.left, window.innerWidth - panelWidth - 8));
-    const below = rect.bottom + 6;
-    const top =
-      below + panelHeight > window.innerHeight - 8 && rect.top - panelHeight - 6 > 8
-        ? rect.top - panelHeight - 6
-        : below;
-
-    setCoords({ top, left });
+    setCoords(placeEditorPopover(
+      rect,
+      { width: panel.offsetWidth, height: Math.max(panel.offsetHeight, panel.scrollHeight) },
+      { width: window.innerWidth, height: window.innerHeight },
+    ));
   }, []);
 
   useLayoutEffect(() => {
-    if (open) place();
+    if (!open) return;
+    place();
   }, [open, place]);
+
+  useLayoutEffect(() => {
+    if (open && coords && focusOnOpen.current) {
+      panelRef.current?.querySelector<HTMLElement>(
+        'input:not([type="color"]), button:not(:disabled), a[href]',
+      )?.focus({ preventScroll: true });
+      focusOnOpen.current = false;
+    }
+  }, [open, coords]);
 
   useEffect(() => {
     if (!open) return;
@@ -651,21 +666,30 @@ function Popover({
     };
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key !== "Escape") return;
+      event.preventDefault();
       event.stopPropagation();
       setOpen(false);
-      triggerRef.current?.focus();
+      triggerRef.current?.focus({ preventScroll: true });
+    };
+    const reposition = () => {
+      const rect = triggerRef.current?.getBoundingClientRect();
+      if (rect && (rect.bottom < 0 || rect.top > window.innerHeight)) {
+        setOpen(false);
+      } else {
+        place();
+      }
     };
 
     window.addEventListener("pointerdown", onPointerDown, true);
     window.addEventListener("keydown", onKeyDown, true);
-    window.addEventListener("resize", place);
-    window.addEventListener("scroll", place, true);
+    window.addEventListener("resize", reposition);
+    window.addEventListener("scroll", reposition, true);
 
     return () => {
       window.removeEventListener("pointerdown", onPointerDown, true);
       window.removeEventListener("keydown", onKeyDown, true);
-      window.removeEventListener("resize", place);
-      window.removeEventListener("scroll", place, true);
+      window.removeEventListener("resize", reposition);
+      window.removeEventListener("scroll", reposition, true);
     };
   }, [open, place]);
 
@@ -676,16 +700,34 @@ function Popover({
         type="button"
         title={title}
         aria-label={title}
-        aria-haspopup="menu"
+        aria-haspopup="dialog"
+        aria-controls={open ? panelId : undefined}
         aria-expanded={open}
         disabled={disabled}
-        onClick={() => {
+        onMouseDown={(event) => event.preventDefault()}
+        onBlur={(event) => {
+          const next = event.relatedTarget as globalThis.Node | null;
+          if (next && !panelRef.current?.contains(next)) setOpen(false);
+        }}
+        onKeyDown={(event) => {
+          if (event.key !== "ArrowDown") return;
+          event.preventDefault();
+          focusOnOpen.current = true;
+          if (open) {
+            place();
+          } else {
+            setCoords(null);
+            setOpen(true);
+          }
+        }}
+        onClick={(event) => {
           // Drop stale coordinates so a reopened panel is never painted at its
           // previous position before the layout effect re-measures it.
           setCoords(null);
+          focusOnOpen.current = event.detail === 0;
           setOpen((value) => !value);
         }}
-        className={`inline-flex h-8 shrink-0 items-center gap-1 rounded-md px-1.5 text-sm transition disabled:cursor-not-allowed disabled:opacity-35 ${
+        className={`kb-toolbar-popover-trigger inline-flex h-8 shrink-0 items-center gap-1 rounded-md px-1.5 text-sm transition disabled:cursor-not-allowed disabled:opacity-35 ${
           active || open
             ? "bg-orange-500/20 text-orange-100 ring-1 ring-inset ring-orange-400/40"
             : "text-zinc-300 hover:bg-zinc-800 hover:text-white"
@@ -701,14 +743,38 @@ function Popover({
         createPortal(
           <div
             ref={panelRef}
-            role="menu"
+            id={panelId}
+            role="dialog"
             aria-label={title}
+            onBlur={(event) => {
+              const next = event.relatedTarget as globalThis.Node | null;
+              if (next && !event.currentTarget.contains(next) && !triggerRef.current?.contains(next)) {
+                setOpen(false);
+              }
+            }}
+            onKeyDown={(event) => {
+              if ((event.target as HTMLElement).matches("input, textarea, select")) return;
+              if (!["ArrowDown", "ArrowUp", "Home", "End"].includes(event.key)) return;
+              const controls = Array.from(event.currentTarget.querySelectorAll<HTMLElement>(
+                'button:not(:disabled), a[href]',
+              ));
+              if (!controls.length) return;
+              event.preventDefault();
+              const index = controls.indexOf(document.activeElement as HTMLElement);
+              const next = event.key === "Home" ? 0
+                : event.key === "End" ? controls.length - 1
+                : (index + (event.key === "ArrowUp" ? -1 : 1) + controls.length) % controls.length;
+              controls[next]?.focus({ preventScroll: true });
+              controls[next]?.scrollIntoView({ block: "nearest", inline: "nearest" });
+            }}
             style={{
               top: coords?.top ?? 0,
               left: coords?.left ?? 0,
+              maxHeight: coords?.maxHeight,
+              maxWidth: "calc(100vw - 16px)",
               visibility: coords ? "visible" : "hidden",
             }}
-            className={`fixed z-[100] max-h-[70vh] overflow-y-auto rounded-xl border border-zinc-700 bg-zinc-950 p-2 shadow-2xl shadow-black/60 ${panelClassName}`}
+            className={`kb-editor-popover fixed z-[100] overflow-y-auto rounded-lg border border-zinc-700 bg-zinc-950 p-2 shadow-2xl shadow-black/60 ${panelClassName}`}
           >
             {children(() => setOpen(false))}
           </div>,
@@ -724,16 +790,20 @@ function ColorPanel({
   allowCustom,
   onClear,
   onSelect,
+  onCustomSelect,
   swatchShape,
   close,
+  selectedColor,
 }: {
   colors: ColorOption[];
   label: string;
   allowCustom?: boolean;
   onClear: () => void;
   onSelect: (value: string) => void;
+  onCustomSelect: (value: string) => void;
   swatchShape: string;
   close: () => void;
+  selectedColor?: string | null;
 }) {
   return (
     <div>
@@ -756,12 +826,13 @@ function ColorPanel({
             type="button"
             title={color.label}
             aria-label={color.label}
+            aria-pressed={selectedColor === color.value}
             onMouseDown={(event) => event.preventDefault()}
             onClick={() => {
               onSelect(color.value);
               close();
             }}
-            className="flex items-center justify-center rounded-lg border border-zinc-800 p-2 transition hover:border-orange-300/60 hover:bg-zinc-900"
+            className={`flex items-center justify-center rounded-lg border p-2 transition hover:border-orange-300/60 hover:bg-zinc-900 ${selectedColor === color.value ? "border-orange-300 bg-orange-500/15 ring-1 ring-orange-300/50" : "border-zinc-800"}`}
           >
             <span
               className={`h-5 w-5 border border-zinc-600 ${swatchShape}`}
@@ -775,7 +846,9 @@ function ColorPanel({
           Custom
           <input
             type="color"
-            onChange={(event) => onSelect(event.target.value)}
+            aria-label={`Custom ${label.toLowerCase()}`}
+            value={selectedColor?.match(/^#[0-9a-f]{6}$/i) ? selectedColor : "#ffffff"}
+            onChange={(event) => onCustomSelect(event.target.value)}
             className="h-6 w-10 cursor-pointer rounded border border-zinc-700 bg-transparent"
           />
         </label>
@@ -1007,6 +1080,7 @@ function readToolbarState(editor: Editor) {
     linkHref: (editor.getAttributes("link").href as string) || "",
     textColor: (editor.getAttributes("textStyle").color as string) || null,
     highlight: editor.isActive("highlight"),
+    highlightColor: (editor.getAttributes("highlight").color as string) || null,
     calloutType: editor.isActive("callout")
       ? (editor.getAttributes("callout").type as string) || "info"
       : null,
@@ -1018,6 +1092,8 @@ function readToolbarState(editor: Editor) {
 
 export default function RichTextEditor({ value, onChange, articleOptions = [] }: Props) {
   const imageInputRef = useRef<HTMLInputElement | null>(null);
+  const [focusMode, setFocusMode] = useState(false);
+  const toolbarRef = useRef<HTMLDivElement | null>(null);
 
   const editor = useEditor({
     immediatelyRender: false,
@@ -1096,6 +1172,19 @@ export default function RichTextEditor({ value, onChange, articleOptions = [] }:
     editor,
     selector: ({ editor }) => (editor ? readToolbarState(editor) : null),
   });
+
+  useEffect(() => {
+    if (!editor) return;
+    const header = document.querySelector<HTMLElement>(".minikb-header");
+    const measure = () => toolbarRef.current?.style.setProperty(
+      "--kb-toolbar-top", `${header?.getBoundingClientRect().height ?? 0}px`,
+    );
+    measure();
+    if (!header) return;
+    const observer = new ResizeObserver(measure);
+    observer.observe(header);
+    return () => observer.disconnect();
+  }, [editor]);
 
   useEffect(() => {
     if (!editor) return;
@@ -1220,7 +1309,7 @@ export default function RichTextEditor({ value, onChange, articleOptions = [] }:
     HEADING_OPTIONS.find((option) => option.value === state.heading)?.label || "Paragraph";
 
   return (
-    <div className="rounded border border-zinc-800 bg-black">
+    <div className="kb-rich-editor min-w-0 rounded-lg border border-zinc-800 bg-zinc-950" data-editor-focus={focusMode ? "true" : undefined}>
       <input
         ref={imageInputRef}
         type="file"
@@ -1235,302 +1324,418 @@ export default function RichTextEditor({ value, onChange, articleOptions = [] }:
 
       <div
         data-editor-toolbar
-        className="sticky top-16 z-30 rounded-t border-b border-zinc-800 bg-zinc-950 shadow-lg shadow-black/30"
+        className="kb-editor-toolbar sticky top-16 z-30 rounded-t-lg border-b border-zinc-800 bg-zinc-950 shadow-lg shadow-black/30"
+        ref={toolbarRef}
+        style={{ top: "var(--kb-toolbar-top, 4.5rem)" }}
+        role="toolbar"
+        aria-label="Article editing tools"
+        onKeyDown={(event) => {
+          if ((event.target as HTMLElement).closest(".kb-editor-popover")) return;
+          if (event.key !== "ArrowLeft" && event.key !== "ArrowRight") return;
+          const buttons = Array.from(event.currentTarget.querySelectorAll<HTMLButtonElement>("button:not(:disabled)"));
+          const index = buttons.indexOf(event.target as HTMLButtonElement);
+          if (index < 0) return;
+          event.preventDefault();
+          buttons[(index + (event.key === "ArrowRight" ? 1 : -1) + buttons.length) % buttons.length]?.focus({ preventScroll: true });
+        }}
       >
-        <div className="flex flex-wrap items-center gap-0.5 p-1.5">
-          <ToolbarButton
-            title="Undo (Ctrl+Z)"
-            disabled={!state.canUndo}
-            onClick={() => safeEditor.chain().focus().undo().run()}
-          >
-            <Undo2 className="h-4 w-4" />
-          </ToolbarButton>
+        <div className="kb-toolbar-row flex flex-wrap items-center gap-1 p-1.5">
+          <ToolbarGroup label="History">
+            <ToolbarButton
+              title="Undo (Ctrl+Z)"
+              disabled={!state.canUndo}
+              onClick={() => safeEditor.chain().focus().undo().run()}
+            >
+              <Undo2 className="h-4 w-4" />
+            </ToolbarButton>
 
-          <ToolbarButton
-            title="Redo (Ctrl+Shift+Z)"
-            disabled={!state.canRedo}
-            onClick={() => safeEditor.chain().focus().redo().run()}
-          >
-            <Redo2 className="h-4 w-4" />
-          </ToolbarButton>
+            <ToolbarButton
+              title="Redo (Ctrl+Shift+Z)"
+              disabled={!state.canRedo}
+              onClick={() => safeEditor.chain().focus().redo().run()}
+            >
+              <Redo2 className="h-4 w-4" />
+            </ToolbarButton>
 
-          <ToolbarDivider />
+          </ToolbarGroup>
+          <ToolbarGroup label="Text style">
 
-          <Popover
-            title="Text style"
-            active={state.heading !== "paragraph"}
-            triggerClassName="min-w-24 justify-between font-semibold"
-            trigger={<span>{activeHeadingLabel}</span>}
-          >
-            {(close) => (
-              <>
-                {HEADING_OPTIONS.map((option) => (
-                  <MenuItem
-                    key={option.value}
-                    active={state.heading === option.value}
-                    hint={option.description}
-                    onClick={() => {
-                      setHeadingValue(option.value);
-                      close();
-                    }}
-                  >
-                    {option.label}
-                  </MenuItem>
-                ))}
-              </>
-            )}
-          </Popover>
-
-          <ToolbarDivider />
-
-          <ToolbarButton
-            title="Bold (Ctrl+B)"
-            active={state.bold}
-            onClick={() => safeEditor.chain().focus().toggleBold().run()}
-          >
-            <Bold className="h-4 w-4" />
-          </ToolbarButton>
-
-          <ToolbarButton
-            title="Italic (Ctrl+I)"
-            active={state.italic}
-            onClick={() => safeEditor.chain().focus().toggleItalic().run()}
-          >
-            <Italic className="h-4 w-4" />
-          </ToolbarButton>
-
-          <ToolbarButton
-            title="Underline (Ctrl+U)"
-            active={state.underline}
-            onClick={() => safeEditor.chain().focus().toggleUnderline().run()}
-          >
-            <UnderlineIcon className="h-4 w-4" />
-          </ToolbarButton>
-
-          <ToolbarButton
-            title="Strikethrough"
-            active={state.strike}
-            onClick={() => safeEditor.chain().focus().toggleStrike().run()}
-          >
-            <Strikethrough className="h-4 w-4" />
-          </ToolbarButton>
-
-          <ToolbarButton
-            title="Subscript"
-            active={state.subscript}
-            onClick={() => safeEditor.chain().focus().toggleSubscript().run()}
-          >
-            <SubscriptIcon className="h-4 w-4" />
-          </ToolbarButton>
-
-          <ToolbarButton
-            title="Superscript"
-            active={state.superscript}
-            onClick={() => safeEditor.chain().focus().toggleSuperscript().run()}
-          >
-            <SuperscriptIcon className="h-4 w-4" />
-          </ToolbarButton>
-
-          <ToolbarButton
-            title="Clear formatting"
-            onClick={() => safeEditor.chain().focus().unsetAllMarks().run()}
-          >
-            <RemoveFormatting className="h-4 w-4" />
-          </ToolbarButton>
-
-          <ToolbarDivider />
-
-          <Popover
-            title="Text color"
-            active={Boolean(state.textColor)}
-            trigger={
-              <span className="relative inline-flex">
-                <Type className="h-4 w-4" />
-                <span
-                  aria-hidden
-                  className="absolute -bottom-1 left-0 h-1 w-4 rounded-full"
-                  style={{ backgroundColor: state.textColor || "#a1a1aa" }}
-                />
-              </span>
-            }
-            panelClassName="w-52"
-          >
-            {(close) => (
-              <ColorPanel
-                colors={TEXT_COLORS}
-                label="Text color"
-                allowCustom
-                swatchShape="rounded-full"
-                close={close}
-                onClear={() => safeEditor.chain().focus().unsetColor().run()}
-                onSelect={(color) => safeEditor.chain().focus().setColor(color).run()}
-              />
-            )}
-          </Popover>
-
-          <Popover
-            title="Highlight"
-            active={state.highlight}
-            trigger={<Highlighter className="h-4 w-4" />}
-            panelClassName="w-52"
-          >
-            {(close) => (
-              <ColorPanel
-                colors={HIGHLIGHT_COLORS}
-                label="Highlight"
-                swatchShape="rounded"
-                close={close}
-                onClear={() => safeEditor.chain().focus().unsetHighlight().run()}
-                onSelect={(color) => safeEditor.chain().focus().setHighlight({ color }).run()}
-              />
-            )}
-          </Popover>
-
-          <ToolbarDivider />
-
-          <ToolbarButton
-            title="Bullet list"
-            active={state.bulletList}
-            onClick={() => safeEditor.chain().focus().toggleBulletList().run()}
-          >
-            <List className="h-4 w-4" />
-          </ToolbarButton>
-
-          <Popover title="Bullet style" active={state.bulletList} trigger={null} panelClassName="w-44">
-            {(close) => (
-              <>
-                {BULLET_LIST_STYLES.map((style) => (
-                  <MenuItem
-                    key={style.value}
-                    active={state.bulletList && state.bulletStyle === style.value}
-                    onClick={() => {
-                      setListStyle("bulletList", style.value);
-                      close();
-                    }}
-                  >
-                    {style.label}
-                  </MenuItem>
-                ))}
-              </>
-            )}
-          </Popover>
-
-          <ToolbarButton
-            title="Numbered list"
-            active={state.orderedList}
-            onClick={() => safeEditor.chain().focus().toggleOrderedList().run()}
-          >
-            <ListOrdered className="h-4 w-4" />
-          </ToolbarButton>
-
-          <Popover
-            title="Numbering style"
-            active={state.orderedList}
-            trigger={null}
-            panelClassName="w-44"
-          >
-            {(close) => (
-              <>
-                {ORDERED_LIST_STYLES.map((style) => (
-                  <MenuItem
-                    key={style.value}
-                    active={state.orderedList && state.orderedStyle === style.value}
-                    onClick={() => {
-                      setListStyle("orderedList", style.value);
-                      close();
-                    }}
-                  >
-                    {style.label}
-                  </MenuItem>
-                ))}
-              </>
-            )}
-          </Popover>
-
-          <ToolbarButton
-            title="Task list"
-            active={state.taskList}
-            onClick={() => safeEditor.chain().focus().toggleTaskList().run()}
-          >
-            <ListTodo className="h-4 w-4" />
-          </ToolbarButton>
-
-          <ToolbarDivider />
-
-          {ALIGN_OPTIONS.map((option) => {
-            const Icon = option.icon;
-            return (
-              <ToolbarButton
-                key={option.value}
-                title={option.label}
-                active={state.align === option.value}
-                onClick={() => safeEditor.chain().focus().setTextAlign(option.value).run()}
-              >
-                <Icon className="h-4 w-4" />
-              </ToolbarButton>
-            );
-          })}
-
-          <ToolbarDivider />
-
-          <Popover
-            title="Link"
-            active={state.link}
-            trigger={<LinkIcon className="h-4 w-4" />}
-            panelClassName="w-72"
-          >
-            {(close) => (
-              <LinkPanel
-                initialHref={state.linkHref}
-                onApply={applyLink}
-                onRemove={removeLink}
-                close={close}
-              />
-            )}
-          </Popover>
-
-          {articleOptions.length > 0 && (
             <Popover
-              title="Link KB article"
-              trigger={<BookMarked className="h-4 w-4" />}
+              title="Text style"
+              active={state.heading !== "paragraph"}
+              triggerClassName="min-w-24 justify-between font-semibold"
+              trigger={<span>{activeHeadingLabel}</span>}
+            >
+              {(close) => (
+                <>
+                  {HEADING_OPTIONS.map((option) => (
+                    <MenuItem
+                      key={option.value}
+                      active={state.heading === option.value}
+                      hint={option.description}
+                      onClick={() => {
+                        setHeadingValue(option.value);
+                        close();
+                      }}
+                    >
+                      {option.label}
+                    </MenuItem>
+                  ))}
+                </>
+              )}
+            </Popover>
+
+          </ToolbarGroup>
+          <ToolbarGroup label="Text formatting">
+
+            <ToolbarButton
+              title="Bold (Ctrl+B)"
+              active={state.bold}
+              onClick={() => safeEditor.chain().focus().toggleBold().run()}
+            >
+              <Bold className="h-4 w-4" />
+            </ToolbarButton>
+
+            <ToolbarButton
+              title="Italic (Ctrl+I)"
+              active={state.italic}
+              onClick={() => safeEditor.chain().focus().toggleItalic().run()}
+            >
+              <Italic className="h-4 w-4" />
+            </ToolbarButton>
+
+            <ToolbarButton
+              title="Underline (Ctrl+U)"
+              active={state.underline}
+              onClick={() => safeEditor.chain().focus().toggleUnderline().run()}
+            >
+              <UnderlineIcon className="h-4 w-4" />
+            </ToolbarButton>
+
+            <ToolbarButton
+              title="Strikethrough"
+              active={state.strike}
+              onClick={() => safeEditor.chain().focus().toggleStrike().run()}
+            >
+              <Strikethrough className="h-4 w-4" />
+            </ToolbarButton>
+
+            <ToolbarButton
+              title="Subscript"
+              active={state.subscript}
+              onClick={() => safeEditor.chain().focus().toggleSubscript().run()}
+            >
+              <SubscriptIcon className="h-4 w-4" />
+            </ToolbarButton>
+
+            <ToolbarButton
+              title="Superscript"
+              active={state.superscript}
+              onClick={() => safeEditor.chain().focus().toggleSuperscript().run()}
+            >
+              <SuperscriptIcon className="h-4 w-4" />
+            </ToolbarButton>
+
+            <ToolbarButton
+              title="Clear formatting"
+              onClick={() => safeEditor.chain().focus().unsetAllMarks().run()}
+            >
+              <RemoveFormatting className="h-4 w-4" />
+            </ToolbarButton>
+
+          </ToolbarGroup>
+          <ToolbarGroup label="Text and highlight colors">
+
+            <Popover
+              title="Text color"
+              active={Boolean(state.textColor)}
+              trigger={
+                <span className="relative inline-flex">
+                  <Type className="h-4 w-4" />
+                  <span
+                    aria-hidden
+                    className="absolute -bottom-1 left-0 h-1 w-4 rounded-full"
+                    style={{ backgroundColor: state.textColor || "#a1a1aa" }}
+                  />
+                </span>
+              }
+              panelClassName="w-52"
+            >
+              {(close) => (
+                <ColorPanel
+                  colors={TEXT_COLORS}
+                  label="Text color"
+                  selectedColor={state.textColor}
+                  allowCustom
+                  swatchShape="rounded-full"
+                  close={close}
+                  onClear={() => safeEditor.chain().focus().unsetColor().run()}
+                  onSelect={(color) => safeEditor.chain().focus().setColor(color).run()}
+                  onCustomSelect={(color) => safeEditor.chain().setColor(color).run()}
+                />
+              )}
+            </Popover>
+
+            <Popover
+              title="Highlight"
+              active={state.highlight}
+              trigger={
+                <span className="relative inline-flex">
+                  <Highlighter className="h-4 w-4" />
+                  <span aria-hidden className="absolute -bottom-1 left-0 h-1 w-4 rounded-full" style={{ backgroundColor: state.highlightColor || "#fde68a" }} />
+                </span>
+              }
+              panelClassName="w-52"
+            >
+              {(close) => (
+                <ColorPanel
+                  colors={HIGHLIGHT_COLORS}
+                  label="Highlight"
+                  selectedColor={state.highlightColor}
+                  allowCustom
+                  swatchShape="rounded"
+                  close={close}
+                  onClear={() => safeEditor.chain().focus().unsetHighlight().run()}
+                  onSelect={(color) => safeEditor.chain().focus().setHighlight({ color }).run()}
+                  onCustomSelect={(color) => safeEditor.chain().setHighlight({ color }).run()}
+                />
+              )}
+            </Popover>
+
+          </ToolbarGroup>
+          <ToolbarGroup label="Lists">
+
+            <ToolbarButton
+              title="Bullet list"
+              active={state.bulletList}
+              onClick={() => safeEditor.chain().focus().toggleBulletList().run()}
+            >
+              <List className="h-4 w-4" />
+            </ToolbarButton>
+
+            <Popover title="Bullet style" active={state.bulletList} trigger={null} panelClassName="w-44">
+              {(close) => (
+                <>
+                  {BULLET_LIST_STYLES.map((style) => (
+                    <MenuItem
+                      key={style.value}
+                      active={state.bulletList && state.bulletStyle === style.value}
+                      onClick={() => {
+                        setListStyle("bulletList", style.value);
+                        close();
+                      }}
+                    >
+                      {style.label}
+                    </MenuItem>
+                  ))}
+                </>
+              )}
+            </Popover>
+
+            <ToolbarButton
+              title="Numbered list"
+              active={state.orderedList}
+              onClick={() => safeEditor.chain().focus().toggleOrderedList().run()}
+            >
+              <ListOrdered className="h-4 w-4" />
+            </ToolbarButton>
+
+            <Popover
+              title="Numbering style"
+              active={state.orderedList}
+              trigger={null}
+              panelClassName="w-44"
+            >
+              {(close) => (
+                <>
+                  {ORDERED_LIST_STYLES.map((style) => (
+                    <MenuItem
+                      key={style.value}
+                      active={state.orderedList && state.orderedStyle === style.value}
+                      onClick={() => {
+                        setListStyle("orderedList", style.value);
+                        close();
+                      }}
+                    >
+                      {style.label}
+                    </MenuItem>
+                  ))}
+                </>
+              )}
+            </Popover>
+
+            <ToolbarButton
+              title="Task list"
+              active={state.taskList}
+              onClick={() => safeEditor.chain().focus().toggleTaskList().run()}
+            >
+              <ListTodo className="h-4 w-4" />
+            </ToolbarButton>
+
+          </ToolbarGroup>
+          <ToolbarGroup label="Text alignment">
+
+            {ALIGN_OPTIONS.map((option) => {
+              const Icon = option.icon;
+              return (
+                <ToolbarButton
+                  key={option.value}
+                  title={option.label}
+                  active={state.align === option.value}
+                  onClick={() => safeEditor.chain().focus().setTextAlign(option.value).run()}
+                >
+                  <Icon className="h-4 w-4" />
+                </ToolbarButton>
+              );
+            })}
+
+          </ToolbarGroup>
+          <div className="ml-auto">
+            <ToolbarButton
+              title={focusMode ? "Exit focus mode" : "Focus writing"}
+              active={focusMode}
+              onClick={() => setFocusMode((current) => !current)}
+            >
+              {focusMode ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
+            </ToolbarButton>
+          </div>
+        </div>
+
+        <div className="kb-toolbar-row flex flex-wrap items-center gap-1 border-t border-zinc-800/70 px-1.5 py-1">
+          <ToolbarGroup label="Links">
+
+            <Popover
+              title="Link"
+              active={state.link}
+              trigger={<LinkIcon className="h-4 w-4" />}
               panelClassName="w-72"
             >
               {(close) => (
-                <ArticleLinkPanel
-                  articles={articleOptions}
-                  onSelect={insertArticleLink}
+                <LinkPanel
+                  initialHref={state.linkHref}
+                  onApply={applyLink}
+                  onRemove={removeLink}
                   close={close}
                 />
               )}
             </Popover>
-          )}
 
-          <ToolbarButton
-            title="Upload image from computer"
-            onClick={() => imageInputRef.current?.click()}
-          >
-            <Upload className="h-4 w-4" />
-          </ToolbarButton>
+            {articleOptions.length > 0 && (
+              <Popover
+                title="Link KB article"
+                trigger={<BookMarked className="h-4 w-4" />}
+                panelClassName="w-72"
+              >
+                {(close) => (
+                  <ArticleLinkPanel
+                    articles={articleOptions}
+                    onSelect={insertArticleLink}
+                    close={close}
+                  />
+                )}
+              </Popover>
+            )}
 
-          <Popover
-            title="Image from URL"
-            trigger={<ImageIcon className="h-4 w-4" />}
-            panelClassName="w-72"
-          >
-            {(close) => <ImageUrlPanel onInsertUrl={addImageUrl} close={close} />}
-          </Popover>
+          </ToolbarGroup>
+          <ToolbarGroup label="Images">
+            <ToolbarButton
+              title="Upload image from computer"
+              onClick={() => imageInputRef.current?.click()}
+            >
+              <Upload className="h-4 w-4" />
+            </ToolbarButton>
 
-          <ToolbarDivider />
+            <Popover
+              title="Image from URL"
+              trigger={<ImageIcon className="h-4 w-4" />}
+              panelClassName="w-72"
+            >
+              {(close) => <ImageUrlPanel onInsertUrl={addImageUrl} close={close} />}
+            </Popover>
 
-          <ToolbarButton
-            title="Insert Table"
-            onClick={() =>
-              safeEditor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run()
-            }
-          >
-            <TableIcon className="h-4 w-4" />
-          </ToolbarButton>
+          </ToolbarGroup>
+          <ToolbarGroup label="Table">
 
+            <ToolbarButton
+              title="Insert Table"
+              onClick={() =>
+                safeEditor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run()
+              }
+            >
+              <TableIcon className="h-4 w-4" />
+            </ToolbarButton>
+
+          </ToolbarGroup>
+          <ToolbarGroup label="Document blocks">
+            <ToolbarButton
+              title="Blockquote"
+              active={state.blockquote}
+              onClick={() => safeEditor.chain().focus().toggleBlockquote().run()}
+            >
+              <Quote className="h-4 w-4" />
+            </ToolbarButton>
+
+            <ToolbarButton
+              title="Inline code"
+              active={state.code}
+              onClick={() => safeEditor.chain().focus().toggleCode().run()}
+            >
+              <Code className="h-4 w-4" />
+            </ToolbarButton>
+
+            <ToolbarButton
+              title="Code block"
+              active={state.codeBlock}
+              onClick={() => safeEditor.chain().focus().toggleCodeBlock().run()}
+            >
+              <SquareCode className="h-4 w-4" />
+            </ToolbarButton>
+
+            <ToolbarButton
+              title="Horizontal rule"
+              onClick={() => safeEditor.chain().focus().setHorizontalRule().run()}
+            >
+              <Minus className="h-4 w-4" />
+            </ToolbarButton>
+          </ToolbarGroup>
+          <ToolbarGroup label="Callouts">
+            <ToolbarButton
+              title="Info callout"
+              active={state.calloutType === "info"}
+              onClick={() => safeEditor.chain().focus().toggleCallout({ type: "info" }).run()}
+            >
+              <Info className="h-4 w-4" />
+            </ToolbarButton>
+
+            <ToolbarButton
+              title="Success callout"
+              active={state.calloutType === "success"}
+              onClick={() => safeEditor.chain().focus().toggleCallout({ type: "success" }).run()}
+            >
+              <CircleCheck className="h-4 w-4" />
+            </ToolbarButton>
+
+            <ToolbarButton
+              title="Warning callout"
+              active={state.calloutType === "warning"}
+              onClick={() => safeEditor.chain().focus().toggleCallout({ type: "warning" }).run()}
+            >
+              <TriangleAlert className="h-4 w-4" />
+            </ToolbarButton>
+
+            <ToolbarButton
+              title="Danger callout"
+              active={state.calloutType === "danger"}
+              onClick={() => safeEditor.chain().focus().toggleCallout({ type: "danger" }).run()}
+            >
+              <ShieldAlert className="h-4 w-4" />
+            </ToolbarButton>
+          </ToolbarGroup>
+        </div>
+
+        {state.inTable && (
+        <div className="kb-toolbar-row flex flex-wrap items-center gap-1 border-t border-zinc-800 px-2 py-1.5" role="group" aria-label="Table editing">
+          <span className="px-1 text-xs font-medium text-orange-200">Table</span>
           <ToolbarButton
             title="Add table row"
             disabled={!state.inTable}
@@ -1587,74 +1792,11 @@ export default function RichTextEditor({ value, onChange, articleOptions = [] }:
             <Trash2 className="h-4 w-4" />
           </ToolbarButton>
 
-          <ToolbarDivider />
-
-          <ToolbarButton
-            title="Blockquote"
-            active={state.blockquote}
-            onClick={() => safeEditor.chain().focus().toggleBlockquote().run()}
-          >
-            <Quote className="h-4 w-4" />
-          </ToolbarButton>
-
-          <ToolbarButton
-            title="Inline code"
-            active={state.code}
-            onClick={() => safeEditor.chain().focus().toggleCode().run()}
-          >
-            <Code className="h-4 w-4" />
-          </ToolbarButton>
-
-          <ToolbarButton
-            title="Code block"
-            active={state.codeBlock}
-            onClick={() => safeEditor.chain().focus().toggleCodeBlock().run()}
-          >
-            <SquareCode className="h-4 w-4" />
-          </ToolbarButton>
-
-          <ToolbarButton
-            title="Horizontal rule"
-            onClick={() => safeEditor.chain().focus().setHorizontalRule().run()}
-          >
-            <Minus className="h-4 w-4" />
-          </ToolbarButton>
-
-          <ToolbarButton
-            title="Info callout"
-            active={state.calloutType === "info"}
-            onClick={() => safeEditor.chain().focus().toggleCallout({ type: "info" }).run()}
-          >
-            <Info className="h-4 w-4" />
-          </ToolbarButton>
-
-          <ToolbarButton
-            title="Success callout"
-            active={state.calloutType === "success"}
-            onClick={() => safeEditor.chain().focus().toggleCallout({ type: "success" }).run()}
-          >
-            <CircleCheck className="h-4 w-4" />
-          </ToolbarButton>
-
-          <ToolbarButton
-            title="Warning callout"
-            active={state.calloutType === "warning"}
-            onClick={() => safeEditor.chain().focus().toggleCallout({ type: "warning" }).run()}
-          >
-            <TriangleAlert className="h-4 w-4" />
-          </ToolbarButton>
-
-          <ToolbarButton
-            title="Danger callout"
-            active={state.calloutType === "danger"}
-            onClick={() => safeEditor.chain().focus().toggleCallout({ type: "danger" }).run()}
-          >
-            <ShieldAlert className="h-4 w-4" />
-          </ToolbarButton>
         </div>
+        )}
       </div>
 
-      <div className="bg-black">
+      <div className="kb-editor-document bg-zinc-950">
         <EditorContent editor={safeEditor} />
       </div>
 
@@ -1662,9 +1804,6 @@ export default function RichTextEditor({ value, onChange, articleOptions = [] }:
         <span>
           {state.words} {state.words === 1 ? "word" : "words"} · {state.characters}{" "}
           {state.characters === 1 ? "character" : "characters"}
-        </span>
-        <span className="hidden sm:inline">
-          Paste or drop images directly · Ctrl+Alt+C for a callout
         </span>
       </div>
     </div>

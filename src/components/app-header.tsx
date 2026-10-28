@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import { runGuardedNavigation } from "@/hooks/use-unsaved-changes-guard";
 import { getClientRecords, signOut } from "@/lib/pocketbase/client";
+import { parseWorkspaceRecordRoute, type WorkspaceRecordRoute } from "@/lib/client-workspace";
 import MiniKbLogo from "@/components/minikb-logo";
 import type { RawPocketBaseRecord } from "@/types/database";
 
@@ -55,37 +56,26 @@ export default function AppHeader({ profile }: { profile: Profile | null }) {
   const [searchOpen, setSearchOpen] = useState(false);
   const [results, setResults] = useState<SearchResult[]>([]);
   const [searching, setSearching] = useState(false);
-  const [contextCompany, setContextCompany] = useState<CompanySummary | null>(null);
-  const [resolvedContextCompanyId, setResolvedContextCompanyId] = useState<string | null>(null);
+  const [loadedContextCompany, setLoadedContextCompany] = useState<CompanySummary | null>(null);
+  const [resolvedContext, setResolvedContext] = useState<{
+    record: WorkspaceRecordRoute;
+    companyId: string | null;
+  } | null>(null);
 
   const canEdit = profile?.role === "admin" || profile?.role === "editor";
-  const routeCompanyId = useMemo(() => {
-    const companyMatch = pathname.match(/^\/companies\/([^/]+)/);
-    if (companyMatch && companyMatch[1] !== "new") {
-      return decodeURIComponent(companyMatch[1]);
-    }
-
-    const seededCompanyId = searchParams.get("companyId");
-    if (seededCompanyId) return seededCompanyId;
-
-    return null;
-  }, [pathname, searchParams]);
-
-  const recordContext = useMemo(() => {
-    const articleMatch = pathname.match(/^\/articles\/([^/]+)/);
-    if (articleMatch && articleMatch[1] !== "new") {
-      return { collection: "articles", id: decodeURIComponent(articleMatch[1]) };
-    }
-
-    const assetMatch = pathname.match(/^\/assets\/([^/]+)/);
-    if (assetMatch && assetMatch[1] !== "new") {
-      return { collection: "assets", id: decodeURIComponent(assetMatch[1]) };
-    }
-
-    return null;
-  }, [pathname]);
-
+  const recordContext = useMemo(() => parseWorkspaceRecordRoute(pathname), [pathname]);
+  const routeCompanyId = recordContext?.collection === "companies"
+    ? recordContext.id
+    : pathname === "/articles/new" || pathname === "/assets/new"
+      ? searchParams.get("companyId")
+      : null;
+  const resolvedContextCompanyId = recordContext && resolvedContext &&
+    resolvedContext.record.collection === recordContext.collection &&
+    resolvedContext.record.id === recordContext.id
+      ? resolvedContext.companyId
+      : null;
   const contextCompanyId = routeCompanyId || resolvedContextCompanyId;
+  const contextCompany = loadedContextCompany?.id === contextCompanyId ? loadedContextCompany : null;
 
   const currentArea = useMemo(() => {
     if (contextCompanyId) return "Client KB";
@@ -112,9 +102,12 @@ export default function AppHeader({ profile }: { profile: Profile | null }) {
     return items;
   }, [profile?.role]);
 
-  async function handleLogout() {
-    signOut();
-    window.location.href = "/login";
+  function handleLogout() {
+    runGuardedNavigation(() => {
+      signOut();
+      router.replace("/login");
+      router.refresh();
+    });
   }
 
   function handleSearchSubmit(e: React.FormEvent) {
@@ -132,7 +125,7 @@ export default function AppHeader({ profile }: { profile: Profile | null }) {
 
     async function resolveRecordCompany() {
       if (routeCompanyId || !recordContext) {
-        setResolvedContextCompanyId(null);
+        setResolvedContext(null);
         return;
       }
 
@@ -147,9 +140,9 @@ export default function AppHeader({ profile }: { profile: Profile | null }) {
           })
         );
 
-        if (!cancelled) setResolvedContextCompanyId(response.items[0]?.company_id || null);
+        if (!cancelled) setResolvedContext({ record: recordContext, companyId: response.items[0]?.company_id || null });
       } catch {
-        if (!cancelled) setResolvedContextCompanyId(null);
+        if (!cancelled) setResolvedContext({ record: recordContext, companyId: null });
       }
     }
 
@@ -165,7 +158,7 @@ export default function AppHeader({ profile }: { profile: Profile | null }) {
 
     async function loadCompanyContext() {
       if (!contextCompanyId) {
-        setContextCompany(null);
+        setLoadedContextCompany(null);
         return;
       }
 
@@ -180,9 +173,9 @@ export default function AppHeader({ profile }: { profile: Profile | null }) {
           })
         );
 
-        if (!cancelled) setContextCompany(response.items[0] ?? null);
+        if (!cancelled) setLoadedContextCompany(response.items[0] ?? null);
       } catch {
-        if (!cancelled) setContextCompany(null);
+        if (!cancelled) setLoadedContextCompany(null);
       }
     }
 

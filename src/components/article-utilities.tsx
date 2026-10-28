@@ -5,11 +5,11 @@ import { Check, Copy, ListTree, Printer, Star } from "lucide-react";
 import type { FavoriteArticle } from "@/lib/article-favorites";
 
 import {
-  isFavoriteArticle,
   readFavoriteArticles,
   subscribeToFavoriteArticles,
   toggleFavoriteArticle,
 } from "@/lib/article-favorites";
+import { recordRecentArticle } from "@/lib/recent-articles";
 
 const emptyFavoriteArticlesSnapshot: FavoriteArticle[] = [];
 
@@ -34,30 +34,23 @@ export default function ArticleUtilities({
   const [progress, setProgress] = useState(0);
   const [headings, setHeadings] = useState<Heading[]>([]);
   const isCentralArticle = !companyId;
-  useSyncExternalStore(
+  const favoriteArticles = useSyncExternalStore(
     subscribeToFavoriteArticles,
     readFavoriteArticles,
     () => emptyFavoriteArticlesSnapshot
   );
-  const isFavorite = isFavoriteArticle(articleId);
+  const isFavorite = favoriteArticles.some((item) => item.id === articleId);
 
   useEffect(() => {
-    const stored = window.localStorage.getItem("minikb_recent_articles");
-    const current = { id: articleId, title, viewedAt: new Date().toISOString() };
-    const previous = stored ? (JSON.parse(stored) as typeof current[]) : [];
-    const next = [
-      current,
-      ...previous.filter((item) => item.id !== articleId),
-    ].slice(0, 8);
-
-    window.localStorage.setItem("minikb_recent_articles", JSON.stringify(next));
-    window.dispatchEvent(new Event("minikb-recent-articles"));
+    recordRecentArticle({ id: articleId, title });
   }, [articleId, title]);
 
   useEffect(() => {
     const frame = window.requestAnimationFrame(() => {
       const nodes = Array.from(
-        document.querySelectorAll<HTMLElement>(".article-content h1, .article-content h2, .article-content h3")
+        document.querySelectorAll<HTMLElement>(
+          ".article-content h1, .article-content h2, .article-content h3, .article-content h4, .article-content h5"
+        )
       );
 
       const collected = nodes

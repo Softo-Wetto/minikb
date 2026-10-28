@@ -177,7 +177,7 @@ export default function NewArticleForm({
   }
 
   return (
-    <form onSubmit={(event) => saveArticle(event, primaryDraft)} className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_340px]">
+    <form onSubmit={(event) => saveArticle(event, primaryDraft)} className="kb-article-editor-form grid gap-4 xl:grid-cols-[minmax(0,1fr)_340px]">
       <section className="min-w-0 rounded border border-zinc-800 bg-black">
         {recovery && (
           <ArticleRecoveryBanner

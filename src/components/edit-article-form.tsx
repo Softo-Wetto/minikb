@@ -280,7 +280,7 @@ export default function EditArticleForm({
   return (
     <form
       onSubmit={(event) => saveArticle(event, false)}
-      className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_360px]"
+      className="kb-article-editor-form grid gap-4 xl:grid-cols-[minmax(0,1fr)_360px]"
     >
       <section className="min-w-0 overflow-visible rounded border border-slate-800 bg-slate-950/85">
         {recovery && (

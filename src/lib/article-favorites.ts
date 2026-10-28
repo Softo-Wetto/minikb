@@ -16,36 +16,55 @@ export const favoriteArticlesEvent = "minikb-favorite-articles";
 export const favoriteArticlesKey = "minikb_favorite_articles";
 
 const emptyFavorites: FavoriteArticle[] = [];
-let cachedStored = "";
+let cachedStored: string | null | undefined;
 let cachedFavorites: FavoriteArticle[] = emptyFavorites;
 
+function isFavoriteRecord(value: unknown): value is FavoriteArticle {
+  if (typeof value !== "object" || value === null) return false;
+  const item = value as Record<string, unknown>;
+  return (
+    typeof item.id === "string" && item.id.trim().length > 0 &&
+    typeof item.title === "string" && item.title.trim().length > 0 &&
+    (item.category == null || typeof item.category === "string") &&
+    typeof item.favoritedAt === "string" && Number.isFinite(Date.parse(item.favoritedAt))
+  );
+}
+
 function safeParse(value: string | null) {
-  if (!value) return emptyFavorites;
   if (value === cachedStored) return cachedFavorites;
 
+  cachedStored = value;
+  cachedFavorites = emptyFavorites;
   try {
-    cachedStored = value;
-    cachedFavorites = JSON.parse(value) as FavoriteArticle[];
-    return cachedFavorites;
+    const parsed: unknown = value ? JSON.parse(value) : null;
+    if (Array.isArray(parsed)) {
+      const valid = parsed.filter(isFavoriteRecord);
+      if (valid.length > 0) cachedFavorites = valid;
+    }
   } catch {
-    cachedStored = value;
-    cachedFavorites = emptyFavorites;
-    return emptyFavorites;
+    // Malformed browser-local state is an empty collection until the next save.
   }
+  return cachedFavorites;
 }
 
 export function readFavoriteArticles() {
   if (typeof window === "undefined") return emptyFavorites;
-  return safeParse(window.localStorage.getItem(favoriteArticlesKey));
+  try {
+    return safeParse(window.localStorage.getItem(favoriteArticlesKey));
+  } catch {
+    return emptyFavorites;
+  }
 }
 
 export function subscribeToFavoriteArticles(onStoreChange: () => void) {
-  window.addEventListener("storage", onStoreChange);
-  window.addEventListener(favoriteArticlesEvent, onStoreChange);
+  if (typeof window === "undefined") return () => {};
+  const target = window;
+  target.addEventListener("storage", onStoreChange);
+  target.addEventListener(favoriteArticlesEvent, onStoreChange);
 
   return () => {
-    window.removeEventListener("storage", onStoreChange);
-    window.removeEventListener(favoriteArticlesEvent, onStoreChange);
+    target.removeEventListener("storage", onStoreChange);
+    target.removeEventListener(favoriteArticlesEvent, onStoreChange);
   };
 }
 
@@ -83,38 +102,47 @@ export function selectFavoriteArticles(
 
 function storeFavoriteArticles(items: FavoriteArticle[]) {
   const stored = JSON.stringify(items);
-  cachedStored = stored;
-  cachedFavorites = items;
   window.localStorage.setItem(favoriteArticlesKey, stored);
+  cachedStored = stored;
+  cachedFavorites = items.length > 0 ? items : emptyFavorites;
   window.dispatchEvent(new Event(favoriteArticlesEvent));
 }
 
 export function removeFavoriteArticle(articleId: string) {
   if (typeof window === "undefined") return false;
 
-  const current = readFavoriteArticles();
-  const next = current.filter((item) => item.id !== articleId);
-  if (next.length === current.length) return false;
+  try {
+    const current = safeParse(window.localStorage.getItem(favoriteArticlesKey));
+    const next = current.filter((item) => item.id !== articleId);
+    if (next.length === current.length) return false;
 
-  storeFavoriteArticles(next);
-  return true;
+    storeFavoriteArticles(next);
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 export function toggleFavoriteArticle(article: Omit<FavoriteArticle, "favoritedAt">) {
   if (typeof window === "undefined") return false;
 
-  const current = readFavoriteArticles();
-  const exists = current.some((item) => item.id === article.id);
-  const next = exists
-    ? current.filter((item) => item.id !== article.id)
-    : [
-        {
-          ...article,
-          favoritedAt: new Date().toISOString(),
-        },
-        ...current.filter((item) => item.id !== article.id),
-      ];
+  try {
+    // Do not overwrite existing favorites if storage cannot be read.
+    const current = safeParse(window.localStorage.getItem(favoriteArticlesKey));
+    const exists = current.some((item) => item.id === article.id);
+    const next = exists
+      ? current.filter((item) => item.id !== article.id)
+      : [
+          {
+            ...article,
+            favoritedAt: new Date().toISOString(),
+          },
+          ...current.filter((item) => item.id !== article.id),
+        ];
 
-  storeFavoriteArticles(next);
-  return !exists;
+    storeFavoriteArticles(next);
+    return !exists;
+  } catch {
+    return false;
+  }
 }

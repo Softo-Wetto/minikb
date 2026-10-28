@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import {
   AlertCircle,
   ArrowRight,
@@ -13,6 +14,7 @@ import {
 import { signInWithPassword } from "@/lib/pocketbase/client";
 
 export default function LoginForm() {
+  const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -26,7 +28,8 @@ export default function LoginForm() {
 
     try {
       await signInWithPassword(email, password);
-      window.location.href = "/";
+      router.replace("/");
+      router.refresh();
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "Unable to log in.");
       setLoading(false);

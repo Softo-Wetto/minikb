@@ -16,7 +16,9 @@ import CompanyAvatar from "@/components/company-avatar";
 import {
   companyWorkspaceHref,
   normalizeClientView,
+  parseWorkspaceRecordRoute,
   type ClientView,
+  type WorkspaceRecordRoute,
 } from "@/lib/client-workspace";
 import { getCompanyWebsiteHostname } from "@/lib/company-branding";
 import { getClientRecords } from "@/lib/pocketbase/client";
@@ -43,72 +45,39 @@ export default function AppSidebar({ role }: { role: string }) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const canEdit = role === "admin" || role === "editor";
-  const [resolvedClientId, setResolvedClientId] = useState<string | null>(null);
-  const [company, setCompany] = useState<CompanySummary | null>(null);
-  const [counts, setCounts] = useState<ClientCounts>(emptyCounts);
+  const [resolvedClient, setResolvedClient] = useState<{
+    record: WorkspaceRecordRoute;
+    companyId: string | null;
+  } | null>(null);
+  const [loadedWorkspace, setLoadedWorkspace] = useState<{
+    clientId: string;
+    company: CompanySummary | null;
+    counts: ClientCounts;
+  } | null>(null);
 
-  const routeContext = useMemo(() => {
-    const companyMatch = pathname.match(/^\/companies\/([^/]+)/);
-    if (companyMatch && companyMatch[1] !== "new") {
-      return {
-        type: "company" as const,
-        id: decodeURIComponent(companyMatch[1]),
-      };
-    }
-
-    const seededCompanyId = searchParams.get("companyId");
-    if (
-      seededCompanyId &&
-      (pathname === "/articles/new" || pathname === "/assets/new")
-    ) {
-      return {
-        type: "company" as const,
-        id: seededCompanyId,
-      };
-    }
-
-    const articleMatch = pathname.match(/^\/articles\/([^/]+)/);
-    if (articleMatch && articleMatch[1] !== "new") {
-      return {
-        type: "article" as const,
-        id: decodeURIComponent(articleMatch[1]),
-      };
-    }
-
-    const assetMatch = pathname.match(/^\/assets\/([^/]+)/);
-    if (assetMatch && assetMatch[1] !== "new") {
-      return {
-        type: "asset" as const,
-        id: decodeURIComponent(assetMatch[1]),
-      };
-    }
-
-    return null;
-  }, [pathname, searchParams]);
-
-  const clientId = routeContext?.type === "company"
+  const routeContext = useMemo(() => parseWorkspaceRecordRoute(pathname), [pathname]);
+  const routeCompanyId = routeContext?.collection === "companies"
     ? routeContext.id
-    : routeContext
-      ? resolvedClientId
+    : pathname === "/articles/new" || pathname === "/assets/new"
+      ? searchParams.get("companyId")
       : null;
+  const resolvedClientId = routeContext && resolvedClient &&
+    resolvedClient.record.collection === routeContext.collection &&
+    resolvedClient.record.id === routeContext.id
+      ? resolvedClient.companyId
+      : null;
+  const clientId = routeCompanyId || resolvedClientId;
+  const company = loadedWorkspace?.clientId === clientId ? loadedWorkspace.company : null;
+  const counts = loadedWorkspace?.clientId === clientId ? loadedWorkspace.counts : emptyCounts;
 
   useEffect(() => {
     let cancelled = false;
 
     async function resolveClientId() {
-      if (!routeContext) {
-        setResolvedClientId(null);
-        setCompany(null);
-        setCounts(emptyCounts);
+      if (routeCompanyId || !routeContext) {
+        setResolvedClient(null);
         return;
       }
-
-      if (routeContext.type === "company") {
-        setResolvedClientId(null);
-        return;
-      }
-
-      const collection = routeContext.type === "article" ? "articles" : "assets";
 
       try {
         const params = new URLSearchParams({
@@ -119,15 +88,11 @@ export default function AppSidebar({ role }: { role: string }) {
         });
         const response = await getClientRecords<
           RawPocketBaseRecord & { company_id?: string | null }
-        >(collection, params);
+        >(routeContext.collection, params);
 
-        if (!cancelled) setResolvedClientId(response.items[0]?.company_id || null);
+        if (!cancelled) setResolvedClient({ record: routeContext, companyId: response.items[0]?.company_id || null });
       } catch {
-        if (!cancelled) {
-          setResolvedClientId(null);
-          setCompany(null);
-          setCounts(emptyCounts);
-        }
+        if (!cancelled) setResolvedClient({ record: routeContext, companyId: null });
       }
     }
 
@@ -136,15 +101,14 @@ export default function AppSidebar({ role }: { role: string }) {
     return () => {
       cancelled = true;
     };
-  }, [routeContext]);
+  }, [routeContext, routeCompanyId]);
 
   useEffect(() => {
     let cancelled = false;
 
     async function loadClientWorkspace() {
       if (!clientId) {
-        setCompany(null);
-        setCounts(emptyCounts);
+        setLoadedWorkspace(null);
         return;
       }
 
@@ -182,18 +146,13 @@ export default function AppSidebar({ role }: { role: string }) {
 
       if (cancelled) return;
 
-      setCompany(
-        companyResult.status === "fulfilled"
-          ? companyResult.value.items[0] ?? null
-          : null,
-      );
-      setCounts({
-        articles:
-          articleResult.status === "fulfilled"
-            ? articleResult.value.totalItems
-            : 0,
-        assets:
-          assetResult.status === "fulfilled" ? assetResult.value.totalItems : 0,
+      setLoadedWorkspace({
+        clientId,
+        company: companyResult.status === "fulfilled" ? companyResult.value.items[0] ?? null : null,
+        counts: {
+          articles: articleResult.status === "fulfilled" ? articleResult.value.totalItems : 0,
+          assets: assetResult.status === "fulfilled" ? assetResult.value.totalItems : 0,
+        },
       });
     }
 

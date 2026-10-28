@@ -3,15 +3,12 @@
 import Link from "next/link";
 import { useSyncExternalStore } from "react";
 import { History } from "lucide-react";
+import type { RecentArticle } from "@/lib/recent-articles";
+import {
+  readRecentArticles,
+  subscribeToRecentArticles,
+} from "@/lib/recent-articles";
 
-type RecentArticle = {
-  id: string;
-  title: string;
-  viewedAt: string;
-};
-
-let cachedStored = "";
-let cachedItems: RecentArticle[] = [];
 const emptyRecentArticles: RecentArticle[] = [];
 
 function formatDate(value: string) {
@@ -22,38 +19,6 @@ function formatDate(value: string) {
     day: "2-digit",
     month: "short",
   });
-}
-
-function readRecentArticles() {
-  if (typeof window === "undefined") return emptyRecentArticles;
-
-  const stored = window.localStorage.getItem("minikb_recent_articles");
-  if (!stored) {
-    cachedStored = "";
-    cachedItems = emptyRecentArticles;
-    return emptyRecentArticles;
-  }
-  if (stored === cachedStored) return cachedItems;
-
-  try {
-    cachedStored = stored;
-    cachedItems = JSON.parse(stored) as RecentArticle[];
-    return cachedItems;
-  } catch {
-    cachedStored = stored;
-    cachedItems = emptyRecentArticles;
-    return emptyRecentArticles;
-  }
-}
-
-function subscribeToRecentArticles(onStoreChange: () => void) {
-  window.addEventListener("storage", onStoreChange);
-  window.addEventListener("minikb-recent-articles", onStoreChange);
-
-  return () => {
-    window.removeEventListener("storage", onStoreChange);
-    window.removeEventListener("minikb-recent-articles", onStoreChange);
-  };
 }
 
 export default function RecentViews() {

@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import ArticleFolderPicker from "@/components/article-folder-picker";
 import RichTextEditor from "@/components/rich-text-editor";
 import { useUnsavedChangesGuard } from "@/hooks/use-unsaved-changes-guard";
@@ -23,6 +24,7 @@ export default function EditArticleForm({
 }: {
   article: Article;
 }) {
+  const router = useRouter();
   const [title, setTitle] = useState(article.title || "");
   const [summary, setSummary] = useState(article.summary || "");
   const [content, setContent] = useState(article.content || "<p></p>");
@@ -102,7 +104,8 @@ export default function EditArticleForm({
       });
       setIsDraft(draft);
       allowNextNavigation();
-      window.location.href = `/articles/${article.id}`;
+      router.push(`/articles/${article.id}`);
+      router.refresh();
     } catch (error) {
       alert(error instanceof Error ? error.message : "Unable to update article.");
       setSavingMode(null);
@@ -110,7 +113,7 @@ export default function EditArticleForm({
   }
 
   return (
-    <form onSubmit={(event) => saveArticle(event, false)} className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_340px]">
+    <form onSubmit={(event) => saveArticle(event, false)} className="kb-article-editor-form grid gap-4 xl:grid-cols-[minmax(0,1fr)_340px]">
       <section className="min-w-0 rounded border border-zinc-800 bg-black">
         <div className="border-b border-zinc-800 px-4 py-3">
           <label className="mb-2 block text-sm font-medium text-white">

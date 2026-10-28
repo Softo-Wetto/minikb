@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { settleConcurrent } from "@/lib/concurrent-loaders";
-import { FilePlus2, Filter, FolderCog, Search, Star } from "lucide-react";
+import { FilePlus2, Filter, FolderCog, RotateCcw, Search, Star } from "lucide-react";
 import KbCategoryList from "@/components/kb-category-list";
 import ArticleTable from "@/components/article-table";
 import FavoriteArticles from "@/components/favorite-articles";
@@ -163,7 +163,7 @@ export default async function ArticlesPage({
         </div>
 
         <div className="border-b border-slate-800 p-4">
-          <form className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_170px_190px_220px_160px_170px_160px_130px]">
+          <form className="minikb-article-filters grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
             <input type="hidden" name="sort" value={sort} />
             <input type="hidden" name="dir" value={dir} />
 
@@ -174,12 +174,14 @@ export default async function ArticlesPage({
                 name="q"
                 defaultValue={q}
                 placeholder="Search articles..."
+                aria-label="Search articles"
                 className="h-10 w-full rounded-xl border border-slate-800 bg-slate-900/70 pl-9 pr-3 text-sm text-white outline-none transition placeholder:text-slate-500 focus:border-orange-500/70"
               />
             </label>
 
             <select
               name="scope"
+              aria-label="Knowledge base scope"
               defaultValue={formScope}
               className="h-10 rounded-xl border border-slate-800 bg-slate-900/70 px-3 text-sm text-white outline-none transition focus:border-orange-500/70"
             >
@@ -191,6 +193,7 @@ export default async function ArticlesPage({
 
             <select
               name="companyId"
+              aria-label="Client"
               defaultValue={formCompanyId}
               className="h-10 rounded-xl border border-slate-800 bg-slate-900/70 px-3 text-sm text-white outline-none transition focus:border-orange-500/70"
             >
@@ -204,6 +207,7 @@ export default async function ArticlesPage({
 
             <select
               name="tag"
+              aria-label="Tag"
               defaultValue={tag}
               className="h-10 rounded-xl border border-slate-800 bg-slate-900/70 px-3 text-sm text-white outline-none transition focus:border-orange-500/70"
             >
@@ -217,6 +221,7 @@ export default async function ArticlesPage({
 
             <select
               name="category"
+              aria-label="Category"
               defaultValue={category}
               className="h-10 rounded-xl border border-slate-800 bg-slate-900/70 px-3 text-sm text-white outline-none transition focus:border-orange-500/70"
             >
@@ -230,6 +235,7 @@ export default async function ArticlesPage({
 
             <select
               name="visibility"
+              aria-label="Visibility"
               defaultValue={visibility}
               className="h-10 rounded-xl border border-slate-800 bg-slate-900/70 px-3 text-sm text-white outline-none transition focus:border-orange-500/70"
             >
@@ -240,6 +246,7 @@ export default async function ArticlesPage({
 
             <select
               name="status"
+              aria-label="Publication status"
               defaultValue={status}
               className="h-10 rounded-xl border border-slate-800 bg-slate-900/70 px-3 text-sm text-white outline-none transition focus:border-orange-500/70"
             >
@@ -248,13 +255,20 @@ export default async function ArticlesPage({
               <option value="draft">Draft</option>
             </select>
 
+            <div className="flex gap-2">
             <button
               type="submit"
-              className="inline-flex h-10 items-center justify-center gap-2 rounded-xl border border-slate-700 bg-slate-900 px-3 text-sm font-medium text-slate-100 transition hover:border-orange-500/60 hover:text-white"
+              className="inline-flex h-10 flex-1 items-center justify-center gap-2 rounded-lg border border-slate-700 bg-slate-900 px-3 text-sm font-medium text-slate-100 transition hover:border-orange-500/60 hover:text-white"
             >
               <Filter className="h-4 w-4" />
               Filter
             </button>
+            {(q || category || tag || visibility || status || companyId || scope !== "all") && (
+              <Link href="/articles" title="Reset article filters" aria-label="Reset article filters" className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-slate-700 text-slate-300 transition hover:border-orange-400/60 hover:bg-orange-500/10 hover:text-orange-100">
+                <RotateCcw className="h-4 w-4" />
+              </Link>
+            )}
+            </div>
           </form>
         </div>
 
